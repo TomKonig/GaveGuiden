@@ -8,6 +8,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Poppins', sans-serif; }
+        .tab-btn.active { border-color: #4F46E5; color: #4F46E5; background-color: #EEF2FF; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body class="bg-slate-100">
@@ -22,13 +26,59 @@
 
     <div id="admin-view" class="hidden p-4 md:p-8">
         <h1 class="text-3xl font-bold text-slate-800 mb-6">Product Management</h1>
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-bold mb-2">Edit products.json</h2>
-            <p class="text-slate-600 mb-4">Modify the product data below. When you are finished, click "Copy to Clipboard" and paste the entire content into the `assets/products.json` file in your GitHub repository to update the live site.</p>
-            <textarea id="json-editor" class="w-full h-96 p-3 border-2 border-slate-300 rounded-lg font-mono text-sm"></textarea>
-            <div class="mt-4 flex gap-4">
-                <button id="copy-btn" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700">Copy to Clipboard</button>
-                <span id="copy-feedback" class="text-green-600 self-center hidden">Copied!</span>
+        
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-6" id="admin-tabs">
+                <button class="tab-btn active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="live-editor">Live Editor</button>
+                <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="edit-product">Edit Product</button>
+                <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="add-products">Add Products</button>
+            </nav>
+        </div>
+
+        <div id="tab-content-container">
+            <!-- Live Editor Tab -->
+            <div id="live-editor" class="tab-content active">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold mb-2">products.json Live Editor</h2>
+                    <p class="text-slate-600 mb-4">This text area contains the full `products.json` content. Changes made in the "Edit Product" tab will be reflected here. When you are finished, copy this content and paste it into the file on GitHub.</p>
+                    <textarea id="json-editor" class="w-full h-96 p-3 border-2 border-slate-300 rounded-lg font-mono text-sm"></textarea>
+                    <div class="mt-4 flex gap-4">
+                        <button id="copy-btn" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700">Copy to Clipboard</button>
+                        <span id="copy-feedback" class="text-green-600 self-center hidden">Copied!</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Product Tab -->
+            <div id="edit-product" class="tab-content">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold mb-4">Edit an Existing Product</h2>
+                    <div class="mb-4">
+                        <label for="product-selector" class="block text-sm font-medium text-gray-700">Select a Product</label>
+                        <select id="product-selector" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></select>
+                    </div>
+                    <div id="edit-form-container" class="hidden space-y-4">
+                        <div><label class="block font-medium">Name</label><input type="text" id="edit-name" class="w-full p-2 border rounded"></div>
+                        <div><label class="block font-medium">Description</label><textarea id="edit-description" class="w-full p-2 border rounded h-24"></textarea></div>
+                        <div><label class="block font-medium">Price</label><input type="number" id="edit-price" class="w-full p-2 border rounded"></div>
+                        <div><label class="block font-medium">Image URL</label><input type="text" id="edit-image" class="w-full p-2 border rounded"></div>
+                        <div><label class="block font-medium">Tags (comma-separated)</label><input type="text" id="edit-tags-interests" class="w-full p-2 border rounded"></div>
+                        <button id="save-changes-btn" class="bg-green-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-green-700">Update in Editor</button>
+                        <span id="save-feedback" class="text-green-600 self-center hidden ml-4">Updated!</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Products Tab -->
+            <div id="add-products" class="tab-content">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold mb-4">Add New Products</h2>
+                    <p class="text-slate-500">(Functionality coming soon)</p>
+                    <div class="mt-4 space-y-6">
+                        <div><h3 class="font-semibold">Add a Single Product</h3><div class="mt-2 p-8 border-2 border-dashed rounded-lg bg-slate-50 text-center text-slate-400">Single product form will be here.</div></div>
+                        <div><h3 class="font-semibold">Bulk Add from JSON</h3><div class="mt-2 p-8 border-2 border-dashed rounded-lg bg-slate-50 text-center text-slate-400">Bulk add text area will be here.</div></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -43,17 +93,26 @@
             const jsonEditor = document.getElementById('json-editor');
             const copyBtn = document.getElementById('copy-btn');
             const copyFeedback = document.getElementById('copy-feedback');
+            const tabs = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const productSelector = document.getElementById('product-selector');
+            const editFormContainer = document.getElementById('edit-form-container');
+            const saveChangesBtn = document.getElementById('save-changes-btn');
+            const saveFeedback = document.getElementById('save-feedback');
 
             const ADMIN_PASSWORD = "testAdmin!1";
+            let productData = [];
+            let selectedProductIndex = -1;
 
             async function loadProducts() {
                 try {
                     const response = await fetch('./assets/products.json');
                     if (!response.ok) throw new Error('Failed to fetch');
-                    const products = await response.json();
-                    jsonEditor.value = JSON.stringify(products, null, 2);
+                    productData = await response.json();
+                    jsonEditor.value = JSON.stringify(productData, null, 2);
+                    populateProductSelector();
                 } catch (error) {
-                    jsonEditor.value = "Error: Could not load products.json. Make sure the file exists in the 'assets' folder.";
+                    jsonEditor.value = "Error: Could not load products.json.";
                 }
             }
 
@@ -66,6 +125,54 @@
                     errorMsg.classList.remove('hidden');
                 }
             }
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    tabContents.forEach(c => c.classList.toggle('active', c.id === tab.dataset.tab));
+                });
+            });
+
+            function populateProductSelector() {
+                productSelector.innerHTML = '<option value="-1">-- Vælg et produkt --</option>';
+                productData.forEach((product, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = `${product.id}: ${product.name}`;
+                    productSelector.appendChild(option);
+                });
+            }
+
+            productSelector.addEventListener('change', () => {
+                selectedProductIndex = parseInt(productSelector.value);
+                if (selectedProductIndex > -1) {
+                    const product = productData[selectedProductIndex];
+                    document.getElementById('edit-name').value = product.name;
+                    document.getElementById('edit-description').value = product.description;
+                    document.getElementById('edit-price').value = product.price;
+                    document.getElementById('edit-image').value = product.image;
+                    document.getElementById('edit-tags-interests').value = product.tags.interests.join(', ');
+                    editFormContainer.classList.remove('hidden');
+                } else {
+                    editFormContainer.classList.add('hidden');
+                }
+            });
+
+            saveChangesBtn.addEventListener('click', () => {
+                if (selectedProductIndex > -1) {
+                    const product = productData[selectedProductIndex];
+                    product.name = document.getElementById('edit-name').value;
+                    product.description = document.getElementById('edit-description').value;
+                    product.price = parseFloat(document.getElementById('edit-price').value);
+                    product.image = document.getElementById('edit-image').value;
+                    product.tags.interests = document.getElementById('edit-tags-interests').value.split(',').map(s => s.trim());
+                    
+                    jsonEditor.value = JSON.stringify(productData, null, 2);
+                    saveFeedback.classList.remove('hidden');
+                    setTimeout(() => saveFeedback.classList.add('hidden'), 2000);
+                }
+            });
 
             loginBtn.addEventListener('click', login);
             passwordInput.addEventListener('keypress', (e) => {
