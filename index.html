@@ -265,4 +265,78 @@
                         </div>
                         <div class="bg-slate-50 p-4 border-t">
                             <div class="mb-4">
-                                <p cl
+                                <p class="text-sm font-semibold text-center mb-2">Hvor godt ramte vi plet?</p>
+                                <div class="star-rating flex justify-center text-3xl" data-product-id="${product.id}">
+                                    <button data-value="1">★</button><button data-value="2">★</button><button data-value="3">★</button><button data-value="4">★</button><button data-value="5">★</button>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <button class="share-btn text-blue-600 font-semibold hover:underline">Del dit resultat -- eller spørg en ven om hjælp!</button>
+                                <p class="share-feedback hidden text-sm text-green-600 mt-1">Link kopieret!</p>
+                            </div>
+                            <div class="text-xs text-slate-400 mt-4 text-right">
+                                <button class="hover:underline report-btn" data-product-id="${product.id}">Rapportér et problem</button>
+                            </div>
+                        </div>
+                    </div>`;
+            };
+            
+            function handleModal(modalElement, openTriggers, closeTriggers) {
+                openTriggers.forEach(trigger => trigger.addEventListener('click', () => modalElement.classList.add('visible')));
+                closeTriggers.forEach(trigger => trigger.addEventListener('click', () => modalElement.classList.remove('visible')));
+                modalElement.addEventListener('click', (e) => {
+                    if (e.target === modalElement) modalElement.classList.remove('visible');
+                });
+            }
+
+            handleModal(howItWorksModal, [document.getElementById('how-it-works-btn')], document.querySelectorAll('#how-it-works-modal .close-modal-btn'));
+            handleModal(reportProblemModal, [], document.querySelectorAll('#report-problem-modal .close-modal-btn'));
+
+            resultsContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('report-btn')) {
+                    currentReportProductId = e.target.dataset.productId;
+                    reportOptions.classList.remove('hidden');
+                    reportFeedback.classList.add('hidden');
+                    reportProblemModal.classList.add('visible');
+                }
+                if (e.target.closest('.share-btn')) {
+                    const feedback = e.target.nextElementSibling;
+                    navigator.clipboard.writeText(window.location.href).then(() => {
+                        feedback.classList.remove('hidden');
+                        setTimeout(() => feedback.classList.add('hidden'), 2000);
+                    });
+                }
+                if (e.target.closest('.star-rating button')) {
+                    const button = e.target.closest('.star-rating button');
+                    const rating = button.dataset.value;
+                    const productId = button.parentElement.dataset.productId;
+                    console.log(`Product ${productId} rated ${rating} stars.`);
+                    
+                    const stars = button.parentElement.querySelectorAll('button');
+                    stars.forEach(star => {
+                        star.classList.toggle('selected', star.dataset.value <= rating);
+                    });
+                    // Disable after rating
+                    stars.forEach(star => star.disabled = true);
+                }
+            });
+
+            reportOptions.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    const reportType = e.target.dataset.reportType;
+                    console.log(`Problem reported for product ${currentReportProductId}: ${reportType}`);
+                    reportOptions.classList.add('hidden');
+                    reportFeedback.classList.remove('hidden');
+                    setTimeout(() => reportProblemModal.classList.remove('visible'), 1500);
+                }
+            });
+
+            startQuizBtn.addEventListener('click', startQuiz);
+            restartQuizBtn.addEventListener('click', () => switchView('landing'));
+            quizContainer.addEventListener('click', handleAnswer);
+            nextBtn.addEventListener('click', goToNextQuestion);
+            earlyExitBtn.addEventListener('click', showResults);
+        });
+    </script>
+</body>
+</html>
