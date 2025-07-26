@@ -22,6 +22,7 @@
         .quiz-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
         .interest-tag { transition: background-color 0.2s, color 0.2s, border-color 0.2s; }
         .interest-tag.selected { background-color: #4F46E5; color: white; border-color: #4F46E5; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -29,6 +30,9 @@
     <div id="app" class="max-w-4xl mx-auto p-4 md:p-8">
         <header class="flex justify-between items-center mb-8">
             <h1 class="text-2xl md:text-3xl font-bold text-slate-700">GaveGuiden</h1>
+            <nav>
+                <button id="how-it-works-btn" class="text-slate-600 hover:text-slate-900 font-semibold">Sådan fungerer det</button>
+            </nav>
         </header>
 
         <main id="landing-view" class="view active text-center">
@@ -60,6 +64,21 @@
         </footer>
     </div>
 
+    <!-- How It Works Modal -->
+    <div id="how-it-works-modal" class="modal-overlay hidden">
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-lg m-4 animate-fadeIn">
+            <h2 class="text-2xl font-bold mb-4">Sådan fungerer GaveGuiden</h2>
+            <div class="text-slate-600 space-y-4">
+                <p>Velkommen til GaveGuiden! Vores mål er at gøre gavejagten nem og sjov. Her er en hurtig oversigt over, hvordan det hele virker:</p>
+                <p><strong>1. Svar på spørgsmål:</strong> Du besvarer et par simple spørgsmål om den person, du køber gave til. Dine svar hjælper vores system med at forstå deres personlighed og interesser.</p>
+                <p><strong>2. Vores Pointsystem:</strong> Hvert produkt i vores database har "tags" (f.eks. "Kaffe", "Mand", "18-25"). Når du svarer, giver vores system point til de produkter, der matcher dine svar. Et match på "interesser" vejer tungere end f.eks. "alder", så vi kan finde de mest relevante gaver.</p>
+                <p><strong>3. Affiliate Links (Sådan tjener vi penge):</strong> Når vi foreslår en gave, er linket til produktet et "affiliate link". Det betyder, at hvis du klikker på linket og køber produktet, modtager vi en lille kommission fra forhandleren. **Dette koster dig absolut intet ekstra!** Det er sådan, vi kan holde GaveGuiden kørende og gratis at bruge.</p>
+                <p>Vi værdsætter din tillid og stræber efter kun at anbefale kvalitetsprodukter, vi tror på.</p>
+            </div>
+            <button id="close-modal-btn" class="mt-6 bg-blue-600 text-white font-bold py-2 px-5 rounded-lg w-full hover:bg-blue-700">Forstået!</button>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const views = { landing: document.getElementById('landing-view'), quiz: document.getElementById('quiz-view'), results: document.getElementById('results-view') };
@@ -70,6 +89,9 @@
             const earlyExitBtn = document.getElementById('early-exit-btn');
             const resultsTitle = document.getElementById('results-title');
             const resultsContainer = document.getElementById('results-container');
+            const howItWorksBtn = document.getElementById('how-it-works-btn');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const modal = document.getElementById('how-it-works-modal');
 
             let products = [];
             try {
@@ -78,12 +100,12 @@
                 products = await response.json();
             } catch (error) {
                 console.error("Failed to load products:", error);
-                quizContainer.innerHTML = `<p class="text-center text-red-500">Kunne ikke indlæse produkter. Prøv venligst igen senere.</p>`;
+                document.getElementById('app').innerHTML = `<p class="text-center text-red-500 p-8">Kunne ikke indlæse produkter. Sørg for at 'assets/products.json' findes og er korrekt formateret.</p>`;
                 return;
             }
 
             const quizQuestions = [
-                { question: "Hvad hedder gavemodtageren?", type: 'text-input', key: 'name', placeholder: 'F.eks. "Mor" eller "Anders"' },
+                { question: "Hvad hedder den heldige?", type: 'text-input', key: 'name', placeholder: 'F.eks. "Mor" eller "Anders"' },
                 { question: "Hvem er gaven til?", type: 'single-choice-card', key: 'relation', options: ['Partner', 'Forælder', 'Ven', 'Søskende', 'Kollega', 'Andet'] },
                 { question: "Hvad er modtagerens køn?", type: 'single-choice-card', key: 'gender', options: ['Mand', 'Kvinde', 'Andet'] },
                 { question: "Hvad er deres cirka alder?", type: 'single-choice-card', key: 'age', options: ['Under 18', '18-25', '26-40', '41-60', '60+'] },
@@ -114,7 +136,7 @@
                 nextBtn.classList.add('hidden');
 
                 if (questionData.type === 'text-input') {
-                    optionsHtml = `<input type="text" id="text-input-field" class="w-full max-w-md mx-auto p-3 border-2 border-slate-300 rounded-lg text-center text-lg" placeholder="${questionData.placeholder}">`;
+                    optionsHtml = `<div class="flex justify-center"><input type="text" id="text-input-field" class="w-full max-w-md p-3 border-2 border-slate-300 rounded-lg text-center text-lg" placeholder="${questionData.placeholder}"></div>`;
                     nextBtn.classList.remove('hidden');
                 } else if (questionData.type === 'single-choice-card') {
                     optionsHtml = `<div class="grid grid-cols-2 md:grid-cols-3 gap-4">` +
@@ -129,10 +151,10 @@
             };
 
             const handleAnswer = (e) => {
-                const questionData = quizQuestions[currentQuestionIndex];
                 const target = e.target.closest('[data-value]');
                 if (!target) return;
                 const value = target.dataset.value;
+                const questionData = quizQuestions[currentQuestionIndex];
 
                 if (questionData.type === 'single-choice-card') {
                     userAnswers[questionData.key] = value;
@@ -169,7 +191,7 @@
                     showResults();
                 }
             };
-
+            
             const showResults = () => {
                 const scoredProducts = products
                     .filter(p => p.status === 'active')
@@ -178,11 +200,11 @@
                         Object.entries(userAnswers).forEach(([key, value]) => {
                             if (product.tags[key]) {
                                 const weight = (key === 'interests') ? 10 : 3;
-                                if (Array.isArray(value)) { // For interests
+                                if (Array.isArray(value)) {
                                     value.forEach(v => {
                                         if (product.tags[key].includes(v)) score += weight;
                                     });
-                                } else { // For single choice
+                                } else {
                                     if (product.tags[key].includes(value) || product.tags[key].includes('alle')) {
                                         score += weight;
                                     }
@@ -217,36 +239,46 @@
             };
 
             const createProductCard = (product, isPrimary) => {
-                if (isPrimary) {
-                    return `
-                        <div class="bg-white rounded-lg shadow-xl max-w-md mx-auto text-left overflow-hidden">
-                            <img src="${product.image}" alt="${product.name}" class="w-full h-64 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e2e8f0/475569?text=Billede+mangler';">
-                            <div class="p-6">
-                                <h3 class="text-2xl font-bold mb-2">${product.name}</h3>
-                                <p class="text-slate-600 mb-4">${product.description}</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-3xl font-bold text-slate-800">${product.price} kr.</span>
-                                    <a href="${product.url}" target="_blank" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700 transition-colors">Se produkt</a>
-                                </div>
-                            </div>
-                        </div>`;
-                }
+                const cardClass = isPrimary 
+                    ? 'bg-white rounded-lg shadow-xl max-w-md mx-auto text-left overflow-hidden'
+                    : 'bg-white rounded-lg shadow text-left overflow-hidden flex flex-col';
+                const imgClass = isPrimary ? 'w-full h-64 object-cover' : 'w-full h-40 object-cover';
+                const contentClass = isPrimary ? 'p-6' : 'p-4 flex-grow flex flex-col';
+
                 return `
-                    <div class="bg-white rounded-lg shadow text-left overflow-hidden">
-                        <img src="${product.image}" alt="${product.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e2e8f0/475569?text=Billede+mangler';">
-                        <div class="p-4">
-                            <h4 class="font-bold">${product.name}</h4>
-                            <p class="text-lg font-semibold text-slate-800 mt-2">${product.price} kr.</p>
-                            <a href="${product.url}" target="_blank" class="text-blue-600 font-semibold mt-2 inline-block">Se produkt &rarr;</a>
+                    <div class="${cardClass}">
+                        <img src="${product.image}" alt="${product.name}" class="${imgClass}" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e2e8f0/475569?text=Billede+mangler';">
+                        <div class="${contentClass}">
+                            <h3 class="${isPrimary ? 'text-2xl' : 'text-base'} font-bold">${product.name}</h3>
+                            ${isPrimary ? `<p class="text-slate-600 my-4">${product.description}</p>` : ''}
+                            <div class="mt-auto flex justify-between items-center pt-2">
+                                <span class="${isPrimary ? 'text-3xl' : 'text-lg'} font-bold text-slate-800">${product.price} kr.</span>
+                                <a href="${product.url}" target="_blank" class="${isPrimary ? 'bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700' : 'text-blue-600 font-semibold'} transition-colors">Se produkt ${isPrimary ? '' : '&rarr;'}</a>
+                            </div>
+                            <div class="text-xs text-slate-400 mt-4 text-right">
+                                <button class="hover:underline report-btn" data-product-id="${product.id}">Rapportér et problem</button>
+                            </div>
                         </div>
                     </div>`;
             };
+
+            resultsContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('report-btn')) {
+                    e.target.textContent = 'Tak for din feedback!';
+                    e.target.disabled = true;
+                }
+            });
 
             startQuizBtn.addEventListener('click', startQuiz);
             restartQuizBtn.addEventListener('click', () => switchView('landing'));
             quizContainer.addEventListener('click', handleAnswer);
             nextBtn.addEventListener('click', goToNextQuestion);
             earlyExitBtn.addEventListener('click', showResults);
+            howItWorksBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+            closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.add('hidden');
+            });
         });
     </script>
 </body>
