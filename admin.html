@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GaveGuiden Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-100">
+    <div id="auth-view" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
+            <h1 class="text-2xl font-bold text-center mb-6">GaveGuiden Admin</h1>
+            <input type="password" id="password-input" class="w-full p-3 border-2 border-slate-300 rounded-lg mb-4" placeholder="Password">
+            <button id="login-btn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700">Login</button>
+            <p id="error-msg" class="text-red-500 text-sm text-center mt-4 hidden">Incorrect password.</p>
+        </div>
+    </div>
+
+    <div id="admin-view" class="hidden p-4 md:p-8">
+        <h1 class="text-3xl font-bold text-slate-800 mb-6">Product Management</h1>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-2">Edit products.json</h2>
+            <p class="text-slate-600 mb-4">Modify the product data below. When you are finished, click "Copy to Clipboard" and paste the entire content into the `assets/products.json` file in your GitHub repository to update the live site.</p>
+            <textarea id="json-editor" class="w-full h-96 p-3 border-2 border-slate-300 rounded-lg font-mono text-sm"></textarea>
+            <div class="mt-4 flex gap-4">
+                <button id="copy-btn" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700">Copy to Clipboard</button>
+                <span id="copy-feedback" class="text-green-600 self-center hidden">Copied!</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const authView = document.getElementById('auth-view');
+            const adminView = document.getElementById('admin-view');
+            const passwordInput = document.getElementById('password-input');
+            const loginBtn = document.getElementById('login-btn');
+            const errorMsg = document.getElementById('error-msg');
+            const jsonEditor = document.getElementById('json-editor');
+            const copyBtn = document.getElementById('copy-btn');
+            const copyFeedback = document.getElementById('copy-feedback');
+
+            const ADMIN_PASSWORD = "testAdmin!1";
+
+            async function loadProducts() {
+                try {
+                    const response = await fetch('./assets/products.json');
+                    if (!response.ok) throw new Error('Failed to fetch');
+                    const products = await response.json();
+                    jsonEditor.value = JSON.stringify(products, null, 2);
+                } catch (error) {
+                    jsonEditor.value = "Error: Could not load products.json. Make sure the file exists in the 'assets' folder.";
+                }
+            }
+
+            function login() {
+                if (passwordInput.value === ADMIN_PASSWORD) {
+                    authView.classList.add('hidden');
+                    adminView.classList.remove('hidden');
+                    loadProducts();
+                } else {
+                    errorMsg.classList.remove('hidden');
+                }
+            }
+
+            loginBtn.addEventListener('click', login);
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') login();
+            });
+
+            copyBtn.addEventListener('click', () => {
+                jsonEditor.select();
+                document.execCommand('copy');
+                copyFeedback.classList.remove('hidden');
+                setTimeout(() => copyFeedback.classList.add('hidden'), 2000);
+            });
+        });
+    </script>
+</body>
+</html>
