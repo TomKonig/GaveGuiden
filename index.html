@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GaveGuiden - Find den perfekte gave</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .view { display: none; animation: fadeIn 0.6s ease-in-out; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .question-wrapper { display: none; animation: slideIn 0.5s forwards; }
+        .question-wrapper.active { display: block; }
+        .question-wrapper.exiting { animation: slideOut 0.5s forwards; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-50px); } }
+        .quiz-card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .quiz-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .interest-tag { transition: background-color 0.2s, color 0.2s, border-color 0.2s; }
+        .interest-tag.selected { background-color: #4F46E5; color: white; border-color: #4F46E5; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div id="app" class="max-w-4xl mx-auto p-4 md:p-8">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-700">GaveGuiden</h1>
+        </header>
+
+        <main id="landing-view" class="view active text-center">
+            <div class="py-12 md:py-24">
+                <h2 class="text-4xl md:text-6xl font-bold mb-4">Find den perfekte gave. Hver gang.</h2>
+                <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-8">Vores smarte quiz stiller et par simple spørgsmål for at finde personlige gaveidéer til hvem som helst.</p>
+                <button id="start-quiz-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl">Start Guiden</button>
+            </div>
+        </main>
+
+        <main id="quiz-view" class="view">
+            <div id="quiz-container" class="relative pt-8"></div>
+            <div class="mt-8 text-center">
+                <button id="next-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors hidden">Næste</button>
+                <button id="early-exit-btn" class="mt-4 text-slate-500 hover:text-slate-800 text-sm hidden">Vis mig resultater nu</button>
+            </div>
+        </main>
+
+        <main id="results-view" class="view text-center">
+             <div class="py-12">
+                <h2 id="results-title" class="text-3xl md:text-4xl font-bold mb-4">Vi fandt den perfekte gave!</h2>
+                <div id="results-container" class="space-y-8"></div>
+                <button id="restart-quiz-btn" class="mt-8 bg-slate-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-slate-700 transition-colors">Start forfra</button>
+            </div>
+        </main>
+
+        <footer class="text-center text-slate-500 mt-16 py-4 border-t border-slate-200">
+            &copy; 2025 GaveGuiden
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const views = { landing: document.getElementById('landing-view'), quiz: document.getElementById('quiz-view'), results: document.getElementById('results-view') };
+            const startQuizBtn = document.getElementById('start-quiz-btn');
+            const restartQuizBtn = document.getElementById('restart-quiz-btn');
+            const quizContainer = document.getElementById('quiz-container');
+            const nextBtn = document.getElementById('next-btn');
+            const earlyExitBtn = document.getElementById('early-exit-btn');
+            const resultsTitle = document.getElementById('results-title');
+            const resultsContainer = document.getElementById('results-container');
+
+            let products = [];
+            try {
+                const response = await fetch('./assets/products.json');
+                if (!response.ok) throw new Error('Network response was not ok');
+                products = await response.json();
+            } catch (error) {
+                console.error("Failed to load products:", error);
+                quizContainer.innerHTML = `<p class="text-center text-red-500">Kunne ikke indlæse produkter. Prøv venligst igen senere.</p>`;
+                return;
+            }
+
+            const quizQuestions = [
+                { question: "Hvad hedder gavemodtageren?", type: 'text-input', key: 'name', placeholder: 'F.eks. "Mor" eller "Anders"' },
+                { question: "Hvem er gaven til?", type: 'single-choice-card', key: 'relation', options: ['Partner', 'Forælder', 'Ven', 'Søskende', 'Kollega', 'Andet'] },
+                { question: "Hvad er modtagerens køn?", type: 'single-choice-card', key: 'gender', options: ['Mand', 'Kvinde', 'Andet'] },
+                { question: "Hvad er deres cirka alder?", type: 'single-choice-card', key: 'age', options: ['Under 18', '18-25', '26-40', '41-60', '60+'] },
+                { question: "Hvad er anledningen?", type: 'single-choice-card', key: 'occasion', options: ['Fødselsdag', 'Jul', 'Årsdag', 'Bare fordi'] },
+                { question: "Hvad interesserer de sig for? (Vælg op til 3)", type: 'multi-select-tag', key: 'interests', options: ['Kaffe', 'Hjemmet', 'Bøger', 'Læsning', 'Teknologi', 'Madlavning', 'Mode'] }
+            ];
+
+            let currentQuestionIndex = 0;
+            let userAnswers = {};
+
+            const switchView = (activeView) => {
+                Object.values(views).forEach(view => view.classList.remove('active'));
+                views[activeView].classList.add('active');
+            };
+
+            const startQuiz = () => {
+                currentQuestionIndex = 0;
+                userAnswers = {};
+                switchView('quiz');
+                renderQuestion();
+            };
+
+            const renderQuestion = () => {
+                if (currentQuestionIndex >= 2) earlyExitBtn.classList.remove('hidden');
+                
+                const questionData = quizQuestions[currentQuestionIndex];
+                let optionsHtml = '';
+                nextBtn.classList.add('hidden');
+
+                if (questionData.type === 'text-input') {
+                    optionsHtml = `<input type="text" id="text-input-field" class="w-full max-w-md mx-auto p-3 border-2 border-slate-300 rounded-lg text-center text-lg" placeholder="${questionData.placeholder}">`;
+                    nextBtn.classList.remove('hidden');
+                } else if (questionData.type === 'single-choice-card') {
+                    optionsHtml = `<div class="grid grid-cols-2 md:grid-cols-3 gap-4">` +
+                        questionData.options.map(option => `<div class="quiz-card bg-white p-4 rounded-lg shadow cursor-pointer border-2 border-transparent text-center" data-value="${option}"><span class="font-semibold">${option}</span></div>`).join('') + `</div>`;
+                } else if (questionData.type === 'multi-select-tag') {
+                    optionsHtml = `<div class="flex flex-wrap gap-3 justify-center">` +
+                        questionData.options.map(option => `<button class="interest-tag bg-white py-2 px-4 rounded-full shadow border-2 border-slate-200 cursor-pointer" data-value="${option}">${option}</button>`).join('') + `</div>`;
+                    nextBtn.classList.remove('hidden');
+                }
+
+                quizContainer.innerHTML = `<div class="question-wrapper active" id="question-${currentQuestionIndex}"><h3 class="text-2xl md:text-3xl font-bold text-center mb-8">${questionData.question}</h3>${optionsHtml}</div>`;
+            };
+
+            const handleAnswer = (e) => {
+                const questionData = quizQuestions[currentQuestionIndex];
+                const target = e.target.closest('[data-value]');
+                if (!target) return;
+                const value = target.dataset.value;
+
+                if (questionData.type === 'single-choice-card') {
+                    userAnswers[questionData.key] = value;
+                    goToNextQuestion();
+                } else if (questionData.type === 'multi-select-tag') {
+                    userAnswers[questionData.key] = userAnswers[questionData.key] || [];
+                    const selected = userAnswers[questionData.key];
+                    if (selected.includes(value)) {
+                        userAnswers[questionData.key] = selected.filter(i => i !== value);
+                        target.classList.remove('selected');
+                    } else if (selected.length < 3) {
+                        userAnswers[questionData.key].push(value);
+                        target.classList.add('selected');
+                    }
+                }
+            };
+
+            const goToNextQuestion = () => {
+                const currentQuestionData = quizQuestions[currentQuestionIndex];
+                if (currentQuestionData.type === 'text-input') {
+                    userAnswers[currentQuestionData.key] = document.getElementById('text-input-field').value.trim();
+                }
+
+                const currentWrapper = document.getElementById(`question-${currentQuestionIndex}`);
+                if (currentQuestionIndex < quizQuestions.length - 1) {
+                    currentQuestionIndex++;
+                    if (currentWrapper) {
+                        currentWrapper.classList.add('exiting');
+                        setTimeout(() => renderQuestion(), 500);
+                    } else {
+                        renderQuestion();
+                    }
+                } else {
+                    showResults();
+                }
+            };
+
+            const showResults = () => {
+                const scoredProducts = products
+                    .filter(p => p.status === 'active')
+                    .map(product => {
+                        let score = 0;
+                        Object.entries(userAnswers).forEach(([key, value]) => {
+                            if (product.tags[key]) {
+                                const weight = (key === 'interests') ? 10 : 3;
+                                if (Array.isArray(value)) { // For interests
+                                    value.forEach(v => {
+                                        if (product.tags[key].includes(v)) score += weight;
+                                    });
+                                } else { // For single choice
+                                    if (product.tags[key].includes(value) || product.tags[key].includes('alle')) {
+                                        score += weight;
+                                    }
+                                }
+                            }
+                        });
+                        return { ...product, score };
+                    })
+                    .sort((a, b) => b.score - a.score);
+
+                resultsTitle.textContent = userAnswers.name ? `Gaveidéer til ${userAnswers.name}` : 'Her er vores forslag!';
+                
+                const topProduct = scoredProducts[0];
+                const secondaryProducts = scoredProducts.slice(1, 4);
+
+                let resultsHtml = '';
+                if (topProduct) {
+                    resultsHtml += createProductCard(topProduct, true);
+                    if (secondaryProducts.length > 0) {
+                        resultsHtml += `<h3 class="text-xl font-bold text-slate-700 mt-12 mb-4">Andre gode forslag</h3><div class="grid md:grid-cols-3 gap-4">`;
+                        secondaryProducts.forEach(p => {
+                            resultsHtml += createProductCard(p, false);
+                        });
+                        resultsHtml += `</div>`;
+                    }
+                } else {
+                    resultsHtml = `<p>Vi kunne desværre ikke finde et specifikt match. Prøv eventuelt igen med andre svar.</p>`;
+                }
+                
+                resultsContainer.innerHTML = resultsHtml;
+                switchView('results');
+            };
+
+            const createProductCard = (product, isPrimary) => {
+                if (isPrimary) {
+                    return `
+                        <div class="bg-white rounded-lg shadow-xl max-w-md mx-auto text-left overflow-hidden">
+                            <img src="${product.image}" alt="${product.name}" class="w-full h-64 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e2e8f0/475569?text=Billede+mangler';">
+                            <div class="p-6">
+                                <h3 class="text-2xl font-bold mb-2">${product.name}</h3>
+                                <p class="text-slate-600 mb-4">${product.description}</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-3xl font-bold text-slate-800">${product.price} kr.</span>
+                                    <a href="${product.url}" target="_blank" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700 transition-colors">Se produkt</a>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+                return `
+                    <div class="bg-white rounded-lg shadow text-left overflow-hidden">
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e2e8f0/475569?text=Billede+mangler';">
+                        <div class="p-4">
+                            <h4 class="font-bold">${product.name}</h4>
+                            <p class="text-lg font-semibold text-slate-800 mt-2">${product.price} kr.</p>
+                            <a href="${product.url}" target="_blank" class="text-blue-600 font-semibold mt-2 inline-block">Se produkt &rarr;</a>
+                        </div>
+                    </div>`;
+            };
+
+            startQuizBtn.addEventListener('click', startQuiz);
+            restartQuizBtn.addEventListener('click', () => switchView('landing'));
+            quizContainer.addEventListener('click', handleAnswer);
+            nextBtn.addEventListener('click', goToNextQuestion);
+            earlyExitBtn.addEventListener('click', showResults);
+        });
+    </script>
+</body>
+</html>
