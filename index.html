@@ -22,7 +22,11 @@
         .quiz-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
         .interest-tag { transition: background-color 0.2s, color 0.2s, border-color 0.2s; }
         .interest-tag.selected { background-color: #4F46E5; color: white; border-color: #4F46E5; }
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
+        .modal-overlay.visible { opacity: 1; visibility: visible; }
+        .star-rating button { color: #d1d5db; transition: color 0.2s; }
+        .star-rating button.selected, .star-rating:hover button { color: #f59e0b; }
+        .star-rating:hover button:hover ~ button { color: #d1d5db; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -65,17 +69,31 @@
     </div>
 
     <!-- How It Works Modal -->
-    <div id="how-it-works-modal" class="modal-overlay hidden">
+    <div id="how-it-works-modal" class="modal-overlay">
         <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-lg m-4 animate-fadeIn">
             <h2 class="text-2xl font-bold mb-4">Sådan fungerer GaveGuiden</h2>
             <div class="text-slate-600 space-y-4">
-                <p>Velkommen til GaveGuiden! Vores mål er at gøre gavejagten nem og sjov. Her er en hurtig oversigt over, hvordan det hele virker:</p>
-                <p><strong>1. Svar på spørgsmål:</strong> Du besvarer et par simple spørgsmål om den person, du køber gave til. Dine svar hjælper vores system med at forstå deres personlighed og interesser.</p>
-                <p><strong>2. Vores Pointsystem:</strong> Hvert produkt i vores database har "tags" (f.eks. "Kaffe", "Mand", "18-25"). Når du svarer, giver vores system point til de produkter, der matcher dine svar. Et match på "interesser" vejer tungere end f.eks. "alder", så vi kan finde de mest relevante gaver.</p>
-                <p><strong>3. Affiliate Links (Sådan tjener vi penge):</strong> Når vi foreslår en gave, er linket til produktet et "affiliate link". Det betyder, at hvis du klikker på linket og køber produktet, modtager vi en lille kommission fra forhandleren. **Dette koster dig absolut intet ekstra!** Det er sådan, vi kan holde GaveGuiden kørende og gratis at bruge.</p>
-                <p>Vi værdsætter din tillid og stræber efter kun at anbefale kvalitetsprodukter, vi tror på.</p>
+                <p>Velkommen til GaveGuiden! Vores mål er at gøre gavejagten nem og sjov.</p>
+                <p>Vores intelligente quiz bestemmer spørgsmål for spørgsmål præcis hvilke produkter der skal overvejes, og hvilke der skal sorteres fra, indtil vi har indsnævret søgningen til den perfekte gave til anledningen.</p>
+                <p><strong>Affiliate Links (Sådan tjener vi penge):</strong> Når vi foreslår en gave, er linket til produktet et "affiliate link". Det betyder, at hvis du klikker på linket og køber produktet, modtager vi en lille kommission fra forhandleren. **Dette koster dig absolut intet ekstra!** Det er sådan, vi kan holde GaveGuiden kørende og gratis at bruge.</p>
             </div>
-            <button id="close-modal-btn" class="mt-6 bg-blue-600 text-white font-bold py-2 px-5 rounded-lg w-full hover:bg-blue-700">Forstået!</button>
+            <button class="close-modal-btn mt-6 bg-blue-600 text-white font-bold py-2 px-5 rounded-lg w-full hover:bg-blue-700">Forstået!</button>
+        </div>
+    </div>
+
+    <!-- Report Problem Modal -->
+    <div id="report-problem-modal" class="modal-overlay">
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-lg m-4 animate-fadeIn">
+            <h2 class="text-2xl font-bold mb-4">Rapportér et problem</h2>
+            <p class="text-slate-600 mb-6">Hvad ser ud til at være galt med dette produktforslag? Din feedback hjælper os med at holde vores guide opdateret.</p>
+            <div id="report-options" class="space-y-3">
+                <button class="w-full text-left p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-report-type="Billedet mangler">Billedet mangler</button>
+                <button class="w-full text-left p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-report-type="Linket virker ikke">Linket virker ikke</button>
+                <button class="w-full text-left p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-report-type="Prisen er forkert">Prisen er forkert</button>
+                <button class="w-full text-left p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-report-type="Andet">Andet</button>
+            </div>
+            <div id="report-feedback" class="hidden text-center p-4 bg-green-100 text-green-800 rounded-lg mt-4">Tak for din feedback!</div>
+            <button class="close-modal-btn mt-6 text-slate-500 font-semibold w-full">Annuller</button>
         </div>
     </div>
 
@@ -89,9 +107,11 @@
             const earlyExitBtn = document.getElementById('early-exit-btn');
             const resultsTitle = document.getElementById('results-title');
             const resultsContainer = document.getElementById('results-container');
-            const howItWorksBtn = document.getElementById('how-it-works-btn');
-            const closeModalBtn = document.getElementById('close-modal-btn');
-            const modal = document.getElementById('how-it-works-modal');
+            
+            const howItWorksModal = document.getElementById('how-it-works-modal');
+            const reportProblemModal = document.getElementById('report-problem-modal');
+            const reportOptions = document.getElementById('report-options');
+            const reportFeedback = document.getElementById('report-feedback');
 
             let products = [];
             try {
@@ -115,6 +135,7 @@
 
             let currentQuestionIndex = 0;
             let userAnswers = {};
+            let currentReportProductId = null;
 
             const switchView = (activeView) => {
                 Object.values(views).forEach(view => view.classList.remove('active'));
@@ -218,18 +239,10 @@
                 resultsTitle.textContent = userAnswers.name ? `Gaveidéer til ${userAnswers.name}` : 'Her er vores forslag!';
                 
                 const topProduct = scoredProducts[0];
-                const secondaryProducts = scoredProducts.slice(1, 4);
 
                 let resultsHtml = '';
                 if (topProduct) {
                     resultsHtml += createProductCard(topProduct, true);
-                    if (secondaryProducts.length > 0) {
-                        resultsHtml += `<h3 class="text-xl font-bold text-slate-700 mt-12 mb-4">Andre gode forslag</h3><div class="grid md:grid-cols-3 gap-4">`;
-                        secondaryProducts.forEach(p => {
-                            resultsHtml += createProductCard(p, false);
-                        });
-                        resultsHtml += `</div>`;
-                    }
                 } else {
                     resultsHtml = `<p>Vi kunne desværre ikke finde et specifikt match. Prøv eventuelt igen med andre svar.</p>`;
                 }
@@ -238,48 +251,18 @@
                 switchView('results');
             };
 
-            const createProductCard = (product, isPrimary) => {
-                const cardClass = isPrimary 
-                    ? 'bg-white rounded-lg shadow-xl max-w-md mx-auto text-left overflow-hidden'
-                    : 'bg-white rounded-lg shadow text-left overflow-hidden flex flex-col';
-                const imgClass = isPrimary ? 'w-full h-64 object-cover' : 'w-full h-40 object-cover';
-                const contentClass = isPrimary ? 'p-6' : 'p-4 flex-grow flex flex-col';
-
+            const createProductCard = (product) => {
                 return `
-                    <div class="${cardClass}">
-                        <img src="${product.image}" alt="${product.name}" class="${imgClass}" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e2e8f0/475569?text=Billede+mangler';">
-                        <div class="${contentClass}">
-                            <h3 class="${isPrimary ? 'text-2xl' : 'text-base'} font-bold">${product.name}</h3>
-                            ${isPrimary ? `<p class="text-slate-600 my-4">${product.description}</p>` : ''}
-                            <div class="mt-auto flex justify-between items-center pt-2">
-                                <span class="${isPrimary ? 'text-3xl' : 'text-lg'} font-bold text-slate-800">${product.price} kr.</span>
-                                <a href="${product.url}" target="_blank" class="${isPrimary ? 'bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700' : 'text-blue-600 font-semibold'} transition-colors">Se produkt ${isPrimary ? '' : '&rarr;'}</a>
-                            </div>
-                            <div class="text-xs text-slate-400 mt-4 text-right">
-                                <button class="hover:underline report-btn" data-product-id="${product.id}">Rapportér et problem</button>
+                    <div class="bg-white rounded-lg shadow-xl max-w-md mx-auto text-left overflow-hidden">
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-64 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e2e8f0/475569?text=Billede+mangler';">
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold mb-2">${product.name}</h3>
+                            <p class="text-slate-600 mb-4">${product.description}</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-3xl font-bold text-slate-800">${product.price} kr.</span>
+                                <a href="${product.url}" target="_blank" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700 transition-colors">Se produkt</a>
                             </div>
                         </div>
-                    </div>`;
-            };
-
-            resultsContainer.addEventListener('click', (e) => {
-                if (e.target.classList.contains('report-btn')) {
-                    e.target.textContent = 'Tak for din feedback!';
-                    e.target.disabled = true;
-                }
-            });
-
-            startQuizBtn.addEventListener('click', startQuiz);
-            restartQuizBtn.addEventListener('click', () => switchView('landing'));
-            quizContainer.addEventListener('click', handleAnswer);
-            nextBtn.addEventListener('click', goToNextQuestion);
-            earlyExitBtn.addEventListener('click', showResults);
-            howItWorksBtn.addEventListener('click', () => modal.classList.remove('hidden'));
-            closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.classList.add('hidden');
-            });
-        });
-    </script>
-</body>
-</html>
+                        <div class="bg-slate-50 p-4 border-t">
+                            <div class="mb-4">
+                                <p cl
