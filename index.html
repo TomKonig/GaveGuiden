@@ -308,15 +308,27 @@
                 }
                 if (e.target.closest('.star-rating button')) {
                     const button = e.target.closest('.star-rating button');
-                    const rating = button.dataset.value;
-                    const productId = button.parentElement.dataset.productId;
-                    console.log(`Product ${productId} rated ${rating} stars.`);
+                    const rating = parseInt(button.dataset.value, 10);
+                    const productId = parseInt(button.parentElement.dataset.productId, 10);
+                    
+                    const recommendedProduct = products.find(p => p.id === productId);
+
+                    const feedbackData = {
+                        rating_id: Date.now(),
+                        product_id: productId,
+                        product_name: recommendedProduct ? recommendedProduct.name : 'Unknown',
+                        rating: rating,
+                        quiz_answers: userAnswers,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    console.log("Rating Submitted (to be sent to ratings.json):", feedbackData);
                     
                     const stars = button.parentElement.querySelectorAll('button');
                     stars.forEach(star => {
                         star.classList.toggle('selected', star.dataset.value <= rating);
                     });
-                    // Disable after rating
+                    
                     stars.forEach(star => star.disabled = true);
                 }
             });
@@ -324,7 +336,17 @@
             reportOptions.addEventListener('click', (e) => {
                 if (e.target.tagName === 'BUTTON') {
                     const reportType = e.target.dataset.reportType;
-                    console.log(`Problem reported for product ${currentReportProductId}: ${reportType}`);
+                    
+                    const flagData = {
+                        flag_id: `f_${Date.now()}`,
+                        product_id: parseInt(currentReportProductId, 10),
+                        issue_type: reportType,
+                        timestamp: new Date().toISOString(),
+                        status: 'unresolved'
+                    };
+
+                    console.log(`Flag Submitted (to be sent to flags.json):`, flagData);
+
                     reportOptions.classList.add('hidden');
                     reportFeedback.classList.remove('hidden');
                     setTimeout(() => reportProblemModal.classList.remove('visible'), 1500);
