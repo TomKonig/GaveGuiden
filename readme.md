@@ -73,7 +73,8 @@ Hosting & Backend: Netlify or Vercel.
 ├── assets/                 // Publicly accessible folder
 │   ├── products.json       // Public: The core database of all gift products.
 │   ├── questions.json      // Public: The script for the quiz flow.
-│   └── flags.json          // Public: User-submitted error reports.
+│   ├── flags.json          // Public: User-submitted error reports.
+│   └── analytics.json      // Public: stores site analytics.
 |
 ├── data/                   // PRIVATE: This folder is NOT publicly accessible.
 │   ├── ratings.json        // PRIVATE: Stores user ratings and anonymized answers.
