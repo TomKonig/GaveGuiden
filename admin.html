@@ -320,8 +320,58 @@
                     tabContents.forEach(c => c.classList.toggle('active', c.id === tab.dataset.tab));
                 });
             });
+            
+            flagsTableBody.addEventListener('click', (e) => {
+                if (e.target.classList.contains('resolve-btn')) {
+                    const flagIdsToResolve = JSON.parse(e.target.dataset.flagIds);
+                    flagIdsToResolve.forEach(id => {
+                        const flag = flagsData.find(f => f.flag_id === id);
+                        if (flag) flag.status = 'resolved';
+                    });
+                    // This would ideally send an update to a 'resolve-flags' function
+                    console.log("Resolved flags:", flagIdsToResolve, "You would now need to save the updated flags.json");
+                    renderFlags();
+                }
+            });
 
-            // ... (rest of the event listeners for copy, edit, resolve, etc.)
+            thresholdInput.addEventListener('change', renderFlags);
+
+            productSelector.addEventListener('change', () => {
+                selectedProductIndex = parseInt(productSelector.value);
+                if (selectedProductIndex > -1) {
+                    const product = productData[selectedProductIndex];
+                    document.getElementById('edit-name').value = product.name;
+                    document.getElementById('edit-description').value = product.description;
+                    document.getElementById('edit-price').value = product.price;
+                    document.getElementById('edit-image').value = product.image;
+                    document.getElementById('edit-tags-interests').value = product.tags.interests.join(', ');
+                    editFormContainer.classList.remove('hidden');
+                } else {
+                    editFormContainer.classList.add('hidden');
+                }
+            });
+
+            saveChangesBtn.addEventListener('click', () => {
+                if (selectedProductIndex > -1) {
+                    const product = productData[selectedProductIndex];
+                    product.name = document.getElementById('edit-name').value;
+                    product.description = document.getElementById('edit-description').value;
+                    product.price = parseFloat(document.getElementById('edit-price').value);
+                    product.image = document.getElementById('edit-image').value;
+                    product.tags.interests = document.getElementById('edit-tags-interests').value.split(',').map(s => s.trim());
+                    
+                    jsonEditor.value = JSON.stringify(productData, null, 2);
+                    saveFeedback.classList.remove('hidden');
+                    setTimeout(() => saveFeedback.classList.add('hidden'), 2000);
+                }
+            });
+
+            copyBtn.addEventListener('click', () => {
+                jsonEditor.select();
+                document.execCommand('copy');
+                copyFeedback.classList.remove('hidden');
+                setTimeout(() => copyFeedback.classList.add('hidden'), 2000);
+            });
         });
     </script>
 </body>
