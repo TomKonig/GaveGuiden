@@ -33,7 +33,7 @@
 
     <div id="app" class="max-w-4xl mx-auto p-4 md:p-8">
         <header class="flex justify-between items-center mb-8">
-            <h1 class="text-2xl md:text-3xl font-bold text-slate-700">Den Rette Gave</h1>
+            <a href="/" class="text-2xl md:text-3xl font-bold text-slate-700 hover:text-slate-900 transition-colors">Den Rette Gave</a>
             <nav>
                 <button id="how-it-works-btn" class="text-slate-600 hover:text-slate-900 font-semibold">Sådan fungerer det</button>
             </nav>
@@ -238,7 +238,7 @@
                 }
                 
                 topProductResult = topProduct;
-                if (topProduct && !productId) { // Only log suggestion on initial generation
+                if (topProduct && !productId) {
                     logAnalytics('suggestion', topProduct.id);
                 }
 
@@ -276,7 +276,7 @@
             handleModal(reportProblemModal, [], document.querySelectorAll('#report-problem-modal .close-modal-btn'));
             handleModal(shareModal, [], document.querySelectorAll('#share-modal .close-modal-btn'));
 
-            resultsContainer.addEventListener('click', (e) => {
+            resultsContainer.addEventListener('click', async (e) => {
                 if (e.target.classList.contains('report-btn')) {
                     currentReportProductId = e.target.dataset.productId;
                     document.getElementById('report-options').classList.remove('hidden');
@@ -284,8 +284,8 @@
                     reportProblemModal.classList.add('visible');
                 }
                 if (e.target.closest('.share-btn')) {
-                    const answersParam = encodeURIComponent(JSON.stringify(userAnswers));
-                    const shareUrl = `${window.location.origin}${window.location.pathname}?product_id=${topProductResult.id}&answers=${answersParam}`;
+                    // Placeholder for secure share link generation
+                    const shareUrl = `${window.location.origin}${window.location.pathname}?product_id=${topProductResult.id}`;
                     
                     document.getElementById('share-whatsapp').href = `https://wa.me/?text=${encodeURIComponent('Se denne gaveidé jeg fandt: ' + shareUrl)}`;
                     document.getElementById('share-messenger').href = `fb-messenger://share/?link=${encodeURIComponent(shareUrl)}`;
@@ -358,19 +358,11 @@
                     .catch(err => console.error("Error submitting analytics:", err));
             }
 
-            // Check for shared link on page load
             const urlParams = new URLSearchParams(window.location.search);
-            const sharedProductId = urlParams.get('product_id');
-            const sharedAnswers = urlParams.get('answers');
-
-            if (sharedProductId && sharedAnswers) {
-                try {
-                    userAnswers = JSON.parse(decodeURIComponent(sharedAnswers));
-                    showResults(parseInt(sharedProductId), userAnswers);
-                } catch (e) {
-                    console.error("Failed to parse shared URL params", e);
-                    startQuiz();
-                }
+            if (urlParams.has('product_id')) {
+                const productId = parseInt(urlParams.get('product_id'));
+                const answers = {}; // In a real scenario, you'd fetch this from a backend
+                showResults(productId, answers);
             } else {
                  startQuizBtn.addEventListener('click', startQuiz);
             }
