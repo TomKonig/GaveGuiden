@@ -387,3 +387,4 @@ Purpose: To securely provide ratings data to the admin panel.
 Authentication: Requires a valid temporary auth token in the request header.
 
 Action: If authenticated, reads and returns the contents of the private ratings.json file.
+
