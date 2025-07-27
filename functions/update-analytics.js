@@ -1,6 +1,9 @@
 const fs = require('fs').promises;
 const path = require('path');
 
+const ASSETS_DIR = path.join(__dirname, '..', 'assets');
+const filePath = path.join(ASSETS_DIR, 'analytics.json');
+
 exports.handler = async (event, context) => {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
@@ -14,7 +17,7 @@ exports.handler = async (event, context) => {
             return { statusCode: 400, body: 'Bad Request: Missing eventType or productId.' };
         }
 
-        const filePath = path.join(__dirname, '..', 'assets', 'analytics.json');
+        await fs.mkdir(ASSETS_DIR, { recursive: true });
         
         let analytics = { products: {}, site_totals: {} };
         try {
@@ -24,11 +27,11 @@ exports.handler = async (event, context) => {
             if (error.code !== 'ENOENT') throw error;
         }
 
-        // Initialize product entry if it doesn't exist
+        if (!analytics.products) analytics.products = {};
+        if (!analytics.site_totals) analytics.site_totals = {};
         if (!analytics.products[productId]) {
             analytics.products[productId] = { suggestions: 0, clicks: 0, sales: 0 };
         }
-        // Initialize site totals if they don't exist
         if (!analytics.site_totals.quizzes_completed) analytics.site_totals.quizzes_completed = 0;
         if (!analytics.site_totals.total_clicks) analytics.site_totals.total_clicks = 0;
 
@@ -48,7 +51,7 @@ exports.handler = async (event, context) => {
             body: JSON.stringify({ message: 'Analytics updated successfully' })
         };
 
-    } catch (error)
+    } catch (error) {
         console.error('Error processing analytics:', error);
         return {
             statusCode: 500,
