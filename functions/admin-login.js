@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 
 // IMPORTANT: For security, you must set these as environment variables
 // in your Netlify site settings.
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'testAdmin!1';
+const ADMIN_PASSWORD = (process.env.ADMIN_PASSWORD || 'testAdmin!1').trim();
 const JWT_SECRET = process.env.JWT_SECRET || 'a-very-secret-string-for-dev';
 
 exports.handler = async (event, context) => {
@@ -12,13 +12,14 @@ exports.handler = async (event, context) => {
 
     try {
         const { password } = JSON.parse(event.body);
+        const userPassword = (password || '').trim();
 
         if (!password) {
             return { statusCode: 400, body: 'Bad Request: Missing password.' };
         }
 
         // Compare the provided password with the one stored securely
-        if (password === ADMIN_PASSWORD) {
+        if (userPassword === ADMIN_PASSWORD) {
             // If the password is correct, create a secure, temporary token.
             // This token proves the user is authenticated for a short period.
             const token = jwt.sign({ user: 'admin' }, JWT_SECRET, { expiresIn: '1h' }); // Token is valid for 1 hour

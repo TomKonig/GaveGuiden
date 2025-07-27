@@ -62,6 +62,16 @@ Styling: Tailwind CSS.
 
 Hosting & Backend: Netlify or Vercel.
 
+If you deploy to Netlify, be sure its **Functions directory** points to `functions`. You can either set this in your site settings or include a `netlify.toml` file:
+
+```
+[build]
+  functions = "functions"
+  publish = "."
+```
+
+Without this configuration, requests like `/.netlify/functions/admin-login` will return 404.
+
 3.3 Detailed File Structure
 
 /
@@ -79,6 +89,7 @@ Hosting & Backend: Netlify or Vercel.
 ├── data/                   // PRIVATE: This folder is NOT publicly accessible.
 │   ├── ratings.json        // PRIVATE: Stores user ratings and anonymized answers.
 │   └── shares.json         // PRIVATE: Stores data for shareable links.
+> Note: When first deploying, initialize `flags.json`, `ratings.json`, and `shares.json` with `[]` so the admin panel can parse them.
 |
 └── functions/              // Directory for our serverless backend logic.
     ├── admin-login.js      // Securely handles admin login.
