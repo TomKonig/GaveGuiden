@@ -62,6 +62,16 @@ Styling: Tailwind CSS.
 
 Hosting & Backend: Netlify or Vercel.
 
+If you deploy to Netlify, be sure its **Functions directory** points to `functions`. You can either set this in your site settings or include a `netlify.toml` file:
+
+```
+[build]
+  functions = "functions"
+  publish = "."
+```
+
+Without this configuration, requests like `/.netlify/functions/admin-login` will return 404.
+
 3.3 Detailed File Structure
 
 /
