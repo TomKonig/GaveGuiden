@@ -3,48 +3,445 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brugsbetingelser - Den Rette Gave</title>
+    <title>Den Rette Gave - Find den perfekte gave</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Poppins', sans-serif; }
-        .content-container h2 { font-size: 1.875rem; font-weight: 700; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
-        .content-container p { margin-bottom: 1rem; }
+        .view { display: none; animation: fadeIn 0.6s ease-in-out; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .question-wrapper { display: none; animation: slideIn 0.5s forwards; }
+        .question-wrapper.active { display: block; }
+        .question-wrapper.exiting { animation: slideOut 0.5s forwards; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-50px); } }
+        .quiz-card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .quiz-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .interest-tag { transition: background-color 0.2s, color 0.2s, border-color 0.2s; }
+        .interest-tag.selected { background-color: #4F46E5; color: white; border-color: #4F46E5; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
+        .modal-overlay.visible { opacity: 1; visibility: visible; }
+        .star-rating button { color: #d1d5db; transition: color 0.2s; }
+        .star-rating button.selected, .star-rating:hover button { color: #f59e0b; }
+        .star-rating:hover button:hover ~ button { color: #d1d5db; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
-    <div class="max-w-4xl mx-auto p-4 md:p-8 flex flex-col min-h-screen">
+
+    <div id="app" class="max-w-4xl mx-auto p-4 md:p-8 flex flex-col min-h-screen">
         <header class="flex justify-between items-center mb-8">
             <a href="/" class="text-2xl md:text-3xl font-bold text-slate-700 hover:text-slate-900 transition-colors">Den Rette Gave</a>
+            <nav>
+                <button id="how-it-works-btn" class="text-slate-600 hover:text-slate-900 font-semibold">Sådan fungerer det</button>
+            </nav>
         </header>
 
-        <main class="bg-white p-8 rounded-lg shadow-md content-container flex-grow">
-            <h1 class="text-3xl font-bold text-slate-800 mb-4">Brugsbetingelser for Den Rette Gave</h1>
-            <p class="text-slate-500">Sidst opdateret: 27. juli 2025</p>
-
-            <h2>1. Accept af Betingelser</h2>
-            <p>Ved at tilgå og bruge hjemmesiden DenRetteGave.dk ("Tjenesten") accepterer du at være bundet af disse brugsbetingelser. Hvis du er uenig i nogen del af betingelserne, må du ikke bruge Tjenesten.</p>
-
-            <h2>2. Tjenestens Beskrivelse</h2>
-            <p>Den Rette Gave er en online guide, der hjælper brugere med at finde gaveidéer gennem en interaktiv quiz. Tjenesten er gratis at bruge. Vores forretningsmodel er baseret på affiliate marketing, hvilket betyder, at vi modtager en kommission fra forhandlere, hvis du køber et produkt via et af vores links.</p>
-
-            <h2>3. Affiliate Ansvarsfraskrivelse</h2>
-            <p>Vi bestræber os på at give nøjagtige og opdaterede oplysninger om produkter, herunder priser. Dog kan vi ikke garantere, at oplysningerne på forhandlerens hjemmeside altid er identiske med, hvad der vises på vores Tjeneste. Priser og tilgængelighed kan ændre sig uden varsel. Ethvert køb, du foretager, er en transaktion direkte mellem dig og forhandleren. Den Rette Gave er ikke part i denne transaktion og påtager sig intet ansvar for købet, levering, kvalitet eller returnering af produkter.</p>
-
-            <h2>4. Ansvarsbegrænsning</h2>
-            <p>Tjenesten leveres "som den er". Vi giver ingen garantier for, at de foreslåede gaver vil være perfekte for enhver modtager. Brugen af vores anbefalinger sker på egen risiko. Vi er ikke ansvarlige for nogen direkte eller indirekte tab, der måtte opstå som følge af brugen af vores Tjeneste.</p>
-
-            <h2>5. Ændringer af Betingelser</h2>
-            <p>Vi forbeholder os retten til at ændre disse betingelser til enhver tid. Vi vil bestræbe os på at give besked om væsentlige ændringer. Din fortsatte brug af Tjenesten efter sådanne ændringer udgør din accept af de nye betingelser.</p>
-            
-            <h2>6. Lovvalg</h2>
-            <p>Disse betingelser er underlagt og skal fortolkes i overensstemmelse med dansk lovgivning.</p>
+        <main id="landing-view" class="view active text-center flex-grow">
+            <div class="py-12 md:py-24">
+                <h2 class="text-4xl md:text-6xl font-bold mb-4">Find den perfekte gave. Hver gang.</h2>
+                <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-8">Vores smarte quiz stiller et par simple spørgsmål for at finde personlige gaveidéer til hvem som helst.</p>
+                <button id="start-quiz-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl">Start Guiden</button>
+            </div>
         </main>
-        <footer class="text-center text-slate-500 mt-8 py-4">
-            <p>&copy; 2025 Den Rette Gave (CVR: [Dit CVR-nummer])</p>
+
+        <main id="quiz-view" class="view flex-grow">
+            <div id="quiz-container" class="relative pt-8"></div>
+            <div class="mt-8 text-center">
+                <button id="next-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors hidden">Næste</button>
+                <button id="early-exit-btn" class="mt-4 text-slate-500 hover:text-slate-800 text-sm hidden">Vis mig resultater nu</button>
+            </div>
+        </main>
+
+        <main id="results-view" class="view flex-grow">
+             <div class="py-12">
+                <h2 id="results-title" class="text-3xl md:text-4xl font-bold mb-4">Vi fandt den perfekte gave!</h2>
+                <div id="results-container" class="space-y-8"></div>
+                <button id="restart-quiz-btn" class="mt-8 bg-slate-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-slate-700 transition-colors">Start forfra</button>
+            </div>
+        </main>
+
+        <footer class="text-center text-slate-500 mt-16 py-4 border-t border-slate-200">
+            <div class="flex flex-col md:flex-row justify-center items-center gap-2 md:gap-4">
+                <span>&copy; 2025 Den Rette Gave (CVR: [Dit CVR-nummer])</span>
+                <span class="hidden md:inline">|</span>
+                <a href="./privacy-policy.html" target="_blank" class="hover:underline">Privatlivspolitik</a>
+                <span class="hidden md:inline">|</span>
+                <a href="./terms-of-service.html" target="_blank" class="hover:underline">Brugsbetingelser</a>
+                <span class="hidden md:inline">|</span>
+                <button id="contact-btn" class="hover:underline">Kontakt os</button>
+            </div>
         </footer>
     </div>
+
+    <!-- Modals -->
+    <div id="how-it-works-modal" class="modal-overlay">
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-lg m-4 animate-fadeIn">
+            <h2 class="text-2xl font-bold mb-4">Sådan fungerer Den Rette Gave</h2>
+            <div class="text-slate-600 space-y-4">
+                <p>Vores intelligente quiz bestemmer spørgsmål for spørgsmål præcis hvilke produkter der skal overvejes, og hvilke der skal sorteres fra, indtil vi har indsnævret søgningen til den perfekte gave til anledningen.</p>
+                <p><strong>Feedback & Deling:</strong> Når du får et forslag, kan du give det stjerner for at hjælpe os med at forbedre vores logik. Du kan også dele resultatet med en ven via et sikkert, anonymt link.</p>
+                <p><strong>Affiliate Links (Sådan tjener vi penge):</strong> Når vi foreslår en gave, er linket et "affiliate link". Hvis du køber produktet, modtager vi en lille kommission. **Dette koster dig intet ekstra!** Det er sådan, vi kan holde Den Rette Gave kørende og gratis at bruge.</p>
+            </div>
+            <button class="close-modal-btn mt-6 bg-blue-600 text-white font-bold py-2 px-5 rounded-lg w-full hover:bg-blue-700">Forstået!</button>
+        </div>
+    </div>
+
+    <div id="contact-modal" class="modal-overlay">
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md m-4 text-center">
+            <h2 class="text-2xl font-bold mb-4">Kontakt Os</h2>
+            <p class="text-slate-600">Har du spørgsmål, feedback eller forslag? Vi vil meget gerne høre fra dig!</p>
+            <p class="mt-4">Send os en e-mail på:</p>
+            <a href="mailto:support@denrettegave.dk" class="text-blue-600 font-bold text-lg hover:underline">support@denrettegave.dk</a>
+            <button class="close-modal-btn mt-6 bg-slate-200 text-slate-800 font-bold py-2 px-5 rounded-lg w-full hover:bg-slate-300">Luk</button>
+        </div>
+    </div>
+
+    <div id="report-problem-modal" class="modal-overlay">
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-lg m-4">
+            <h2 class="text-2xl font-bold mb-4">Rapportér et problem</h2>
+            <div id="report-options" class="space-y-3">
+                <button class="w-full text-left p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-report-type="Billedet mangler">Billedet mangler</button>
+                <button class="w-full text-left p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-report-type="Linket virker ikke">Linket virker ikke</button>
+                <button class="w-full text-left p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-report-type="Prisen er forkert">Prisen er forkert</button>
+                <button class="w-full text-left p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-report-type="Andet">Andet</button>
+            </div>
+            <div id="report-feedback" class="hidden text-center p-4 bg-green-100 text-green-800 rounded-lg mt-4">Tak for din feedback!</div>
+            <button class="close-modal-btn mt-6 text-slate-500 font-semibold w-full">Annuller</button>
+        </div>
+    </div>
+
+    <div id="share-modal" class="modal-overlay">
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md m-4">
+            <h2 class="text-2xl font-bold mb-4">Del denne gaveidé</h2>
+            <div class="space-y-3">
+                <a id="share-whatsapp" href="#" target="_blank" class="block w-full text-center p-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600">Del på WhatsApp</a>
+                <a id="share-messenger" href="#" target="_blank" class="block w-full text-center p-3 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600">Del på Messenger</a>
+                <a id="share-email" href="#" class="block w-full text-center p-3 bg-slate-500 text-white rounded-lg font-bold hover:bg-slate-600">Del via Email</a>
+                <button id="share-copy" class="w-full text-center p-3 bg-slate-200 text-slate-800 rounded-lg font-bold hover:bg-slate-300">Kopiér Link</button>
+            </div>
+            <p id="share-copy-feedback" class="text-sm text-green-600 mt-2 text-center hidden">Link kopieret!</p>
+            <button class="close-modal-btn mt-6 text-slate-500 font-semibold w-full">Luk</button>
+        </div>
+    </div>
+    
+    <!-- Cookie Banner -->
+    <div id="cookie-banner" class="hidden fixed bottom-0 left-0 right-0 bg-white p-4 shadow-2xl border-t z-50 transform translate-y-full transition-transform duration-500 ease-in-out">
+        <div class="max-w-4xl mx-auto md:flex items-center justify-between">
+            <p class="text-slate-700 text-sm mb-4 md:mb-0">Denne side bruger cookies for at sikre den bedste oplevelse. Ved at bruge siden accepterer du vores brug af cookies. Læs mere i vores <a href="./privacy-policy.html" target="_blank" class="font-semibold text-blue-600 hover:underline">privatlivspolitik</a>.</p>
+            <button id="accept-cookies-btn" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg w-full md:w-auto">Accepter</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const views = { landing: document.getElementById('landing-view'), quiz: document.getElementById('quiz-view'), results: document.getElementById('results-view') };
+            const startQuizBtn = document.getElementById('start-quiz-btn');
+            const restartQuizBtn = document.getElementById('restart-quiz-btn');
+            const quizContainer = document.getElementById('quiz-container');
+            const nextBtn = document.getElementById('next-btn');
+            const earlyExitBtn = document.getElementById('early-exit-btn');
+            const resultsTitle = document.getElementById('results-title');
+            const resultsContainer = document.getElementById('results-container');
+            
+            const howItWorksModal = document.getElementById('how-it-works-modal');
+            const reportProblemModal = document.getElementById('report-problem-modal');
+            const shareModal = document.getElementById('share-modal');
+            const contactModal = document.getElementById('contact-modal');
+            const cookieBanner = document.getElementById('cookie-banner');
+            const acceptCookiesBtn = document.getElementById('accept-cookies-btn');
+
+            let products = [];
+            let allQuestions = [];
+            try {
+                const [productsRes, questionsRes] = await Promise.all([
+                    fetch('./assets/products.json'),
+                    fetch('./assets/questions.json')
+                ]);
+                if (!productsRes.ok || !questionsRes.ok) throw new Error('Network response was not ok');
+                products = await productsRes.json();
+                allQuestions = await questionsRes.json();
+            } catch (error) {
+                console.error("Failed to load data:", error);
+                document.getElementById('app').innerHTML = `<p class="text-center text-red-500 p-8">Kunne ikke indlæse data.</p>`;
+                return;
+            }
+
+            let questionsToAsk = [];
+            let currentQuestion = null;
+            let userAnswers = {};
+            let currentReportProductId = null;
+            let topProductResult = null;
+
+            const switchView = (activeView) => {
+                Object.values(views).forEach(view => view.classList.remove('active'));
+                views[activeView].classList.add('active');
+            };
+
+            const startQuiz = () => {
+                userAnswers = {};
+                topProductResult = null;
+                questionsToAsk = allQuestions.filter(q => !q.trigger);
+                switchView('quiz');
+                askNextQuestion();
+            };
+
+            const askNextQuestion = () => {
+                if (questionsToAsk.length > 0) {
+                    currentQuestion = questionsToAsk.shift();
+                    renderQuestion(currentQuestion);
+                } else {
+                    showResults();
+                }
+            };
+
+            const renderQuestion = (questionData) => {
+                if (Object.keys(userAnswers).length >= 2) earlyExitBtn.classList.remove('hidden');
+                let optionsHtml = '';
+                nextBtn.classList.add('hidden');
+
+                if (questionData.type === 'text-input') {
+                    optionsHtml = `<div class="flex justify-center"><input type="text" id="text-input-field" class="w-full max-w-md p-3 border-2 border-slate-300 rounded-lg text-center text-lg" placeholder="${questionData.placeholder}"></div>`;
+                    nextBtn.classList.remove('hidden');
+                } else if (questionData.type === 'single-choice-card') {
+                    optionsHtml = `<div class="grid grid-cols-2 md:grid-cols-3 gap-4">` + questionData.options.map(o => `<div class="quiz-card bg-white p-4 rounded-lg shadow cursor-pointer" data-value="${o}"><span class="font-semibold">${o}</span></div>`).join('') + `</div>`;
+                } else if (questionData.type === 'multi-select-tag') {
+                    optionsHtml = `<div class="flex flex-wrap gap-3 justify-center">` + questionData.options.map(o => `<button class="interest-tag bg-white py-2 px-4 rounded-full shadow" data-value="${o}">${o}</button>`).join('') + `</div>`;
+                    nextBtn.classList.remove('hidden');
+                }
+                quizContainer.innerHTML = `<div class="question-wrapper active"><h3 class="text-2xl md:text-3xl font-bold text-center mb-8">${questionData.question}</h3>${optionsHtml}</div>`;
+            };
+
+            const handleAnswer = (e) => {
+                const target = e.target.closest('[data-value]');
+                if (!target) return;
+                const value = target.dataset.value;
+                
+                if (currentQuestion.type === 'single-choice-card') {
+                    userAnswers[currentQuestion.key] = value;
+                    processNextStep();
+                } else if (currentQuestion.type === 'multi-select-tag') {
+                    userAnswers[currentQuestion.key] = userAnswers[currentQuestion.key] || [];
+                    const selected = userAnswers[currentQuestion.key];
+                    if (selected.includes(value)) {
+                        userAnswers[currentQuestion.key] = selected.filter(i => i !== value);
+                        target.classList.remove('selected');
+                    } else if (selected.length < 3) {
+                        userAnswers[currentQuestion.key].push(value);
+                        target.classList.add('selected');
+                    }
+                }
+            };
+
+            const processNextStep = () => {
+                if (currentQuestion.type === 'text-input') {
+                    userAnswers[currentQuestion.key] = document.getElementById('text-input-field').value.trim();
+                }
+
+                allQuestions.forEach(q => {
+                    if (q.trigger && !questionsToAsk.some(item => item.id === q.id) && !Object.values(userAnswers).flat().includes(q.id)) {
+                        const triggerKey = q.trigger.key;
+                        const triggerValue = q.trigger.value;
+                        if (userAnswers[triggerKey] && (Array.isArray(userAnswers[triggerKey]) ? userAnswers[triggerKey].includes(triggerValue) : userAnswers[triggerKey] === triggerValue)) {
+                            questionsToAsk.push(q);
+                        }
+                    }
+                });
+
+                const currentWrapper = quizContainer.querySelector('.question-wrapper');
+                currentWrapper.classList.add('exiting');
+                setTimeout(() => askNextQuestion(), 500);
+            };
+            
+            const showResults = (productId, answers) => {
+                const currentAnswers = answers || userAnswers;
+                let topProduct;
+
+                if (productId) {
+                    topProduct = products.find(p => p.id === productId);
+                } else {
+                    const scoredProducts = products.filter(p => p.status === 'active').map(product => {
+                        let score = 0;
+                        Object.entries(currentAnswers).forEach(([key, value]) => {
+                            if (product.tags[key]) {
+                                const weight = (key === 'interests') ? 10 : 3;
+                                if (Array.isArray(value)) value.forEach(v => { if (product.tags[key].includes(v)) score += weight; });
+                                else if (product.tags[key].includes(value) || product.tags[key].includes('alle')) score += weight;
+                            }
+                        });
+                        return { ...product, score };
+                    }).sort((a, b) => b.score - a.score);
+                    topProduct = scoredProducts[0];
+                }
+                
+                topProductResult = topProduct;
+                if (topProduct && !productId) {
+                    logAnalytics('suggestion', topProduct.id);
+                }
+
+                resultsTitle.textContent = currentAnswers.name ? `Gaveidéer til ${currentAnswers.name}` : 'Her er vores forslag!';
+                resultsContainer.innerHTML = topProduct ? createProductCard(topProduct) : `<p>Vi kunne desværre ikke finde et match.</p>`;
+                switchView('results');
+            };
+
+            const createProductCard = (product) => {
+                return `<div class="bg-white rounded-lg shadow-xl max-w-md mx-auto text-left overflow-hidden">
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-64 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e2e8f0/475569?text=Billede+mangler';">
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold mb-2">${product.name}</h3>
+                            <p class="text-slate-600 mb-4">${product.description}</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-3xl font-bold text-slate-800">${product.price} kr.</span>
+                                <div class="text-right">
+                                    <a href="${product.url}" target="_blank" class="affiliate-link bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700" data-product-id="${product.id}">Se produkt</a>
+                                    <p class="text-xs text-slate-400 mt-1">(affiliate link)</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 p-4 border-t">
+                            <div class="mb-4"><p class="text-sm font-semibold text-center mb-2">Hvor godt ramte vi plet?</p><div class="star-rating flex justify-center text-3xl" data-product-id="${product.id}"><button data-value="1">★</button><button data-value="2">★</button><button data-value="3">★</button><button data-value="4">★</button><button data-value="5">★</button></div></div>
+                            <div class="text-center"><button class="share-btn text-blue-600 font-semibold hover:underline">Del dit resultat -- eller spørg en ven om hjælp!</button></div>
+                            <div class="text-xs text-slate-400 mt-4 text-right"><button class="hover:underline report-btn" data-product-id="${product.id}">Rapportér et problem</button></div>
+                        </div>
+                    </div>`;
+            };
+            
+            function handleModal(modalElement, openTriggers, closeTriggers) {
+                openTriggers.forEach(trigger => trigger.addEventListener('click', () => modalElement.classList.add('visible')));
+                closeTriggers.forEach(trigger => trigger.addEventListener('click', () => modalElement.classList.remove('visible')));
+                modalElement.addEventListener('click', (e) => { if (e.target === modalElement) modalElement.classList.remove('visible'); });
+            }
+
+            handleModal(howItWorksModal, [document.getElementById('how-it-works-btn')], document.querySelectorAll('#how-it-works-modal .close-modal-btn'));
+            handleModal(contactModal, [document.getElementById('contact-btn')], document.querySelectorAll('#contact-modal .close-modal-btn'));
+            handleModal(reportProblemModal, [], document.querySelectorAll('#report-problem-modal .close-modal-btn'));
+            handleModal(shareModal, [], document.querySelectorAll('#share-modal .close-modal-btn'));
+
+            resultsContainer.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('report-btn')) {
+                    currentReportProductId = e.target.dataset.productId;
+                    document.getElementById('report-options').classList.remove('hidden');
+                    document.getElementById('report-feedback').classList.add('hidden');
+                    reportProblemModal.classList.add('visible');
+                }
+                if (e.target.closest('.share-btn')) {
+                    const sharePayload = {
+                        product_id: topProductResult.id,
+                        quiz_answers: userAnswers
+                    };
+                    try {
+                        const response = await fetch('/.netlify/functions/create-share-link', { method: 'POST', body: JSON.stringify(sharePayload) });
+                        const data = await response.json();
+                        if (data.shareId) {
+                            const shareUrl = `${window.location.origin}${window.location.pathname}?id=${data.shareId}`;
+                            document.getElementById('share-whatsapp').href = `https://wa.me/?text=${encodeURIComponent('Se denne gaveidé jeg fandt: ' + shareUrl)}`;
+                            document.getElementById('share-messenger').href = `fb-messenger://share/?link=${encodeURIComponent(shareUrl)}`;
+                            document.getElementById('share-email').href = `mailto:?subject=Gaveidé fra Den Rette Gave&body=${encodeURIComponent('Se denne gaveidé jeg fandt: ' + shareUrl)}`;
+                            const copyBtn = document.getElementById('share-copy');
+                            copyBtn.onclick = () => {
+                                navigator.clipboard.writeText(shareUrl).then(() => {
+                                    const feedback = document.getElementById('share-copy-feedback');
+                                    feedback.classList.remove('hidden');
+                                    setTimeout(() => feedback.classList.add('hidden'), 2000);
+                                });
+                            };
+                            shareModal.classList.add('visible');
+                        }
+                    } catch (err) {
+                        console.error("Error creating share link:", err);
+                        alert("Kunne ikke oprette delingslink. Prøv igen.");
+                    }
+                }
+                if (e.target.closest('.star-rating button')) {
+                    const button = e.target.closest('.star-rating button');
+                    const rating = parseInt(button.dataset.value, 10);
+                    const productId = parseInt(button.parentElement.dataset.productId, 10);
+                    
+                    const feedbackData = {
+                        rating_id: Date.now(),
+                        product_id: productId,
+                        product_name: topProductResult.name,
+                        rating: rating,
+                        quiz_answers: userAnswers,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    fetch('/.netlify/functions/submit-rating', { method: 'POST', body: JSON.stringify(feedbackData) });
+                    
+                    const stars = button.parentElement.querySelectorAll('button');
+                    stars.forEach(star => {
+                        star.classList.toggle('selected', star.dataset.value <= rating);
+                        star.disabled = true;
+                    });
+                }
+                if (e.target.classList.contains('affiliate-link')) {
+                    logAnalytics('click', e.target.dataset.productId);
+                }
+            });
+
+            reportProblemModal.querySelector('#report-options').addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    const reportType = e.target.dataset.reportType;
+                    const flagData = {
+                        flag_id: `f_${Date.now()}`,
+                        product_id: parseInt(currentReportProductId, 10),
+                        issue_type: reportType,
+                        timestamp: new Date().toISOString(),
+                        status: 'unresolved'
+                    };
+                    fetch('/.netlify/functions/submit-flag', { method: 'POST', body: JSON.stringify(flagData) });
+                    document.getElementById('report-options').classList.add('hidden');
+                    document.getElementById('report-feedback').classList.remove('hidden');
+                    setTimeout(() => reportProblemModal.classList.remove('visible'), 1500);
+                }
+            });
+
+            function logAnalytics(eventType, productId) {
+                const data = { eventType, productId: parseInt(productId, 10) };
+                fetch('/.netlify/functions/update-analytics', { method: 'POST', body: JSON.stringify(data) });
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const shareId = urlParams.get('id');
+
+            if (shareId) {
+                try {
+                    const response = await fetch(`/.netlify/functions/get-shared-result?id=${shareId}`);
+                    const sharedData = await response.json();
+                    if (sharedData.product_id && sharedData.quiz_answers) {
+                        userAnswers = sharedData.quiz_answers;
+                        showResults(sharedData.product_id, userAnswers);
+                    } else {
+                        startQuiz();
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch shared result", e);
+                    startQuiz();
+                }
+            } else {
+                 startQuizBtn.addEventListener('click', startQuiz);
+            }
+
+            restartQuizBtn.addEventListener('click', () => {
+                window.location.href = window.location.pathname;
+            });
+            quizContainer.addEventListener('click', handleAnswer);
+            nextBtn.addEventListener('click', processNextStep);
+            earlyExitBtn.addEventListener('click', showResults);
+            
+            // Cookie Banner Logic
+            if (!localStorage.getItem('cookieConsent')) {
+                cookieBanner.classList.remove('hidden');
+                setTimeout(() => cookieBanner.classList.remove('translate-y-full'), 100);
+            }
+            acceptCookiesBtn.addEventListener('click', () => {
+                localStorage.setItem('cookieConsent', 'true');
+                cookieBanner.classList.add('translate-y-full');
+                setTimeout(() => cookieBanner.classList.add('hidden'), 500);
+            });
+        });
+    </script>
 </body>
 </html>
