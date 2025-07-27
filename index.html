@@ -68,24 +68,21 @@
         </footer>
     </div>
 
-    <!-- How It Works Modal -->
+    <!-- Modals -->
     <div id="how-it-works-modal" class="modal-overlay">
         <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-lg m-4 animate-fadeIn">
             <h2 class="text-2xl font-bold mb-4">Sådan fungerer Den Rette Gave</h2>
             <div class="text-slate-600 space-y-4">
-                <p>Velkommen til Den Rette Gave! Vores mål er at gøre gavejagten nem og sjov.</p>
                 <p>Vores intelligente quiz bestemmer spørgsmål for spørgsmål præcis hvilke produkter der skal overvejes, og hvilke der skal sorteres fra, indtil vi har indsnævret søgningen til den perfekte gave til anledningen.</p>
-                <p><strong>Affiliate Links (Sådan tjener vi penge):</strong> Når vi foreslår en gave, er linket til produktet et "affiliate link". Det betyder, at hvis du klikker på linket og køber produktet, modtager vi en lille kommission fra forhandleren. **Dette koster dig absolut intet ekstra!** Det er sådan, vi kan holde Den Rette Gave kørende og gratis at bruge.</p>
+                <p><strong>Affiliate Links:</strong> Når vi foreslår en gave, er linket et "affiliate link". Hvis du køber produktet, modtager vi en lille kommission. **Dette koster dig intet ekstra!**</p>
             </div>
             <button class="close-modal-btn mt-6 bg-blue-600 text-white font-bold py-2 px-5 rounded-lg w-full hover:bg-blue-700">Forstået!</button>
         </div>
     </div>
 
-    <!-- Report Problem Modal -->
     <div id="report-problem-modal" class="modal-overlay">
-        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-lg m-4 animate-fadeIn">
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-lg m-4">
             <h2 class="text-2xl font-bold mb-4">Rapportér et problem</h2>
-            <p class="text-slate-600 mb-6">Hvad ser ud til at være galt med dette produktforslag? Din feedback hjælper os med at holde vores guide opdateret.</p>
             <div id="report-options" class="space-y-3">
                 <button class="w-full text-left p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-report-type="Billedet mangler">Billedet mangler</button>
                 <button class="w-full text-left p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-report-type="Linket virker ikke">Linket virker ikke</button>
@@ -94,6 +91,20 @@
             </div>
             <div id="report-feedback" class="hidden text-center p-4 bg-green-100 text-green-800 rounded-lg mt-4">Tak for din feedback!</div>
             <button class="close-modal-btn mt-6 text-slate-500 font-semibold w-full">Annuller</button>
+        </div>
+    </div>
+
+    <div id="share-modal" class="modal-overlay">
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md m-4">
+            <h2 class="text-2xl font-bold mb-4">Del denne gaveidé</h2>
+            <div class="space-y-3">
+                <a id="share-whatsapp" href="#" target="_blank" class="block w-full text-center p-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600">Del på WhatsApp</a>
+                <a id="share-messenger" href="#" target="_blank" class="block w-full text-center p-3 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600">Del på Messenger</a>
+                <a id="share-email" href="#" class="block w-full text-center p-3 bg-slate-500 text-white rounded-lg font-bold hover:bg-slate-600">Del via Email</a>
+                <button id="share-copy" class="w-full text-center p-3 bg-slate-200 text-slate-800 rounded-lg font-bold hover:bg-slate-300">Kopiér Link</button>
+            </div>
+            <p id="share-copy-feedback" class="text-sm text-green-600 mt-2 text-center hidden">Link kopieret!</p>
+            <button class="close-modal-btn mt-6 text-slate-500 font-semibold w-full">Luk</button>
         </div>
     </div>
 
@@ -110,8 +121,7 @@
             
             const howItWorksModal = document.getElementById('how-it-works-modal');
             const reportProblemModal = document.getElementById('report-problem-modal');
-            const reportOptions = document.getElementById('report-options');
-            const reportFeedback = document.getElementById('report-feedback');
+            const shareModal = document.getElementById('share-modal');
 
             let products = [];
             try {
@@ -120,7 +130,7 @@
                 products = await response.json();
             } catch (error) {
                 console.error("Failed to load products:", error);
-                document.getElementById('app').innerHTML = `<p class="text-center text-red-500 p-8">Kunne ikke indlæse produkter. Sørg for at 'assets/products.json' findes og er korrekt formateret.</p>`;
+                document.getElementById('app').innerHTML = `<p class="text-center text-red-500 p-8">Kunne ikke indlæse produkter.</p>`;
                 return;
             }
 
@@ -136,6 +146,7 @@
             let currentQuestionIndex = 0;
             let userAnswers = {};
             let currentReportProductId = null;
+            let topProductResult = null;
 
             const switchView = (activeView) => {
                 Object.values(views).forEach(view => view.classList.remove('active'));
@@ -145,13 +156,13 @@
             const startQuiz = () => {
                 currentQuestionIndex = 0;
                 userAnswers = {};
+                topProductResult = null;
                 switchView('quiz');
                 renderQuestion();
             };
 
             const renderQuestion = () => {
                 if (currentQuestionIndex >= 2) earlyExitBtn.classList.remove('hidden');
-                
                 const questionData = quizQuestions[currentQuestionIndex];
                 let optionsHtml = '';
                 nextBtn.classList.add('hidden');
@@ -160,15 +171,12 @@
                     optionsHtml = `<div class="flex justify-center"><input type="text" id="text-input-field" class="w-full max-w-md p-3 border-2 border-slate-300 rounded-lg text-center text-lg" placeholder="${questionData.placeholder}"></div>`;
                     nextBtn.classList.remove('hidden');
                 } else if (questionData.type === 'single-choice-card') {
-                    optionsHtml = `<div class="grid grid-cols-2 md:grid-cols-3 gap-4">` +
-                        questionData.options.map(option => `<div class="quiz-card bg-white p-4 rounded-lg shadow cursor-pointer border-2 border-transparent text-center" data-value="${option}"><span class="font-semibold">${option}</span></div>`).join('') + `</div>`;
+                    optionsHtml = `<div class="grid grid-cols-2 md:grid-cols-3 gap-4">` + questionData.options.map(o => `<div class="quiz-card bg-white p-4 rounded-lg shadow cursor-pointer" data-value="${o}"><span class="font-semibold">${o}</span></div>`).join('') + `</div>`;
                 } else if (questionData.type === 'multi-select-tag') {
-                    optionsHtml = `<div class="flex flex-wrap gap-3 justify-center">` +
-                        questionData.options.map(option => `<button class="interest-tag bg-white py-2 px-4 rounded-full shadow border-2 border-slate-200 cursor-pointer" data-value="${option}">${option}</button>`).join('') + `</div>`;
+                    optionsHtml = `<div class="flex flex-wrap gap-3 justify-center">` + questionData.options.map(o => `<button class="interest-tag bg-white py-2 px-4 rounded-full shadow" data-value="${o}">${o}</button>`).join('') + `</div>`;
                     nextBtn.classList.remove('hidden');
                 }
-
-                quizContainer.innerHTML = `<div class="question-wrapper active" id="question-${currentQuestionIndex}"><h3 class="text-2xl md:text-3xl font-bold text-center mb-8">${questionData.question}</h3>${optionsHtml}</div>`;
+                quizContainer.innerHTML = `<div class="question-wrapper active"><h3 class="text-2xl md:text-3xl font-bold text-center mb-8">${questionData.question}</h3>${optionsHtml}</div>`;
             };
 
             const handleAnswer = (e) => {
@@ -198,85 +206,58 @@
                 if (currentQuestionData.type === 'text-input') {
                     userAnswers[currentQuestionData.key] = document.getElementById('text-input-field').value.trim();
                 }
-
-                const currentWrapper = document.getElementById(`question-${currentQuestionIndex}`);
                 if (currentQuestionIndex < quizQuestions.length - 1) {
                     currentQuestionIndex++;
-                    if (currentWrapper) {
-                        currentWrapper.classList.add('exiting');
-                        setTimeout(() => renderQuestion(), 500);
-                    } else {
-                        renderQuestion();
-                    }
+                    const currentWrapper = quizContainer.querySelector('.question-wrapper');
+                    currentWrapper.classList.add('exiting');
+                    setTimeout(() => renderQuestion(), 500);
                 } else {
                     showResults();
                 }
             };
             
-            const showResults = () => {
-                const scoredProducts = products
-                    .filter(p => p.status === 'active')
-                    .map(product => {
+            const showResults = (productId, answers) => {
+                const currentAnswers = answers || userAnswers;
+                let topProduct;
+
+                if (productId) {
+                    topProduct = products.find(p => p.id === productId);
+                } else {
+                    const scoredProducts = products.filter(p => p.status === 'active').map(product => {
                         let score = 0;
-                        Object.entries(userAnswers).forEach(([key, value]) => {
+                        Object.entries(currentAnswers).forEach(([key, value]) => {
                             if (product.tags[key]) {
                                 const weight = (key === 'interests') ? 10 : 3;
-                                if (Array.isArray(value)) {
-                                    value.forEach(v => {
-                                        if (product.tags[key].includes(v)) score += weight;
-                                    });
-                                } else {
-                                    if (product.tags[key].includes(value) || product.tags[key].includes('alle')) {
-                                        score += weight;
-                                    }
-                                }
+                                if (Array.isArray(value)) value.forEach(v => { if (product.tags[key].includes(v)) score += weight; });
+                                else if (product.tags[key].includes(value) || product.tags[key].includes('alle')) score += weight;
                             }
                         });
                         return { ...product, score };
-                    })
-                    .sort((a, b) => b.score - a.score);
-
-                resultsTitle.textContent = userAnswers.name ? `Gaveidéer til ${userAnswers.name}` : 'Her er vores forslag!';
-                
-                const topProduct = scoredProducts[0];
-
-                let resultsHtml = '';
-                if (topProduct) {
-                    resultsHtml += createProductCard(topProduct, true);
-                } else {
-                    resultsHtml = `<p>Vi kunne desværre ikke finde et specifikt match. Prøv eventuelt igen med andre svar.</p>`;
+                    }).sort((a, b) => b.score - a.score);
+                    topProduct = scoredProducts[0];
                 }
                 
-                resultsContainer.innerHTML = resultsHtml;
+                topProductResult = topProduct;
+                resultsTitle.textContent = currentAnswers.name ? `Gaveidéer til ${currentAnswers.name}` : 'Her er vores forslag!';
+                resultsContainer.innerHTML = topProduct ? createProductCard(topProduct) : `<p>Vi kunne desværre ikke finde et match.</p>`;
                 switchView('results');
             };
 
             const createProductCard = (product) => {
-                return `
-                    <div class="bg-white rounded-lg shadow-xl max-w-md mx-auto text-left overflow-hidden">
+                return `<div class="bg-white rounded-lg shadow-xl max-w-md mx-auto text-left overflow-hidden">
                         <img src="${product.image}" alt="${product.name}" class="w-full h-64 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e2e8f0/475569?text=Billede+mangler';">
                         <div class="p-6">
                             <h3 class="text-2xl font-bold mb-2">${product.name}</h3>
                             <p class="text-slate-600 mb-4">${product.description}</p>
                             <div class="flex justify-between items-center">
                                 <span class="text-3xl font-bold text-slate-800">${product.price} kr.</span>
-                                <a href="${product.url}" target="_blank" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700 transition-colors">Se produkt</a>
+                                <a href="${product.url}" target="_blank" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700">Se produkt</a>
                             </div>
                         </div>
                         <div class="bg-slate-50 p-4 border-t">
-                            <div class="mb-4">
-                                <p class="text-sm font-semibold text-center mb-2">Hvor godt ramte vi plet?</p>
-                                <div class="star-rating flex justify-center text-3xl" data-product-id="${product.id}">
-                                    <button data-value="1">★</button><button data-value="2">★</button><button data-value="3">★</button><button data-value="4">★</button><button data-value="5">★</button>
-                                </div>
-                            </div>
-                            <div class="text-center">
-                                <button class="share-btn text-blue-600 font-semibold hover:underline">Del dit resultat -- eller spørg en ven om hjælp!</button>
-                                <p class="share-feedback hidden text-sm text-green-600 mt-1">Link kopieret!</p>
-                            </div>
-                            <div class="text-xs text-slate-400 mt-4 text-right">
-                                <button class="hover:underline report-btn" data-product-id="${product.id}">Rapportér et problem</button>
-                            </div>
+                            <div class="mb-4"><p class="text-sm font-semibold text-center mb-2">Hvor godt ramte vi plet?</p><div class="star-rating flex justify-center text-3xl" data-product-id="${product.id}"><button data-value="1">★</button><button data-value="2">★</button><button data-value="3">★</button><button data-value="4">★</button><button data-value="5">★</button></div></div>
+                            <div class="text-center"><button class="share-btn text-blue-600 font-semibold hover:underline">Del dit resultat -- eller spørg en ven om hjælp!</button></div>
+                            <div class="text-xs text-slate-400 mt-4 text-right"><button class="hover:underline report-btn" data-product-id="${product.id}">Rapportér et problem</button></div>
                         </div>
                     </div>`;
             };
@@ -284,59 +265,67 @@
             function handleModal(modalElement, openTriggers, closeTriggers) {
                 openTriggers.forEach(trigger => trigger.addEventListener('click', () => modalElement.classList.add('visible')));
                 closeTriggers.forEach(trigger => trigger.addEventListener('click', () => modalElement.classList.remove('visible')));
-                modalElement.addEventListener('click', (e) => {
-                    if (e.target === modalElement) modalElement.classList.remove('visible');
-                });
+                modalElement.addEventListener('click', (e) => { if (e.target === modalElement) modalElement.classList.remove('visible'); });
             }
 
             handleModal(howItWorksModal, [document.getElementById('how-it-works-btn')], document.querySelectorAll('#how-it-works-modal .close-modal-btn'));
             handleModal(reportProblemModal, [], document.querySelectorAll('#report-problem-modal .close-modal-btn'));
+            handleModal(shareModal, [], document.querySelectorAll('#share-modal .close-modal-btn'));
 
             resultsContainer.addEventListener('click', (e) => {
                 if (e.target.classList.contains('report-btn')) {
                     currentReportProductId = e.target.dataset.productId;
-                    reportOptions.classList.remove('hidden');
-                    reportFeedback.classList.add('hidden');
+                    document.getElementById('report-options').classList.remove('hidden');
+                    document.getElementById('report-feedback').classList.add('hidden');
                     reportProblemModal.classList.add('visible');
                 }
                 if (e.target.closest('.share-btn')) {
-                    const feedback = e.target.nextElementSibling;
-                    navigator.clipboard.writeText(window.location.href).then(() => {
-                        feedback.classList.remove('hidden');
-                        setTimeout(() => feedback.classList.add('hidden'), 2000);
-                    });
+                    const answersParam = encodeURIComponent(JSON.stringify(userAnswers));
+                    const shareUrl = `${window.location.origin}${window.location.pathname}?product_id=${topProductResult.id}&answers=${answersParam}`;
+                    
+                    document.getElementById('share-whatsapp').href = `https://wa.me/?text=${encodeURIComponent('Se denne gaveidé jeg fandt: ' + shareUrl)}`;
+                    document.getElementById('share-messenger').href = `fb-messenger://share/?link=${encodeURIComponent(shareUrl)}`;
+                    document.getElementById('share-email').href = `mailto:?subject=Gaveidé fra Den Rette Gave&body=${encodeURIComponent('Se denne gaveidé jeg fandt: ' + shareUrl)}`;
+                    
+                    const copyBtn = document.getElementById('share-copy');
+                    copyBtn.onclick = () => {
+                        navigator.clipboard.writeText(shareUrl).then(() => {
+                            const feedback = document.getElementById('share-copy-feedback');
+                            feedback.classList.remove('hidden');
+                            setTimeout(() => feedback.classList.add('hidden'), 2000);
+                        });
+                    };
+                    shareModal.classList.add('visible');
                 }
                 if (e.target.closest('.star-rating button')) {
                     const button = e.target.closest('.star-rating button');
                     const rating = parseInt(button.dataset.value, 10);
                     const productId = parseInt(button.parentElement.dataset.productId, 10);
                     
-                    const recommendedProduct = products.find(p => p.id === productId);
-
                     const feedbackData = {
                         rating_id: Date.now(),
                         product_id: productId,
-                        product_name: recommendedProduct ? recommendedProduct.name : 'Unknown',
+                        product_name: topProductResult.name,
                         rating: rating,
                         quiz_answers: userAnswers,
                         timestamp: new Date().toISOString()
                     };
 
-                    console.log("Rating Submitted (to be sent to ratings.json):", feedbackData);
+                    fetch('/.netlify/functions/submit-rating', { method: 'POST', body: JSON.stringify(feedbackData) })
+                        .then(res => res.json()).then(data => console.log(data))
+                        .catch(err => console.error("Error submitting rating:", err));
                     
                     const stars = button.parentElement.querySelectorAll('button');
                     stars.forEach(star => {
                         star.classList.toggle('selected', star.dataset.value <= rating);
+                        star.disabled = true;
                     });
-                    
-                    stars.forEach(star => star.disabled = true);
                 }
             });
 
-            reportOptions.addEventListener('click', (e) => {
+            reportProblemModal.querySelector('#report-options').addEventListener('click', (e) => {
                 if (e.target.tagName === 'BUTTON') {
                     const reportType = e.target.dataset.reportType;
-                    
                     const flagData = {
                         flag_id: `f_${Date.now()}`,
                         product_id: parseInt(currentReportProductId, 10),
@@ -345,16 +334,37 @@
                         status: 'unresolved'
                     };
 
-                    console.log(`Flag Submitted (to be sent to flags.json):`, flagData);
+                    fetch('/.netlify/functions/submit-flag', { method: 'POST', body: JSON.stringify(flagData) })
+                        .then(res => res.json()).then(data => console.log(data))
+                        .catch(err => console.error("Error submitting flag:", err));
 
-                    reportOptions.classList.add('hidden');
-                    reportFeedback.classList.remove('hidden');
+                    document.getElementById('report-options').classList.add('hidden');
+                    document.getElementById('report-feedback').classList.remove('hidden');
                     setTimeout(() => reportProblemModal.classList.remove('visible'), 1500);
                 }
             });
 
-            startQuizBtn.addEventListener('click', startQuiz);
-            restartQuizBtn.addEventListener('click', () => switchView('landing'));
+            // Check for shared link on page load
+            const urlParams = new URLSearchParams(window.location.search);
+            const sharedProductId = urlParams.get('product_id');
+            const sharedAnswers = urlParams.get('answers');
+
+            if (sharedProductId && sharedAnswers) {
+                try {
+                    userAnswers = JSON.parse(decodeURIComponent(sharedAnswers));
+                    showResults(parseInt(sharedProductId), userAnswers);
+                } catch (e) {
+                    console.error("Failed to parse shared URL params", e);
+                    startQuiz();
+                }
+            } else {
+                 startQuizBtn.addEventListener('click', startQuiz);
+            }
+
+            restartQuizBtn.addEventListener('click', () => {
+                // Clear URL params and reload to landing page
+                window.location.href = window.location.pathname;
+            });
             quizContainer.addEventListener('click', handleAnswer);
             nextBtn.addEventListener('click', goToNextQuestion);
             earlyExitBtn.addEventListener('click', showResults);
