@@ -64,7 +64,10 @@
         </main>
 
         <footer class="text-center text-slate-500 mt-16 py-4 border-t border-slate-200">
-            &copy; 2025 Den Rette Gave
+            <div class="flex justify-center gap-4">
+                <span>&copy; 2025 Den Rette Gave</span>
+                <button id="contact-btn" class="hover:underline">Kontakt os</button>
+            </div>
         </footer>
     </div>
 
@@ -74,9 +77,20 @@
             <h2 class="text-2xl font-bold mb-4">Sådan fungerer Den Rette Gave</h2>
             <div class="text-slate-600 space-y-4">
                 <p>Vores intelligente quiz bestemmer spørgsmål for spørgsmål præcis hvilke produkter der skal overvejes, og hvilke der skal sorteres fra, indtil vi har indsnævret søgningen til den perfekte gave til anledningen.</p>
-                <p><strong>Affiliate Links:</strong> Når vi foreslår en gave, er linket et "affiliate link". Hvis du køber produktet, modtager vi en lille kommission. **Dette koster dig intet ekstra!**</p>
+                <p><strong>Feedback & Deling:</strong> Når du får et forslag, kan du give det stjerner for at hjælpe os med at forbedre vores logik. Du kan også dele resultatet med en ven via et sikkert, anonymt link.</p>
+                <p><strong>Affiliate Links (Sådan tjener vi penge):</strong> Når vi foreslår en gave, er linket et "affiliate link". Hvis du køber produktet, modtager vi en lille kommission. **Dette koster dig intet ekstra!** Det er sådan, vi kan holde Den Rette Gave kørende og gratis at bruge.</p>
             </div>
             <button class="close-modal-btn mt-6 bg-blue-600 text-white font-bold py-2 px-5 rounded-lg w-full hover:bg-blue-700">Forstået!</button>
+        </div>
+    </div>
+
+    <div id="contact-modal" class="modal-overlay">
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md m-4 text-center">
+            <h2 class="text-2xl font-bold mb-4">Kontakt Os</h2>
+            <p class="text-slate-600">Har du spørgsmål, feedback eller forslag? Vi vil meget gerne høre fra dig!</p>
+            <p class="mt-4">Send os en e-mail på:</p>
+            <a href="mailto:support@denrettegave.dk" class="text-blue-600 font-bold text-lg hover:underline">support@denrettegave.dk</a>
+            <button class="close-modal-btn mt-6 bg-slate-200 text-slate-800 font-bold py-2 px-5 rounded-lg w-full hover:bg-slate-300">Luk</button>
         </div>
     </div>
 
@@ -122,6 +136,7 @@
             const howItWorksModal = document.getElementById('how-it-works-modal');
             const reportProblemModal = document.getElementById('report-problem-modal');
             const shareModal = document.getElementById('share-modal');
+            const contactModal = document.getElementById('contact-modal');
 
             let products = [];
             let allQuestions = [];
@@ -282,6 +297,7 @@
             }
 
             handleModal(howItWorksModal, [document.getElementById('how-it-works-btn')], document.querySelectorAll('#how-it-works-modal .close-modal-btn'));
+            handleModal(contactModal, [document.getElementById('contact-btn')], document.querySelectorAll('#contact-modal .close-modal-btn'));
             handleModal(reportProblemModal, [], document.querySelectorAll('#report-problem-modal .close-modal-btn'));
             handleModal(shareModal, [], document.querySelectorAll('#share-modal .close-modal-btn'));
 
