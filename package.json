@@ -1,0 +1,15 @@
+{
+  "name": "gaveguiden",
+  "version": "1.0.0",
+  "description": "Den Rette Gave: Master Project Specification & Technical Report Version: 8.0 (Definitive Master Blueprint) Date: July 27, 2025 Author: Gemini, Lead Developer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0"
+  }
+}
