@@ -1,7 +1,12 @@
 const fs = require('fs').promises;
 const path = require('path');
 
+// Path now points to the secure 'data' folder, not the public 'assets' folder.
+const DATA_DIR = path.join(__dirname, '..', 'data');
+const filePath = path.join(DATA_DIR, 'shares.json');
+
 exports.handler = async (event, context) => {
+    // Only allow GET requests
     if (event.httpMethod !== 'GET') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
@@ -13,13 +18,12 @@ exports.handler = async (event, context) => {
             return { statusCode: 400, body: 'Bad Request: Missing share ID.' };
         }
 
-        const filePath = path.join(__dirname, '..', 'assets', 'shares.json');
-        
         let shares = [];
         try {
             const data = await fs.readFile(filePath, 'utf8');
             shares = JSON.parse(data);
         } catch (error) {
+            // If the shares file doesn't exist yet, it's a 404.
             if (error.code === 'ENOENT') {
                 return { statusCode: 404, body: 'Not Found' };
             }
@@ -29,6 +33,7 @@ exports.handler = async (event, context) => {
         const sharedData = shares.find(s => s.id === shareId);
 
         if (sharedData) {
+            // Return the stored data object associated with the share ID
             return {
                 statusCode: 200,
                 body: JSON.stringify(sharedData.data)
