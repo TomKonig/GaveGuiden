@@ -18,12 +18,15 @@
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
-    <div class="max-w-4xl mx-auto p-4 md:p-8">
+    <div class="max-w-4xl mx-auto p-4 md:p-8 flex flex-col min-h-screen">
         <header class="flex justify-between items-center mb-8">
-            <a href="/" class="text-2xl md:text-3xl font-bold text-slate-700 hover:text-slate-900 transition-colors">Den Rette Gave</a>
+            <a href="/" class="flex items-center gap-3 text-2xl md:text-3xl font-bold text-slate-700 hover:text-slate-900 transition-colors">
+                <img src="./assets/logo.jpeg" alt="Den Rette Gave Logo" class="h-10 w-10 rounded-md">
+                <span>Den Rette Gave</span>
+            </a>
         </header>
 
-        <main class="bg-white p-8 rounded-lg shadow-md content-container">
+        <main class="bg-white p-8 rounded-lg shadow-md content-container flex-grow">
             <h1 class="text-3xl font-bold text-slate-800 mb-4">Privatlivspolitik for Den Rette Gave</h1>
             <p class="text-slate-500">Sidst opdateret: 27. juli 2025</p>
 
@@ -72,6 +75,9 @@
             </ul>
             <p>Da vi primært behandler anonymiserede data, kan udøvelsen af disse rettigheder være begrænset, da vi ikke kan identificere, hvilke data der tilhører dig. Du har ret til at indgive en klage til Datatilsynet, hvis du er utilfreds med den måde, vi behandler dine personoplysninger på. Du finder Datatilsynets kontaktoplysninger på <a href="http://www.datatilsynet.dk" target="_blank">www.datatilsynet.dk</a>.</p>
         </main>
+        <footer class="text-center text-slate-500 mt-8 py-4">
+            <p>&copy; 2025 Den Rette Gave (CVR: [Dit CVR-nummer])</p>
+        </footer>
     </div>
 </body>
 </html>
