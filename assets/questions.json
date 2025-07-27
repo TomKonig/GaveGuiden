@@ -1,0 +1,55 @@
+[
+  {
+    "id": "q_name",
+    "question": "Hvad hedder den heldige?",
+    "key": "name",
+    "type": "text-input",
+    "placeholder": "F.eks. \"Mor\" eller \"Anders\""
+  },
+  {
+    "id": "q_relation",
+    "question": "Hvem er gaven til?",
+    "key": "relation",
+    "type": "single-choice-card",
+    "options": ["Partner", "Forælder", "Ven", "Søskende", "Kollega", "Andet"]
+  },
+  {
+    "id": "q_gender",
+    "question": "Hvad er modtagerens køn?",
+    "key": "gender",
+    "type": "single-choice-card",
+    "options": ["Mand", "Kvinde", "Andet"]
+  },
+  {
+    "id": "q_age",
+    "question": "Hvad er deres cirka alder?",
+    "key": "age",
+    "type": "single-choice-card",
+    "options": ["Under 18", "18-25", "26-40", "41-60", "60+"]
+  },
+  {
+    "id": "q_occasion",
+    "question": "Hvad er anledningen?",
+    "key": "occasion",
+    "type": "single-choice-card",
+    "options": ["Fødselsdag", "Jul", "Årsdag", "Bare fordi", "Tak"]
+  },
+  {
+    "id": "q_interests",
+    "question": "Hvad interesserer de sig for? (Vælg op til 3)",
+    "key": "interests",
+    "type": "multi-select-tag",
+    "options": ["Kaffe", "Hjemmet", "Bøger", "Læsning", "Teknologi", "Madlavning", "Mode"]
+  },
+  {
+    "id": "q_coffee_color",
+    "question": "Vælg en farve til koppen:",
+    "key": "color",
+    "type": "single-choice-card",
+    "options": ["Blå", "Grøn"],
+    "trigger": {
+      "key": "interests",
+      "value": "Kaffe"
+    }
+  }
+]
