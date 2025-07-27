@@ -124,26 +124,23 @@
             const shareModal = document.getElementById('share-modal');
 
             let products = [];
+            let allQuestions = [];
             try {
-                const response = await fetch('./assets/products.json');
-                if (!response.ok) throw new Error('Network response was not ok');
-                products = await response.json();
+                const [productsRes, questionsRes] = await Promise.all([
+                    fetch('./assets/products.json'),
+                    fetch('./assets/questions.json')
+                ]);
+                if (!productsRes.ok || !questionsRes.ok) throw new Error('Network response was not ok');
+                products = await productsRes.json();
+                allQuestions = await questionsRes.json();
             } catch (error) {
-                console.error("Failed to load products:", error);
-                document.getElementById('app').innerHTML = `<p class="text-center text-red-500 p-8">Kunne ikke indlæse produkter.</p>`;
+                console.error("Failed to load data:", error);
+                document.getElementById('app').innerHTML = `<p class="text-center text-red-500 p-8">Kunne ikke indlæse data. Sørg for at 'assets/products.json' og 'assets/questions.json' findes.</p>`;
                 return;
             }
 
-            const quizQuestions = [
-                { question: "Hvad hedder den heldige?", type: 'text-input', key: 'name', placeholder: 'F.eks. "Mor" eller "Anders"' },
-                { question: "Hvem er gaven til?", type: 'single-choice-card', key: 'relation', options: ['Partner', 'Forælder', 'Ven', 'Søskende', 'Kollega', 'Andet'] },
-                { question: "Hvad er modtagerens køn?", type: 'single-choice-card', key: 'gender', options: ['Mand', 'Kvinde', 'Andet'] },
-                { question: "Hvad er deres cirka alder?", type: 'single-choice-card', key: 'age', options: ['Under 18', '18-25', '26-40', '41-60', '60+'] },
-                { question: "Hvad er anledningen?", type: 'single-choice-card', key: 'occasion', options: ['Fødselsdag', 'Jul', 'Årsdag', 'Bare fordi'] },
-                { question: "Hvad interesserer de sig for? (Vælg op til 3)", type: 'multi-select-tag', key: 'interests', options: ['Kaffe', 'Hjemmet', 'Bøger', 'Læsning', 'Teknologi', 'Madlavning', 'Mode'] }
-            ];
-
-            let currentQuestionIndex = 0;
+            let questionsToAsk = [];
+            let currentQuestion = null;
             let userAnswers = {};
             let currentReportProductId = null;
             let topProductResult = null;
@@ -154,16 +151,25 @@
             };
 
             const startQuiz = () => {
-                currentQuestionIndex = 0;
                 userAnswers = {};
                 topProductResult = null;
+                questionsToAsk = allQuestions.filter(q => !q.trigger);
                 switchView('quiz');
-                renderQuestion();
+                askNextQuestion();
             };
 
-            const renderQuestion = () => {
-                if (currentQuestionIndex >= 2) earlyExitBtn.classList.remove('hidden');
-                const questionData = quizQuestions[currentQuestionIndex];
+            const askNextQuestion = () => {
+                if (questionsToAsk.length > 0) {
+                    currentQuestion = questionsToAsk.shift();
+                    renderQuestion(currentQuestion);
+                } else {
+                    showResults();
+                }
+            };
+
+            const renderQuestion = (questionData) => {
+                if (Object.keys(userAnswers).length >= 2) earlyExitBtn.classList.remove('hidden');
+                
                 let optionsHtml = '';
                 nextBtn.classList.add('hidden');
 
@@ -183,37 +189,42 @@
                 const target = e.target.closest('[data-value]');
                 if (!target) return;
                 const value = target.dataset.value;
-                const questionData = quizQuestions[currentQuestionIndex];
-
-                if (questionData.type === 'single-choice-card') {
-                    userAnswers[questionData.key] = value;
-                    goToNextQuestion();
-                } else if (questionData.type === 'multi-select-tag') {
-                    userAnswers[questionData.key] = userAnswers[questionData.key] || [];
-                    const selected = userAnswers[questionData.key];
+                
+                if (currentQuestion.type === 'single-choice-card') {
+                    userAnswers[currentQuestion.key] = value;
+                    processNextStep();
+                } else if (currentQuestion.type === 'multi-select-tag') {
+                    userAnswers[currentQuestion.key] = userAnswers[currentQuestion.key] || [];
+                    const selected = userAnswers[currentQuestion.key];
                     if (selected.includes(value)) {
-                        userAnswers[questionData.key] = selected.filter(i => i !== value);
+                        userAnswers[currentQuestion.key] = selected.filter(i => i !== value);
                         target.classList.remove('selected');
                     } else if (selected.length < 3) {
-                        userAnswers[questionData.key].push(value);
+                        userAnswers[currentQuestion.key].push(value);
                         target.classList.add('selected');
                     }
                 }
             };
 
-            const goToNextQuestion = () => {
-                const currentQuestionData = quizQuestions[currentQuestionIndex];
-                if (currentQuestionData.type === 'text-input') {
-                    userAnswers[currentQuestionData.key] = document.getElementById('text-input-field').value.trim();
+            const processNextStep = () => {
+                if (currentQuestion.type === 'text-input') {
+                    userAnswers[currentQuestion.key] = document.getElementById('text-input-field').value.trim();
                 }
-                if (currentQuestionIndex < quizQuestions.length - 1) {
-                    currentQuestionIndex++;
-                    const currentWrapper = quizContainer.querySelector('.question-wrapper');
-                    currentWrapper.classList.add('exiting');
-                    setTimeout(() => renderQuestion(), 500);
-                } else {
-                    showResults();
-                }
+
+                // Check for new conditional questions to add to the queue
+                allQuestions.forEach(q => {
+                    if (q.trigger && !questionsToAsk.some(item => item.id === q.id) && !Object.values(userAnswers).flat().includes(q.id)) {
+                        const triggerKey = q.trigger.key;
+                        const triggerValue = q.trigger.value;
+                        if (userAnswers[triggerKey] && (Array.isArray(userAnswers[triggerKey]) ? userAnswers[triggerKey].includes(triggerValue) : userAnswers[triggerKey] === triggerValue)) {
+                            questionsToAsk.push(q);
+                        }
+                    }
+                });
+
+                const currentWrapper = quizContainer.querySelector('.question-wrapper');
+                currentWrapper.classList.add('exiting');
+                setTimeout(() => askNextQuestion(), 500);
             };
             
             const showResults = (productId, answers) => {
@@ -284,7 +295,6 @@
                     reportProblemModal.classList.add('visible');
                 }
                 if (e.target.closest('.share-btn')) {
-                    // Placeholder for secure share link generation
                     const shareUrl = `${window.location.origin}${window.location.pathname}?product_id=${topProductResult.id}`;
                     
                     document.getElementById('share-whatsapp').href = `https://wa.me/?text=${encodeURIComponent('Se denne gaveidé jeg fandt: ' + shareUrl)}`;
@@ -361,8 +371,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('product_id')) {
                 const productId = parseInt(urlParams.get('product_id'));
-                const answers = {}; // In a real scenario, you'd fetch this from a backend
-                showResults(productId, answers);
+                showResults(productId, {}); // Show product directly, no answers needed
             } else {
                  startQuizBtn.addEventListener('click', startQuiz);
             }
@@ -371,7 +380,7 @@
                 window.location.href = window.location.pathname;
             });
             quizContainer.addEventListener('click', handleAnswer);
-            nextBtn.addEventListener('click', goToNextQuestion);
+            nextBtn.addEventListener('click', processNextStep);
             earlyExitBtn.addEventListener('click', showResults);
         });
     </script>
