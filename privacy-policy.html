@@ -10,10 +10,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Poppins', sans-serif; }
-        .content-container h2 { font-size: 1.875rem; font-weight: 700; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
-        .content-container h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; }
-        .content-container p, .content-container ul { margin-bottom: 1rem; }
+        .content-container h2 { font-size: 1.875rem; font-weight: 700; margin-top: 2.5rem; margin-bottom: 1rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
+        .content-container h3 { font-size: 1.25rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem; }
+        .content-container p, .content-container ul { margin-bottom: 1rem; color: #4b5563; }
         .content-container ul { list-style-position: inside; list-style-type: disc; }
+        .content-container a { color: #4F46E5; text-decoration: underline; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -28,42 +29,48 @@
 
             <h2>1. Dataansvarlig</h2>
             <p>Den Rette Gave er dataansvarlig for de oplysninger, vi indsamler om dig, og vi sikrer, at dine personoplysninger behandles i overensstemmelse med lovgivningen.</p>
-            <p>Kontakt os via: support@denrettegave.dk</p>
+            <p>
+                Den Rette Gave<br>
+                CVR: [Dit CVR-nummer]<br>
+                Email: <a href="mailto:support@denrettegave.dk">support@denrettegave.dk</a>
+            </p>
 
             <h2>2. Hvilke data indsamler vi og hvorfor?</h2>
-            <p>Vi tager din datasikkerhed alvorligt. Vi indsamler kun de data, der er nødvendige for at forbedre vores service og sikre funktionalitet.</p>
-            
-            <h3>2.1. Feedback og Vurderinger</h3>
-            <p>Når du giver en stjernevurdering af et produktforslag, indsamler vi følgende data:</p>
+            <p>Vi behandler dine data med det formål at forbedre vores service. Vores retsgrundlag for behandling er EU's databeskyttelsesforordnings (GDPR) artikel 6, stk. 1, litra f (legitim interesse).</p>
+
+            <h3>2.1. Quiz-svar og Vurderinger</h3>
+            <p>Når du bruger vores quiz og giver en stjernevurdering, indsamler vi følgende data:</p>
             <ul>
-                <li>Det produkt, der blev vurderet.</li>
-                <li>Den afgivne stjernevurdering (1-5).</li>
-                <li>De anonymiserede svar, du gav i quizzen (f.eks. køn, alder, interesser).</li>
+                <li><strong>Navn på gavemodtager:</strong> Indsamles for at personalisere din oplevelse. Dette felt fjernes automatisk og permanent, før data gemmes, for at sikre anonymitet.</li>
+                <li><strong>Quiz-svar:</strong> Dine svar på spørgsmål om relation, køn, alder, anledning og interesser.</li>
+                <li><strong>Vurdering:</strong> Den stjernevurdering (1-5), du giver et produktforslag.</li>
             </ul>
-            <p><strong>Vigtigt:</strong> Vi fjerner bevidst og automatisk det navn, du indtaster for gavemodtageren, før data gemmes. Dette gøres for at beskytte privatlivets fred og sikre, at de gemte data er anonyme.</p>
-            <p><strong>Formål:</strong> At analysere kvaliteten af vores anbefalinger og forbedre vores quiz-logik over tid.</p>
+            <p><strong>Formål og Opbevaring:</strong> Disse anonymiserede data bruges til at analysere og forbedre kvaliteten af vores anbefalinger. Data opbevares, så længe de er relevante for dette formål, typisk i op til 2 år.</p>
 
-            <h3>2.2. Fejlrapportering</h3>
-            <p>Når du rapporterer et problem med et produkt (f.eks. et brudt link), indsamler vi:</p>
+            <h3>2.2. Fejlrapportering og Anonym Brugsanalyse</h3>
+            <p>Vi indsamler anonyme data om fejlrapporteringer og generel brug af siden (f.eks. klik på affiliate links) for at vedligeholde og forbedre tjenesten. Disse data indeholder ingen personlige oplysninger.</p>
+
+            <h2>3. Cookies og Trackere</h2>
+            <p>Vi bruger cookies for at sikre en funktionel og god brugeroplevelse. En cookie er en lille tekstfil, der gemmes på din computer. Vi bruger en funktionel cookie til at huske dit samtykke til vores cookie-politik. Derudover kan vores affiliate-partnere (f.eks. Partner-ads) placere en tredjeparts-cookie, når du klikker på et produktlink. Denne cookie er nødvendig for at spore eventuelle salg og er en kerne del af vores forretningsmodel. Ved at bruge vores tjeneste giver du samtykke til brugen af disse nødvendige cookies.</p>
+
+            <h2>4. Tredjepartsdatabehandlere</h2>
+            <p>Vi benytter os af tredjeparter til at drive vores tjeneste. Disse fungerer som databehandlere.</p>
             <ul>
-                <li>Produktets ID.</li>
-                <li>Typen af fejl, du rapporterede.</li>
-                <li>Et tidsstempel for rapporten.</li>
+                <li><strong>Hosting:</strong> Vores hjemmeside er hostet hos Netlify, Inc. (USA). Dataoverførsel er sikret under EU-U.S. Data Privacy Framework. <a href="https://www.netlify.com/privacy/" target="_blank">Læs Netlifys privatlivspolitik</a>.</li>
+                <li><strong>Affiliate Netværk:</strong> Vi samarbejder med affiliate netværk som Partner-ads. Når du klikker på et affiliate link, kan de indsamle data i henhold til deres egne privatlivspolitikker.</li>
             </ul>
-            <p><strong>Formål:</strong> At vedligeholde og sikre kvaliteten af vores produktkatalog.</p>
 
-            <h3>2.3. Anonymiseret Brugsanalyse</h3>
-            <p>Vi indsamler anonyme data om, hvor mange gange produkter bliver foreslået og hvor mange gange der klikkes på affiliate links. Disse data indeholder ingen personlige oplysninger.</p>
-            <p><strong>Formål:</strong> At forstå hvilke produkter der er mest populære og effektive.</p>
-
-            <h2>3. Datasikkerhed og Opbevaring</h2>
-            <p>Alle indsamlede feedback- og vurderingsdata opbevares i en sikker, ikke-offentligt tilgængelig database. Kun autoriserede administratorer har adgang til disse data via en sikker forbindelse.</p>
-
-            <h2>4. Dine Rettigheder (GDPR)</h2>
-            <p>Da vi kun indsamler og behandler anonymiserede data, er mulighederne for at udøve individuelle rettigheder som indsigt eller sletning begrænsede, da vi ikke kan identificere, hvilke data der tilhører dig. Vi har dog implementeret stærke anonymiseringstiltag for at beskytte dit privatliv fra starten.</p>
-
-            <h2>5. Affiliate Links</h2>
-            <p>Vores forretningsmodel er baseret på affiliate marketing. Når du klikker på et produktlink og foretager et køb, modtager vi en lille kommission. Dette påvirker ikke prisen for dig. Vi linker kun til produkter og forhandlere, vi har tillid til.</p>
+            <h2>5. Dine Rettigheder (GDPR)</h2>
+            <p>Du har efter databeskyttelsesforordningen en række rettigheder i forhold til vores behandling af oplysninger om dig.</p>
+            <ul>
+                <li>Ret til at se oplysninger (indsigtsret)</li>
+                <li>Ret til berigtigelse (rettelse)</li>
+                <li>Ret til sletning</li>
+                <li>Ret til begrænsning af behandling</li>
+                <li>Ret til indsigelse</li>
+                <li>Ret til dataportabilitet</li>
+            </ul>
+            <p>Da vi primært behandler anonymiserede data, kan udøvelsen af disse rettigheder være begrænset, da vi ikke kan identificere, hvilke data der tilhører dig. Du har ret til at indgive en klage til Datatilsynet, hvis du er utilfreds med den måde, vi behandler dine personoplysninger på. Du finder Datatilsynets kontaktoplysninger på <a href="http://www.datatilsynet.dk" target="_blank">www.datatilsynet.dk</a>.</p>
         </main>
     </div>
 </body>
