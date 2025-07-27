@@ -37,6 +37,7 @@
                 <button class="tab-btn active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="live-editor">Live Editor</button>
                 <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="edit-product">Edit Product</button>
                 <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="flagged-items">Flagged Items</button>
+                <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="ratings">Ratings</button>
                 <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="add-products">Add Products</button>
             </nav>
         </div>
@@ -96,7 +97,29 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="flags-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                            <tbody id="flags-table-body" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ratings Tab -->
+            <div id="ratings" class="tab-content">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold mb-4">User Ratings & Feedback</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quiz Answers</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ratings-table-body" class="bg-white divide-y divide-gray-200">
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -135,35 +158,40 @@
             const flagsTableBody = document.getElementById('flags-table-body');
             const thresholdInput = document.getElementById('threshold-input');
             const alertContainer = document.getElementById('alert-container');
+            const ratingsTableBody = document.getElementById('ratings-table-body');
 
             const ADMIN_PASSWORD = "testAdmin!1";
+            const ADMIN_SECRET_KEY = "default-secret-key-for-dev"; 
+            
             let productData = [];
             let flagsData = [];
+            let ratingsData = [];
             let selectedProductIndex = -1;
 
             async function loadAllData() {
                 try {
-                    const [productsRes, flagsRes] = await Promise.all([
+                    const [productsRes, flagsRes, ratingsRes] = await Promise.all([
                         fetch('./assets/products.json'),
-                        fetch('./assets/flags.json')
+                        fetch('./assets/flags.json'),
+                        fetch('/.netlify/functions/get-ratings', {
+                            headers: { 'x-admin-secret-key': ADMIN_SECRET_KEY }
+                        })
                     ]);
-                    if (!productsRes.ok) throw new Error('Failed to fetch products');
                     
+                    if (!productsRes.ok) throw new Error('Failed to fetch products');
                     productData = await productsRes.json();
                     
-                    if (flagsRes.ok) {
-                        flagsData = await flagsRes.json();
-                    } else {
-                        console.warn('flags.json not found or failed to load. Using empty array.');
-                        flagsData = [];
-                    }
+                    flagsData = flagsRes.ok ? await flagsRes.json() : [];
+                    ratingsData = ratingsRes.ok ? await ratingsRes.json() : [];
                     
                     jsonEditor.value = JSON.stringify(productData, null, 2);
                     populateProductSelector();
                     renderFlags();
+                    renderRatings();
+
                 } catch (error) {
                     console.error("Error loading data:", error);
-                    jsonEditor.value = "Error: Could not load data. Make sure 'products.json' and 'flags.json' exist in the 'assets' folder.";
+                    jsonEditor.value = "Error: Could not load data.";
                 }
             }
 
@@ -238,6 +266,28 @@
                 });
 
                 alertContainer.classList.toggle('hidden', !highAlert);
+            }
+            
+            function renderRatings() {
+                if (!ratingsData || ratingsData.length === 0) {
+                    ratingsTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No ratings submitted yet.</td></tr>`;
+                    return;
+                }
+
+                ratingsTableBody.innerHTML = '';
+                ratingsData.slice().reverse().forEach(rating => {
+                    const ratingDate = new Date(rating.timestamp).toLocaleString('da-DK');
+                    const answers = JSON.stringify(rating.quiz_answers, null, 2);
+
+                    const row = `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${rating.product_name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-500 font-bold">${'★'.repeat(rating.rating)}${'☆'.repeat(5 - rating.rating)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${ratingDate}</td>
+                            <td class="px-6 py-4 text-xs text-gray-500"><pre>${answers}</pre></td>
+                        </tr>`;
+                    ratingsTableBody.innerHTML += row;
+                });
             }
 
             flagsTableBody.addEventListener('click', (e) => {
