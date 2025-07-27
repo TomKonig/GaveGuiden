@@ -135,7 +135,7 @@
                 allQuestions = await questionsRes.json();
             } catch (error) {
                 console.error("Failed to load data:", error);
-                document.getElementById('app').innerHTML = `<p class="text-center text-red-500 p-8">Kunne ikke indlæse data. Sørg for at 'assets/products.json' og 'assets/questions.json' findes.</p>`;
+                document.getElementById('app').innerHTML = `<p class="text-center text-red-500 p-8">Kunne ikke indlæse data.</p>`;
                 return;
             }
 
@@ -169,7 +169,6 @@
 
             const renderQuestion = (questionData) => {
                 if (Object.keys(userAnswers).length >= 2) earlyExitBtn.classList.remove('hidden');
-                
                 let optionsHtml = '';
                 nextBtn.classList.add('hidden');
 
@@ -211,7 +210,6 @@
                     userAnswers[currentQuestion.key] = document.getElementById('text-input-field').value.trim();
                 }
 
-                // Check for new conditional questions to add to the queue
                 allQuestions.forEach(q => {
                     if (q.trigger && !questionsToAsk.some(item => item.id === q.id) && !Object.values(userAnswers).flat().includes(q.id)) {
                         const triggerKey = q.trigger.key;
@@ -295,21 +293,32 @@
                     reportProblemModal.classList.add('visible');
                 }
                 if (e.target.closest('.share-btn')) {
-                    const shareUrl = `${window.location.origin}${window.location.pathname}?product_id=${topProductResult.id}`;
-                    
-                    document.getElementById('share-whatsapp').href = `https://wa.me/?text=${encodeURIComponent('Se denne gaveidé jeg fandt: ' + shareUrl)}`;
-                    document.getElementById('share-messenger').href = `fb-messenger://share/?link=${encodeURIComponent(shareUrl)}`;
-                    document.getElementById('share-email').href = `mailto:?subject=Gaveidé fra Den Rette Gave&body=${encodeURIComponent('Se denne gaveidé jeg fandt: ' + shareUrl)}`;
-                    
-                    const copyBtn = document.getElementById('share-copy');
-                    copyBtn.onclick = () => {
-                        navigator.clipboard.writeText(shareUrl).then(() => {
-                            const feedback = document.getElementById('share-copy-feedback');
-                            feedback.classList.remove('hidden');
-                            setTimeout(() => feedback.classList.add('hidden'), 2000);
-                        });
+                    const sharePayload = {
+                        product_id: topProductResult.id,
+                        quiz_answers: userAnswers
                     };
-                    shareModal.classList.add('visible');
+                    try {
+                        const response = await fetch('/.netlify/functions/create-share-link', { method: 'POST', body: JSON.stringify(sharePayload) });
+                        const data = await response.json();
+                        if (data.shareId) {
+                            const shareUrl = `${window.location.origin}${window.location.pathname}?id=${data.shareId}`;
+                            document.getElementById('share-whatsapp').href = `https://wa.me/?text=${encodeURIComponent('Se denne gaveidé jeg fandt: ' + shareUrl)}`;
+                            document.getElementById('share-messenger').href = `fb-messenger://share/?link=${encodeURIComponent(shareUrl)}`;
+                            document.getElementById('share-email').href = `mailto:?subject=Gaveidé fra Den Rette Gave&body=${encodeURIComponent('Se denne gaveidé jeg fandt: ' + shareUrl)}`;
+                            const copyBtn = document.getElementById('share-copy');
+                            copyBtn.onclick = () => {
+                                navigator.clipboard.writeText(shareUrl).then(() => {
+                                    const feedback = document.getElementById('share-copy-feedback');
+                                    feedback.classList.remove('hidden');
+                                    setTimeout(() => feedback.classList.add('hidden'), 2000);
+                                });
+                            };
+                            shareModal.classList.add('visible');
+                        }
+                    } catch (err) {
+                        console.error("Error creating share link:", err);
+                        alert("Kunne ikke oprette delingslink. Prøv igen.");
+                    }
                 }
                 if (e.target.closest('.star-rating button')) {
                     const button = e.target.closest('.star-rating button');
@@ -325,9 +334,7 @@
                         timestamp: new Date().toISOString()
                     };
 
-                    fetch('/.netlify/functions/submit-rating', { method: 'POST', body: JSON.stringify(feedbackData) })
-                        .then(res => res.json()).then(data => console.log("Rating success:", data))
-                        .catch(err => console.error("Error submitting rating:", err));
+                    fetch('/.netlify/functions/submit-rating', { method: 'POST', body: JSON.stringify(feedbackData) });
                     
                     const stars = button.parentElement.querySelectorAll('button');
                     stars.forEach(star => {
@@ -350,11 +357,7 @@
                         timestamp: new Date().toISOString(),
                         status: 'unresolved'
                     };
-
-                    fetch('/.netlify/functions/submit-flag', { method: 'POST', body: JSON.stringify(flagData) })
-                        .then(res => res.json()).then(data => console.log("Flag success:", data))
-                        .catch(err => console.error("Error submitting flag:", err));
-
+                    fetch('/.netlify/functions/submit-flag', { method: 'POST', body: JSON.stringify(flagData) });
                     document.getElementById('report-options').classList.add('hidden');
                     document.getElementById('report-feedback').classList.remove('hidden');
                     setTimeout(() => reportProblemModal.classList.remove('visible'), 1500);
@@ -363,15 +366,26 @@
 
             function logAnalytics(eventType, productId) {
                 const data = { eventType, productId: parseInt(productId, 10) };
-                fetch('/.netlify/functions/update-analytics', { method: 'POST', body: JSON.stringify(data) })
-                    .then(res => res.json()).then(data => console.log("Analytics success:", data))
-                    .catch(err => console.error("Error submitting analytics:", err));
+                fetch('/.netlify/functions/update-analytics', { method: 'POST', body: JSON.stringify(data) });
             }
 
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('product_id')) {
-                const productId = parseInt(urlParams.get('product_id'));
-                showResults(productId, {}); // Show product directly, no answers needed
+            const shareId = urlParams.get('id');
+
+            if (shareId) {
+                try {
+                    const response = await fetch(`/.netlify/functions/get-shared-result?id=${shareId}`);
+                    const sharedData = await response.json();
+                    if (sharedData.product_id && sharedData.quiz_answers) {
+                        userAnswers = sharedData.quiz_answers;
+                        showResults(sharedData.product_id, userAnswers);
+                    } else {
+                        startQuiz();
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch shared result", e);
+                    startQuiz();
+                }
             } else {
                  startQuizBtn.addEventListener('click', startQuiz);
             }
