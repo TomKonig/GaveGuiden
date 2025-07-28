@@ -1,94 +1,76 @@
 [
   {
-    "id": 1,
-    "product_group_id": "DUMMY-MUG-01",
-    "differentiator_tags": ["color"],
-    "status": "active",
-    "name": "Test Kaffekop (Blå)",
-    "description": "En simpel og elegant kaffekop til testformål, perfekt til den daglige kaffe.",
-    "price": 199,
-    "url": "#",
-    "image": "https://placehold.co/600x400/3b82f6/ffffff?text=Kaffekop",
-    "tags": {
-      "gender": ["alle"],
-      "age": ["26-40", "41-60"],
-      "interests": ["Kaffe", "Hjemmet"],
-      "occasion": ["Fødselsdag", "Bare fordi"],
-      "brand": ["TestBrand"],
-      "color": ["Blå"]
-    }
-  },
-  {
-    "id": 2,
-    "product_group_id": "DUMMY-BOOK-01",
-    "differentiator_tags": [],
-    "status": "active",
-    "name": "Spændende Test Bog",
-    "description": "En fængslende bog til at teste produktsiden uden varianter.",
-    "price": 249,
-    "url": "#",
-    "image": "https://placehold.co/600x400/16a34a/ffffff?text=Bog",
-    "tags": {
-      "gender": ["alle"],
-      "age": ["18-25", "26-40", "41-60"],
-      "interests": ["Bøger", "Læsning"],
-      "occasion": ["Jul", "Fødselsdag"],
-      "brand": ["Forlag A/S"]
-    }
-  },
-  {
-    "id": 3,
-    "product_group_id": "DUMMY-GADGET-01",
-    "differentiator_tags": [],
-    "status": "active",
-    "name": "Smart Tech Gadget",
-    "description": "En innovativ gadget til den teknologi-interesserede.",
-    "price": 599,
-    "url": "#",
-    "image": "https://placehold.co/600x400/4f46e5/ffffff?text=Gadget",
-    "tags": {
-      "gender": ["Mand", "alle"],
-      "age": ["18-25", "26-40"],
-      "interests": ["Teknologi"],
-      "occasion": ["Jul"],
-      "brand": ["TechCorp"]
-    }
-  },
-  {
-    "id": 4,
-    "product_group_id": "DUMMY-MUG-01",
-    "differentiator_tags": ["color"],
-    "status": "active",
-    "name": "Test Kaffekop (Grøn)",
-    "description": "En simpel og elegant kaffekop til testformål, i en frisk grøn farve.",
-    "price": 199,
-    "url": "#",
-    "image": "https://placehold.co/600x400/16a34a/ffffff?text=Kaffekop",
-    "tags": {
-      "gender": ["alle"],
-      "age": ["26-40", "41-60"],
-      "interests": ["Kaffe", "Hjemmet"],
-      "occasion": ["Fødselsdag", "Bare fordi"],
-      "brand": ["TestBrand"],
-      "color": ["Grøn"]
-    }
-  },
-  {
-    "id": 5,
-    "product_group_id": "DUMMY-COOK-01",
-    "differentiator_tags": [],
-    "status": "active",
-    "name": "Gourmet Krydderisæt",
-    "description": "Et sæt af eksotiske krydderier til madentusiasten.",
+    "id": "p1",
+    "name": "Smart Kaffekop",
+    "description": "En kop der holder din kaffe varm og kan oplade din telefon. Perfekt til tech-entusiasten.",
     "price": 349,
-    "url": "#",
-    "image": "https://placehold.co/600x400/f97316/ffffff?text=Krydderier",
-    "tags": {
-      "gender": ["alle"],
-      "age": ["26-40", "41-60", "60+"],
-      "interests": ["Madlavning"],
-      "occasion": ["Jul", "Tak"],
-      "brand": ["Gourmet Co."]
-    }
+    "url": "https://example.com/kaffekop",
+    "image": "https://images.unsplash.com/photo-1517554931362-a25e29300436?q=80&w=1974&auto=format&fit=crop",
+    "tags": [
+      "gender:mand",
+      "gender:kvinde",
+      "age:ung",
+      "age:voksen",
+      "interest:tech",
+      "interest:hjem",
+      "price:mellem"
+    ],
+    "differentiator_tags": ["color:sort", "color:hvid"],
+    "status": "active"
+  },
+  {
+    "id": "p2",
+    "name": "Læder Pung",
+    "description": "Klassisk og stilfuld læderpung. En tidløs gave til manden der har alt.",
+    "price": 499,
+    "url": "https://example.com/pung",
+    "image": "https://images.unsplash.com/photo-1620905380598-634587371981?q=80&w=2070&auto=format&fit=crop",
+    "tags": [
+      "gender:mand",
+      "age:ung",
+      "age:voksen",
+      "age:senior",
+      "interest:fashion",
+      "price:mellem",
+      "occasion:fødselsdag"
+    ],
+    "differentiator_tags": ["color:sort", "color:brun"],
+    "status": "active"
+  },
+  {
+    "id": "p3",
+    "name": "Gourmet Chokolade Sæt",
+    "description": "Luksuriøst sæt med håndlavet chokolade. Den perfekte gave til en foodie.",
+    "price": 250,
+    "url": "https://example.com/chokolade",
+    "image": "https://images.unsplash.com/photo-1570832130343-2410a5a36b43?q=80&w=1964&auto=format&fit=crop",
+    "tags": [
+      "gender:alle",
+      "age:voksen",
+      "age:senior",
+      "interest:foodie",
+      "price:mellem",
+      "occasion:jul",
+      "occasion:romantik"
+    ],
+    "differentiator_tags": [],
+    "status": "active"
+  },
+  {
+    "id": "p4",
+    "name": "Trådløse Hovedtelefoner",
+    "description": "Høj kvalitets hovedtelefoner med støjreduktion. Til musikelskeren eller pendleren.",
+    "price": 799,
+    "url": "https://example.com/headphones",
+    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=2070&auto=format&fit=crop",
+    "tags": [
+      "gender:alle",
+      "age:ung",
+      "age:voksen",
+      "interest:tech",
+      "price:dyr"
+    ],
+    "differentiator_tags": ["color:sort", "color:hvid"],
+    "status": "active"
   }
 ]
