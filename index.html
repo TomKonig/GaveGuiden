@@ -123,370 +123,384 @@
         </div>
     </div>
 
-    <script>
-        // --- DOM Elements ---
-        const views = {
-            landing: document.getElementById('landing-view'),
-            quiz: document.getElementById('quiz-view'),
-            results: document.getElementById('results-view')
+<script>
+    // --- DOM Elements ---
+    const views = {
+        landing: document.getElementById('landing-view'),
+        quiz: document.getElementById('quiz-view'),
+        results: document.getElementById('results-view')
+    };
+    const startQuizBtn = document.getElementById('start-quiz-btn');
+    const restartQuizBtn = document.getElementById('restart-quiz-btn');
+    const quizContainer = document.getElementById('quiz-container');
+    const questionTitle = document.getElementById('question-title');
+    const questionText = document.getElementById('question-text');
+    const answersContainer = document.getElementById('answers-container');
+    const earlyExitBtn = document.getElementById('early-exit-btn');
+    const resultsTitle = document.getElementById('results-title');
+    const resultsContainer = document.getElementById('results-container');
+    
+    // Modals & Banners
+    const howItWorksModal = document.getElementById('how-it-works-modal');
+    const reportProblemModal = document.getElementById('report-problem-modal');
+    const shareModal = document.getElementById('share-modal');
+    const contactModal = document.getElementById('contact-modal');
+    const cookieBanner = document.getElementById('cookie-banner');
+
+    // --- CONFIGURATION ---
+    const SCORE_THRESHOLD = 1.8;
+    const MIN_ANSWERS_FOR_THRESHOLD = 3; 
+    const TOP_N_PRODUCTS_FOR_DIFFERENTIATION = 5;
+    const TAG_WEIGHTS = {
+        gender: 3.0,
+        age: 2.5,
+        price: 5.0,
+        occasion: 1.5,
+        interest: 4.0,
+    };
+
+    // --- STATE ---
+    let allProducts = [];
+    let allQuestions = [];
+    let quizState = {};
+    let topProductResult = null;
+    let currentReportProductId = null;
+
+    // --- INITIALIZATION ---
+    const initializeQuizState = () => {
+        quizState = {
+            answers: {},
+            productScores: {},
+            askedQuestionIds: new Set(),
+            availableProducts: [...allProducts],
         };
-        const startQuizBtn = document.getElementById('start-quiz-btn');
-        const restartQuizBtn = document.getElementById('restart-quiz-btn');
-        const quizContainer = document.getElementById('quiz-container');
-        const questionTitle = document.getElementById('question-title');
-        const questionText = document.getElementById('question-text');
-        const answersContainer = document.getElementById('answers-container');
-        const earlyExitBtn = document.getElementById('early-exit-btn');
-        const resultsTitle = document.getElementById('results-title');
-        const resultsContainer = document.getElementById('results-container');
+    };
+    
+    const fetchData = async () => {
+        try {
+            const [productsRes, questionsRes] = await Promise.all([
+                fetch('./assets/products.json'),
+                fetch('./assets/questions.json')
+            ]);
+            allProducts = await productsRes.json();
+            allQuestions = await questionsRes.json();
+        } catch (error) {
+            console.error("Failed to fetch initial data:", error);
+            document.getElementById('app').innerHTML = `<p class="text-center text-red-500 p-8">Kunne ikke indlæse data. Prøv venligst igen senere.</p>`;
+        }
+    };
+
+    // --- VIEW & MODAL MANAGEMENT ---
+    const switchView = (activeView) => {
+        Object.values(views).forEach(view => view.classList.remove('active'));
+        views[activeView].classList.add('active');
+    };
+
+    const handleModal = (modalElement, openTriggers, closeTriggers) => {
+        openTriggers.forEach(trigger => trigger.addEventListener('click', () => modalElement.classList.add('visible')));
+        closeTriggers.forEach(trigger => trigger.addEventListener('click', () => modalElement.classList.remove('visible')));
+        modalElement.addEventListener('click', (e) => {
+            if (e.target === modalElement) modalElement.classList.remove('visible');
+        });
+    };
+    
+    // --- QUIZ FLOW ---
+    const startQuiz = () => {
+        initializeQuizState();
+        switchView('quiz');
+        const initialQuestion = allQuestions.find(q => q.is_initial && q.id === 'q_gender');
+        renderQuestion(initialQuestion || allQuestions[0]);
+    };
+
+    // THIS FUNCTION CONTAINS THE FIX
+    const handleAnswerSelection = (tag, questionId) => {
+        const currentWrapper = quizContainer.querySelector('.question-wrapper');
+        if(currentWrapper) currentWrapper.classList.add('exiting');
         
-        // Modals & Banners
-        const howItWorksModal = document.getElementById('how-it-works-modal');
-        const reportProblemModal = document.getElementById('report-problem-modal');
-        const shareModal = document.getElementById('share-modal');
-        const contactModal = document.getElementById('contact-modal');
-        const cookieBanner = document.getElementById('cookie-banner');
+        // Save the scores BEFORE applying the new answer. This is our safety net.
+        const previousScores = { ...quizState.productScores };
 
-        // --- CONFIGURATION ---
-        const SCORE_THRESHOLD = 1.8; // Increased threshold to prevent premature results
-        const MIN_ANSWERS_FOR_THRESHOLD = 3; // Require at least 3 answers before threshold can trigger a result
-        const TOP_N_PRODUCTS_FOR_DIFFERENTIATION = 5;
-        const TAG_WEIGHTS = {
-            gender: 3.0,
-            age: 2.5,
-            price: 5.0,
-            occasion: 1.5,
-            interest: 4.0, // Increased weight for interests
-        };
-
-        // --- STATE ---
-        let allProducts = [];
-        let allQuestions = [];
-        let quizState = {};
-        let topProductResult = null;
-        let currentReportProductId = null;
-
-        // --- INITIALIZATION ---
-        const initializeQuizState = () => {
-            quizState = {
-                answers: {},
-                productScores: {},
-                askedQuestionIds: new Set(),
-                availableProducts: [...allProducts],
-            };
-        };
-        
-        const fetchData = async () => {
-            try {
-                const [productsRes, questionsRes] = await Promise.all([
-                    fetch('./assets/products.json'),
-                    fetch('./assets/questions.json')
-                ]);
-                allProducts = await productsRes.json();
-                allQuestions = await questionsRes.json();
-            } catch (error) {
-                console.error("Failed to fetch initial data:", error);
-                document.getElementById('app').innerHTML = `<p class="text-center text-red-500 p-8">Kunne ikke indlæse data. Prøv venligst igen senere.</p>`;
-            }
-        };
-
-        // --- VIEW & MODAL MANAGEMENT ---
-        const switchView = (activeView) => {
-            Object.values(views).forEach(view => view.classList.remove('active'));
-            views[activeView].classList.add('active');
-        };
-
-        const handleModal = (modalElement, openTriggers, closeTriggers) => {
-            openTriggers.forEach(trigger => trigger.addEventListener('click', () => modalElement.classList.add('visible')));
-            closeTriggers.forEach(trigger => trigger.addEventListener('click', () => modalElement.classList.remove('visible')));
-            modalElement.addEventListener('click', (e) => {
-                if (e.target === modalElement) modalElement.classList.remove('visible');
-            });
-        };
-        
-        // --- QUIZ FLOW ---
-        const startQuiz = () => {
-            initializeQuizState();
-            switchView('quiz');
-            const initialQuestion = allQuestions.find(q => q.is_initial && q.id === 'q_gender');
-            renderQuestion(initialQuestion || allQuestions[0]);
-        };
-
-        const handleAnswerSelection = (tag, questionId) => {
-            const currentWrapper = quizContainer.querySelector('.question-wrapper');
-            if(currentWrapper) currentWrapper.classList.add('exiting');
+        setTimeout(() => {
+            quizState.askedQuestionIds.add(questionId);
+            const [key, value] = tag.split(':');
+            quizState.answers[key] = value;
             
-            setTimeout(() => {
-                quizState.askedQuestionIds.add(questionId);
+            updateScores();
+            let nextStep = selectNextQuestion();
+            
+            // **FIX**: If the last answer resulted in no products (a dead end),
+            // use the saved scores to find the best product from the *previous* state.
+            if (nextStep.type === 'result' && nextStep.product === null) {
+                const previousSorted = Object.entries(previousScores).sort((a, b) => b[1] - a[1]);
+                if (previousSorted.length > 0) {
+                    const fallbackProduct = allProducts.find(p => p.id === previousSorted[0][0]);
+                    nextStep = { type: 'result', product: fallbackProduct }; // Override the null result
+                }
+            }
+
+            if (nextStep.type === 'question') {
+                renderQuestion(nextStep.question);
+            } else if (nextStep.type === 'result') {
+                showResults(nextStep.product);
+            }
+        }, 500);
+    };
+
+
+    // --- CORE LOGIC: SCORING & SELECTION ---
+    const updateScores = () => {
+        const availableProducts = allProducts.filter(product => {
+            if (quizState.answers.price && !product.tags.includes(`price:${quizState.answers.price}`)) return false;
+            for (const key in quizState.answers) {
+                 const isDifferentiator = allQuestions.some(q => q.answers.some(a => a.tag.startsWith(key)) && q.is_differentiator);
+                 if (isDifferentiator && product.differentiator_tags && !product.differentiator_tags.includes(`${key}:${quizState.answers[key]}`)) return false;
+            }
+            return product.status === 'active';
+        });
+        quizState.availableProducts = availableProducts;
+
+        const scores = {};
+        availableProducts.forEach(product => {
+            let score = 0;
+            product.tags.forEach(tag => {
                 const [key, value] = tag.split(':');
-                quizState.answers[key] = value;
-                
-                updateScores();
-                const nextStep = selectNextQuestion();
-                
-                if (nextStep.type === 'question') {
-                    renderQuestion(nextStep.question);
-                } else if (nextStep.type === 'result') {
-                    showResults(nextStep.product);
-                }
-            }, 500); // Wait for exit animation
-        };
-
-        // --- CORE LOGIC: SCORING & SELECTION ---
-        const updateScores = () => {
-            const availableProducts = allProducts.filter(product => {
-                if (quizState.answers.price && !product.tags.includes(`price:${quizState.answers.price}`)) return false;
-                for (const key in quizState.answers) {
-                     const isDifferentiator = allQuestions.some(q => q.answers.some(a => a.tag.startsWith(key)) && q.is_differentiator);
-                     if (isDifferentiator && !product.differentiator_tags.includes(`${key}:${quizState.answers[key]}`)) return false;
-                }
-                return product.status === 'active';
+                const weight = TAG_WEIGHTS[key] || 1.0;
+                if (quizState.answers[key] === value) score += weight;
+                else if (key === 'gender' && value === 'alle' && quizState.answers.gender) score += weight / 2;
             });
-            quizState.availableProducts = availableProducts;
+            scores[product.id] = score;
+        });
+        quizState.productScores = scores;
+    };
 
-            const scores = {};
-            availableProducts.forEach(product => {
-                let score = 0;
-                product.tags.forEach(tag => {
-                    const [key, value] = tag.split(':');
-                    const weight = TAG_WEIGHTS[key] || 1.0;
-                    if (quizState.answers[key] === value) score += weight;
-                    else if (key === 'gender' && value === 'alle' && quizState.answers.gender) score += weight / 2;
-                });
-                scores[product.id] = score;
-            });
-            quizState.productScores = scores;
-        };
+    const selectNextQuestion = () => {
+        const sortedProducts = Object.entries(quizState.productScores).sort((a, b) => b[1] - a[1]);
 
-        const selectNextQuestion = () => {
-            const sortedProducts = Object.entries(quizState.productScores).sort((a, b) => b[1] - a[1]);
+        if (sortedProducts.length === 0) {
+             return { type: 'result', product: null }; // Signal a dead end
+        }
+        
+        const topScore = sortedProducts[0][1];
+        const secondScore = sortedProducts.length > 1 ? sortedProducts[1][1] : 0;
+        const bestProduct = allProducts.find(p => p.id === sortedProducts[0][0]);
 
-            if (sortedProducts.length === 0) {
-                 return { type: 'result', product: null };
-            }
-            
-            const topScore = sortedProducts[0][1];
-            const secondScore = sortedProducts.length > 1 ? sortedProducts[1][1] : 0;
-            const bestProduct = allProducts.find(p => p.id === sortedProducts[0][0]);
-
-            if (Object.keys(quizState.answers).length >= MIN_ANSWERS_FOR_THRESHOLD && topScore > 0 && (topScore / (secondScore + 0.1)) > SCORE_THRESHOLD) {
-                return { type: 'result', product: bestProduct };
-            }
-            
-            // Find next initial question if any are left
-            const nextInitial = allQuestions.find(q => q.is_initial && !quizState.askedQuestionIds.has(q.id));
-            if(nextInitial) return { type: 'question', question: nextInitial };
-
-            const topProductIds = sortedProducts.slice(0, TOP_N_PRODUCTS_FOR_DIFFERENTIATION).map(p => p[0]);
-            const topProducts = allProducts.filter(p => topProductIds.includes(p.id));
-
-            let nextQuestion = findDifferentiatorQuestion(topProducts, quizState.askedQuestionIds);
-            if (!nextQuestion) {
-                nextQuestion = findDiscoveryQuestion(quizState.askedQuestionIds);
-            }
-
-            if (nextQuestion) {
-                return { type: 'question', question: nextQuestion };
-            }
-
+        if (Object.keys(quizState.answers).length >= MIN_ANSWERS_FOR_THRESHOLD && topScore > 0 && (topScore / (secondScore + 0.1)) > SCORE_THRESHOLD) {
             return { type: 'result', product: bestProduct };
-        };
-
-        const findDifferentiatorQuestion = (topProducts, askedIds) => {
-            let bestQuestion = null;
-            let maxDifferentiation = -1;
-            const potentialQuestions = allQuestions.filter(q => !askedIds.has(q.id) && !q.is_initial);
-
-            potentialQuestions.forEach(question => {
-                const tagsInQuestion = new Set(question.answers.map(a => a.tag));
-                const productTagSets = topProducts.map(p => new Set([...p.tags, ...(p.differentiator_tags || [])]));
-                let splits = 0;
-                for (const tag of tagsInQuestion) {
-                    const productsWithTag = productTagSets.filter(pt => pt.has(tag)).length;
-                    if (productsWithTag > 0 && productsWithTag < topProducts.length) splits++;
-                }
-                if (splits > maxDifferentiation) {
-                    maxDifferentiation = splits;
-                    bestQuestion = question;
-                }
-            });
-            return bestQuestion;
-        };
-
-        const findDiscoveryQuestion = (askedIds) => {
-             return allQuestions.find(q => !q.is_initial && !q.is_differentiator && !askedIds.has(q.id));
-        };
-
-        // --- UI RENDERING ---
-        const renderQuestion = (question) => {
-            if (Object.keys(quizState.answers).length >= 2) earlyExitBtn.classList.remove('hidden');
-
-            let optionsHtml = '';
-            if (question.answers) {
-                 optionsHtml = `<div class="grid grid-cols-2 md:grid-cols-3 gap-4">` + question.answers.map(o => `<div class="quiz-card bg-white p-4 rounded-lg shadow cursor-pointer" data-tag="${o.tag}" data-question-id="${question.id}"><span class="font-semibold pointer-events-none">${o.text}</span></div>`).join('') + `</div>`;
-            }
-            quizContainer.innerHTML = `<div class="question-wrapper active"><h3 class="text-2xl md:text-3xl font-bold text-center mb-8">${question.question_text}</h3>${optionsHtml}</div>`;
-        };
-
-        const showResults = (product, sharedAnswers) => {
-            topProductResult = product;
-            if (sharedAnswers) quizState.answers = sharedAnswers;
-
-            resultsTitle.textContent = 'Her er vores forslag!';
-            resultsContainer.innerHTML = product ? createProductCard(product) : `<p class="text-center">Vi kunne desværre ikke finde et match.</p>`;
-            switchView('results');
-        };
-
-        const createProductCard = (product) => {
-            return `<div class="bg-white rounded-lg shadow-xl max-w-md mx-auto text-left overflow-hidden">
-                    <img src="${product.image}" alt="${product.name}" class="w-full h-64 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e2e8f0/475569?text=Billede+mangler';">
-                    <div class="p-6">
-                        <h3 class="text-2xl font-bold mb-2">${product.name}</h3>
-                        <p class="text-slate-600 mb-4">${product.description}</p>
-                        <div class="flex justify-between items-center">
-                            <span class="text-3xl font-bold text-slate-800">${product.price} kr.</span>
-                            <a href="${product.url}" target="_blank" class="affiliate-link bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700" data-product-id="${product.id}">Se produkt</a>
-                        </div>
-                    </div>
-                    <div class="bg-slate-50 p-4 border-t">
-                        <div class="mb-4"><p class="text-sm font-semibold text-center mb-2">Hvor godt ramte vi plet?</p><div class="star-rating flex justify-center text-3xl" data-product-id="${product.id}">${[1,2,3,4,5].map(i => `<button data-value="${i}">★</button>`).join('')}</div></div>
-                        <div class="text-center"><button class="share-btn text-blue-600 font-semibold hover:underline">Del dit resultat</button></div>
-                        <div class="text-xs text-slate-400 mt-4 text-right"><button class="report-btn hover:underline" data-product-id="${product.id}">Rapportér et problem</button></div>
-                    </div>
-                </div>`;
-        };
+        }
         
-        // --- EVENT LISTENERS & API CALLS ---
-        const setupEventListeners = () => {
-            startQuizBtn.addEventListener('click', startQuiz);
-            restartQuizBtn.addEventListener('click', () => { window.location.href = window.location.pathname; });
-            earlyExitBtn.addEventListener('click', () => showResults(Object.values(quizState.productScores).length > 0 ? allProducts.find(p => p.id === Object.entries(quizState.productScores).sort((a,b) => b[1] - a[1])[0][0]) : null));
-            
-            quizContainer.addEventListener('click', e => {
-                const target = e.target.closest('[data-tag]');
-                if (target) handleAnswerSelection(target.dataset.tag, target.dataset.questionId);
-            });
-            
-            resultsContainer.addEventListener('click', async e => {
-                if (e.target.closest('.report-btn')) {
-                    currentReportProductId = e.target.closest('.report-btn').dataset.productId;
-                    document.getElementById('report-options').classList.remove('hidden');
-                    document.getElementById('report-feedback').classList.add('hidden');
-                    reportProblemModal.classList.add('visible');
-                }
-                 if (e.target.closest('.share-btn')) {
-                     createShareLink(topProductResult.id, quizState.answers);
-                 }
-                 if (e.target.closest('.star-rating button')) {
-                    const button = e.target.closest('.star-rating button');
-                    const rating = parseInt(button.dataset.value, 10);
-                    const productId = button.parentElement.dataset.productId;
-                    submitRating(productId, rating);
-                    const stars = button.parentElement.querySelectorAll('button');
-                    stars.forEach(star => {
-                        star.classList.toggle('selected', star.dataset.value <= rating);
-                        star.disabled = true;
-                    });
-                }
-            });
+        const nextInitial = allQuestions.find(q => q.is_initial && !quizState.askedQuestionIds.has(q.id));
+        if(nextInitial) return { type: 'question', question: nextInitial };
 
-             reportProblemModal.querySelector('#report-options').addEventListener('click', e => {
-                if (e.target.tagName === 'BUTTON') {
-                    submitFlag(currentReportProductId, e.target.dataset.reportType);
-                    document.getElementById('report-options').classList.add('hidden');
-                    document.getElementById('report-feedback').classList.remove('hidden');
-                    setTimeout(() => reportProblemModal.classList.remove('visible'), 1500);
-                }
-            });
-            
-            document.getElementById('copy-share-link-button').onclick = () => {
-                const link = document.getElementById('share-link-input').value;
-                navigator.clipboard.writeText(link).then(() => {
-                    const feedback = document.getElementById('share-copy-feedback');
-                    feedback.classList.remove('hidden');
-                    setTimeout(() => feedback.classList.add('hidden'), 2000);
-                });
-            };
+        const topProductIds = sortedProducts.slice(0, TOP_N_PRODUCTS_FOR_DIFFERENTIATION).map(p => p[0]);
+        const topProducts = allProducts.filter(p => topProductIds.includes(p.id));
 
-            // Cookie Banner
-            const acceptCookiesBtn = document.getElementById('accept-cookies-btn');
-            if (!localStorage.getItem('cookieConsent')) {
-                cookieBanner.classList.remove('hidden');
-                setTimeout(() => cookieBanner.classList.remove('translate-y-full'), 100);
+        let nextQuestion = findDifferentiatorQuestion(topProducts, quizState.askedQuestionIds);
+        if (!nextQuestion) {
+            nextQuestion = findDiscoveryQuestion(quizState.askedQuestionIds);
+        }
+
+        if (nextQuestion) {
+            return { type: 'question', question: nextQuestion };
+        }
+
+        return { type: 'result', product: bestProduct };
+    };
+
+    const findDifferentiatorQuestion = (topProducts, askedIds) => {
+        let bestQuestion = null;
+        let maxDifferentiation = -1;
+        const potentialQuestions = allQuestions.filter(q => !askedIds.has(q.id) && !q.is_initial);
+
+        potentialQuestions.forEach(question => {
+            const tagsInQuestion = new Set(question.answers.map(a => a.tag));
+            const productTagSets = topProducts.map(p => new Set([...p.tags, ...(p.differentiator_tags || [])]));
+            let splits = 0;
+            for (const tag of tagsInQuestion) {
+                const productsWithTag = productTagSets.filter(pt => pt.has(tag)).length;
+                if (productsWithTag > 0 && productsWithTag < topProducts.length) splits++;
             }
-            acceptCookiesBtn.addEventListener('click', () => {
-                localStorage.setItem('cookieConsent', 'true');
-                cookieBanner.classList.add('translate-y-full');
-                setTimeout(() => cookieBanner.classList.add('hidden'), 500);
-            });
-
-            // Modals
-            handleModal(howItWorksModal, [document.getElementById('how-it-works-btn')], document.querySelectorAll('#how-it-works-modal .close-modal-btn'));
-            handleModal(contactModal, [document.getElementById('contact-btn')], document.querySelectorAll('#contact-modal .close-modal-btn'));
-            handleModal(reportProblemModal, [], document.querySelectorAll('#report-problem-modal .close-modal-btn'));
-            handleModal(shareModal, [], document.querySelectorAll('#share-modal .close-modal-btn'));
-        };
-
-        const submitRating = async (productId, rating) => {
-            try {
-                await fetch('/api/submit-rating', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ productId, rating })
-                });
-            } catch (error) { console.error('Failed to submit rating:', error); }
-        };
-
-        const submitFlag = async (productId, reason) => {
-            try {
-                await fetch('/api/submit-flag', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ productId, reason, quizAnswers: quizState.answers })
-                });
-            } catch (error) { console.error('Failed to submit flag:', error); }
-        };
-
-        const createShareLink = async (productId, answers) => {
-            try {
-                const response = await fetch('/api/create-share-link', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ product_id: productId, quiz_answers: answers })
-                });
-                const { shareId } = await response.json();
-                const link = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
-                document.getElementById('share-link-input').value = link;
-                shareModal.classList.add('visible');
-            } catch (error) { console.error('Failed to create share link:', error); }
-        };
-
-        const loadSharedResult = async (shareId) => {
-            try {
-                const response = await fetch(`/api/get-shared-result?id=${shareId}`);
-                if (!response.ok) throw new Error('Share link not found');
-                const { product_id, quiz_answers } = await response.json();
-                const product = allProducts.find(p => p.id === product_id);
-                if(product) {
-                    showResults(product, quiz_answers);
-                } else { throw new Error('Product from share link not found'); }
-            } catch (error) {
-                console.error("Failed to load shared link:", error);
-                document.getElementById('app').innerHTML = `<p class="text-red-500 text-center">Dette delingslink er ugyldigt eller udløbet.</p>`;
+            if (splits > maxDifferentiation) {
+                maxDifferentiation = splits;
+                bestQuestion = question;
             }
-        };
+        });
+        return bestQuestion;
+    };
+
+    const findDiscoveryQuestion = (askedIds) => {
+         return allQuestions.find(q => !q.is_initial && !q.is_differentiator && !askedIds.has(q.id));
+    };
+
+    // --- UI RENDERING ---
+    const renderQuestion = (question) => {
+        if (Object.keys(quizState.answers).length >= 2) earlyExitBtn.classList.remove('hidden');
+
+        let optionsHtml = '';
+        if (question.answers) {
+             optionsHtml = `<div class="grid grid-cols-2 md:grid-cols-3 gap-4">` + question.answers.map(o => `<div class="quiz-card bg-white p-4 rounded-lg shadow cursor-pointer" data-tag="${o.tag}" data-question-id="${question.id}"><span class="font-semibold pointer-events-none">${o.text}</span></div>`).join('') + `</div>`;
+        }
+        quizContainer.innerHTML = `<div class="question-wrapper active"><h3 class="text-2xl md:text-3xl font-bold text-center mb-8">${question.question_text}</h3>${optionsHtml}</div>`;
+    };
+
+    const showResults = (product, sharedAnswers) => {
+        topProductResult = product;
+        if (sharedAnswers) quizState.answers = sharedAnswers;
+
+        resultsTitle.textContent = 'Her er vores forslag!';
+        resultsContainer.innerHTML = product ? createProductCard(product) : `<p class="text-center">Vi kunne desværre ikke finde et match. Prøv venligst igen.</p>`;
+        switchView('results');
+    };
+
+    const createProductCard = (product) => {
+        return `<div class="bg-white rounded-lg shadow-xl max-w-md mx-auto text-left overflow-hidden">
+                <img src="${product.image}" alt="${product.name}" class="w-full h-64 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e2e8f0/475569?text=Billede+mangler';">
+                <div class="p-6">
+                    <h3 class="text-2xl font-bold mb-2">${product.name}</h3>
+                    <p class="text-slate-600 mb-4">${product.description}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-3xl font-bold text-slate-800">${product.price} kr.</span>
+                        <a href="${product.url}" target="_blank" class="affiliate-link bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700" data-product-id="${product.id}">Se produkt</a>
+                    </div>
+                </div>
+                <div class="bg-slate-50 p-4 border-t">
+                    <div class="mb-4"><p class="text-sm font-semibold text-center mb-2">Hvor godt ramte vi plet?</p><div class="star-rating flex justify-center text-3xl" data-product-id="${product.id}">${[1,2,3,4,5].map(i => `<button data-value="${i}">★</button>`).join('')}</div></div>
+                    <div class="text-center"><button class="share-btn text-blue-600 font-semibold hover:underline">Del dit resultat</button></div>
+                    <div class="text-xs text-slate-400 mt-4 text-right"><button class="report-btn hover:underline" data-product-id="${product.id}">Rapportér et problem</button></div>
+                </div>
+            </div>`;
+    };
+    
+    // --- EVENT LISTENERS & API CALLS ---
+    const setupEventListeners = () => {
+        startQuizBtn.addEventListener('click', startQuiz);
+        restartQuizBtn.addEventListener('click', () => { window.location.href = window.location.pathname; });
+        earlyExitBtn.addEventListener('click', () => showResults(Object.values(quizState.productScores).length > 0 ? allProducts.find(p => p.id === Object.entries(quizState.productScores).sort((a,b) => b[1] - a[1])[0][0]) : null));
         
-        // --- APP START ---
-        const startApp = async () => {
-            await fetchData();
-            if (allProducts.length > 0 && allQuestions.length > 0) {
-                const urlParams = new URLSearchParams(window.location.search);
-                const shareId = urlParams.get('share');
-                if (shareId) {
-                    loadSharedResult(shareId);
-                }
-                setupEventListeners();
+        quizContainer.addEventListener('click', e => {
+            const target = e.target.closest('[data-tag]');
+            if (target) handleAnswerSelection(target.dataset.tag, target.dataset.questionId);
+        });
+        
+        resultsContainer.addEventListener('click', async e => {
+            if (e.target.closest('.report-btn')) {
+                currentReportProductId = e.target.closest('.report-btn').dataset.productId;
+                document.getElementById('report-options').classList.remove('hidden');
+                document.getElementById('report-feedback').classList.add('hidden');
+                reportProblemModal.classList.add('visible');
             }
+             if (e.target.closest('.share-btn')) {
+                 createShareLink(topProductResult.id, quizState.answers);
+             }
+             if (e.target.closest('.star-rating button')) {
+                const button = e.target.closest('.star-rating button');
+                const rating = parseInt(button.dataset.value, 10);
+                const productId = button.parentElement.dataset.productId;
+                submitRating(productId, rating);
+                const stars = button.parentElement.querySelectorAll('button');
+                stars.forEach(star => {
+                    star.classList.toggle('selected', star.dataset.value <= rating);
+                    star.disabled = true;
+                });
+            }
+        });
+
+         reportProblemModal.querySelector('#report-options').addEventListener('click', e => {
+            if (e.target.tagName === 'BUTTON') {
+                submitFlag(currentReportProductId, e.target.dataset.reportType);
+                document.getElementById('report-options').classList.add('hidden');
+                document.getElementById('report-feedback').classList.remove('hidden');
+                setTimeout(() => reportProblemModal.classList.remove('visible'), 1500);
+            }
+        });
+        
+        document.getElementById('copy-share-link-button').onclick = () => {
+            const link = document.getElementById('share-link-input').value;
+            navigator.clipboard.writeText(link).then(() => {
+                const feedback = document.getElementById('share-copy-feedback');
+                feedback.classList.remove('hidden');
+                setTimeout(() => feedback.classList.add('hidden'), 2000);
+            });
         };
 
-        document.addEventListener('DOMContentLoaded', startApp);
-    </script>
+        // Cookie Banner
+        const acceptCookiesBtn = document.getElementById('accept-cookies-btn');
+        if (!localStorage.getItem('cookieConsent')) {
+            cookieBanner.classList.remove('hidden');
+            setTimeout(() => cookieBanner.classList.remove('translate-y-full'), 100);
+        }
+        acceptCookiesBtn.addEventListener('click', () => {
+            localStorage.setItem('cookieConsent', 'true');
+            cookieBanner.classList.add('translate-y-full');
+            setTimeout(() => cookieBanner.classList.add('hidden'), 500);
+        });
+
+        // Modals
+        handleModal(howItWorksModal, [document.getElementById('how-it-works-btn')], document.querySelectorAll('#how-it-works-modal .close-modal-btn'));
+        handleModal(contactModal, [document.getElementById('contact-btn')], document.querySelectorAll('#contact-modal .close-modal-btn'));
+        handleModal(reportProblemModal, [], document.querySelectorAll('#report-problem-modal .close-modal-btn'));
+        handleModal(shareModal, [], document.querySelectorAll('#share-modal .close-modal-btn'));
+    };
+
+    const submitRating = async (productId, rating) => {
+        try {
+            await fetch('/api/submit-rating', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId, rating })
+            });
+        } catch (error) { console.error('Failed to submit rating:', error); }
+    };
+
+    const submitFlag = async (productId, reason) => {
+        try {
+            await fetch('/api/submit-flag', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId, reason, quizAnswers: quizState.answers })
+            });
+        } catch (error) { console.error('Failed to submit flag:', error); }
+    };
+
+    const createShareLink = async (productId, answers) => {
+        try {
+            const response = await fetch('/api/create-share-link', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_id: productId, quiz_answers: answers })
+            });
+            const { shareId } = await response.json();
+            const link = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
+            document.getElementById('share-link-input').value = link;
+            shareModal.classList.add('visible');
+        } catch (error) { console.error('Failed to create share link:', error); }
+    };
+
+    const loadSharedResult = async (shareId) => {
+        try {
+            const response = await fetch(`/api/get-shared-result?id=${shareId}`);
+            if (!response.ok) throw new Error('Share link not found');
+            const { product_id, quiz_answers } = await response.json();
+            const product = allProducts.find(p => p.id === product_id);
+            if(product) {
+                showResults(product, quiz_answers);
+            } else { throw new Error('Product from share link not found'); }
+        } catch (error) {
+            console.error("Failed to load shared link:", error);
+            document.getElementById('app').innerHTML = `<p class="text-red-500 text-center">Dette delingslink er ugyldigt eller udløbet.</p>`;
+        }
+    };
+    
+    // --- APP START ---
+    const startApp = async () => {
+        await fetchData();
+        if (allProducts.length > 0 && allQuestions.length > 0) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const shareId = urlParams.get('share');
+            if (shareId) {
+                loadSharedResult(shareId);
+            }
+            setupEventListeners();
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', startApp);
+</script>
 </body>
 </html>
