@@ -1,55 +1,47 @@
-const fs = require('fs').promises;
-const path = require('path');
+const { connectToDatabase } = require('./utils/mongodb-client');
+const { ObjectId } = require('mongodb');
 
-// Path now points to the secure 'data' folder, not the public 'assets' folder.
-const DATA_DIR = path.join(__dirname, '..', 'data');
-const filePath = path.join(DATA_DIR, 'shares.json');
-
-exports.handler = async (event, context) => {
-    // Only allow GET requests
+exports.handler = async (event) => {
     if (event.httpMethod !== 'GET') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
+    const shareId = event.queryStringParameters.id;
+
+    if (!shareId) {
+        return { statusCode: 400, body: 'Bad Request: Missing share ID.' };
+    }
+
     try {
-        const shareId = event.queryStringParameters.id;
-
-        if (!shareId) {
-            return { statusCode: 400, body: 'Bad Request: Missing share ID.' };
-        }
-
-        let shares = [];
+        const db = await connectToDatabase();
+        const sharesCollection = db.collection('shares');
+        
+        let objectId;
         try {
-            const data = await fs.readFile(filePath, 'utf8');
-            shares = JSON.parse(data);
-        } catch (error) {
-            // If the shares file doesn't exist yet, it's a 404.
-            if (error.code === 'ENOENT') {
-                return { statusCode: 404, body: 'Not Found' };
-            }
-            throw error;
+            objectId = new ObjectId(shareId);
+        } catch(e) {
+            return { statusCode: 400, body: 'Invalid Share ID format.' };
         }
 
-        const sharedData = shares.find(s => s.id === shareId);
+        const sharedData = await sharesCollection.findOne({ _id: objectId });
 
-        if (sharedData) {
-            // Return the stored data object associated with the share ID
-            return {
-                statusCode: 200,
-                body: JSON.stringify(sharedData.data)
-            };
-        } else {
-            return {
-                statusCode: 404,
-                body: JSON.stringify({ error: 'Share link not found.' })
-            };
+        if (!sharedData) {
+            return { statusCode: 404, body: 'Share link not found or expired.' };
         }
 
+        return {
+            statusCode: 200,
+            body: JSON.stringify({
+                product_id: sharedData.productId,
+                quiz_answers: sharedData.quizAnswers
+            }),
+            headers: { 'Content-Type': 'application/json' },
+        };
     } catch (error) {
-        console.error('Error getting shared result:', error);
+        console.error('Error fetching shared result:', error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: 'Internal Server Error' })
+            body: JSON.stringify({ message: 'Could not retrieve shared result.' }),
         };
     }
 };
