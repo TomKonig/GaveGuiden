@@ -597,196 +597,74 @@ The workflow involves: 1. Periodically using an LLM to generate candidate produc
 
 We have crafted specific **LLM prompts** for these tasks to guide the AI in producing useful output in a strict format. Below, we detail these prompts and the reasoning behind their structure.
 
-### 7.1 LLM Prompt for Automated Discovery
+The complete, unabridged master prompts for this task are maintained externally in the document: /masterprompts.md
 
-_Context:_ This prompt is designed for the scenario where we want the AI to brainstorm new gift ideas that are _not currently in our database_. We let the AI freely explore the domain of Danish e-commerce for unique products fitting a niche or category we specify, while ensuring no duplicates with what we already have. Essentially, it’s like asking an AI research assistant: “find me 10 new gift ideas in this category that I don't already list, and give me all the details about them in my data format.”
+### **7.1 AI-Driven Workflow: Autonomous Product Discovery & Curation**
 
-We give the LLM a clear **role and objective**, plus very explicit instructions and format. Here is the prompt (as we use it, formatted in our documentation):
+To maintain a competitive and diverse product catalog, we employ an automated, AI-driven workflow for product discovery and curation. This process is orchestrated by a sophisticated, agentic AI tasked with browsing our affiliate partner webshops, identifying high-potential gift items, and generating perfectly structured data for our products.json file. This workflow is initiated via a master prompt designed to guide the AI through a multi-stage process of curation and analysis.  
 
-**Role:** You are an expert e-commerce curator and data analyst specializing in unique and high-quality gifts available in Denmark.
+#### **7.1.1 The Philosophy and Structure of the Discovery Prompt**
 
-**Objective:** Find 10 unique gift _ideas_ that fit a specific niche. For each product idea, you must perform detailed analysis to provide its name, a short compelling description, its exact price in DKK, the direct URL to the product page, a direct URL to a high-quality product image, and a comprehensive set of structured tags based on the product page's content.
+The master prompt is not merely a set of instructions; it is a carefully engineered blueprint that instills our strategic goals and quality standards into the AI agent. It is designed to elicit a high degree of autonomy and analytical rigor, minimizing the need for subsequent human intervention. The prompt is broken down into several key philosophical components:
 
-**CRITICAL INSTRUCTION: Before you begin, you MUST visit the following URL, retrieve its contents, and use the "name" and "url" of every product in that file as an exclusion list. Do NOT suggest any product that is already on this list.**  
-**Exclusion List URL:** <https://denrettegave.dk/assets/products.json>
+* **Role & Goal Definition:** The prompt begins by assigning the AI a specific role: "Expert E-commerce Strategist and Product Discovery Specialist." This is a critical first step in prompt engineering. By defining a professional persona, we prime the AI to access the specific knowledge domains and reasoning patterns associated with that role, leading to a significantly higher quality of analysis and output compared to a generic instruction.
 
-**Variation Handling Clause:**  
-If a product you select has multiple variations (e.g., 3 colors and 4 sizes), you must create a separate JSON object for _each individual variant_. For example, a t-shirt in 3 colors and 4 sizes should result in 12 separate JSON objects. **These variations do not count towards your goal of finding 10 unique product ideas.** You must still find 10 distinct products, and then expand them with all their variations.
+* **Two-Stage Task (Curation then Analysis):** The workflow is intentionally divided into two distinct cognitive modes:
 
-**Tagging & Variation Analysis Instructions:**  
-For each product variant, you must deduce the following attributes and structure them in a tags object.  
-1\. **Analyze Variations:** Examine the product page for options like color, size, material, or subscription duration. List these variation types in the differentiator_tags array. This array should be identical for all variants of the same product.  
-2\. **Populate Tags:** Based on the product's description, title, and category, populate the tags object. Use your best judgment.  
-\- gender: "Mand", "Kvinde", or "alle".  
-\- age: Estimate appropriate age ranges (e.g., "18-25", "26-40", "41-60", "60+").  
-\- interests: Deduce relevant interests (e.g., "Mode", "Gaming", "Madlavning", "Outdoor").  
-\- occasion: Suggest suitable occasions (e.g., "Fødselsdag", "Jul", "Årsdag").  
-\- brand: Identify the product's brand name.  
-\- color, size, etc.: If you identified these as differentiators, list the specific option for the product URL you are providing (e.g., color: \["Blå"\], size: \["Medium"\]).
+  1. **Discovery & Curation:** In this stage, the AI is instructed to act as a skilled human shopper or gift curator. It browses a webshop with a set of heuristics (see Section 3.0 of the prompt) such as "Broad Appeal," "Visual Quality," and "Giftability." This initial phase is qualitative and creative, focusing on identifying products that align with our brand's promise of high-quality, desirable gifts.
+       
+  2. **Analysis & Generation:** Once a product is selected, the AI switches to the role of a meticulous data analyst. This second phase is quantitative and structured, focusing on extracting, interpreting, and formatting data with perfect accuracy according to our JSON schema. This dual-role approach ensures that the products added to our catalog are not just technically correct but also strategically sound and appealing to our target users.
 
-**Output Format (Strict):**  
-The output MUST be a valid JSON array. Each object must follow this exact structure.
+* **Autonomous Context-Fetching & De-duplication:** A key feature of this workflow's autonomy is the instruction for the agent to fetch the live products.json file from its public URL (https://denrettegave.dk/assets/products.json) at the start of its task. This serves two purposes:
 
-\[  
-{  
-"name": "Klassisk T-shirt (Blå, Medium)",  
-"description": "En blød og komfortabel t-shirt i høj kvalitet, perfekt til hverdagsbrug.",  
-"price": 299,  
-"url": "<https://www.example.dk/tshirt-blue-m-affiliate>",  
-"image": "<https://www.example.dk/images/tshirt-blue.jpg>",  
-"differentiator_tags": \["color", "size"\],  
-"tags": {  
-"gender": \["Mand", "alle"\],  
-"age": \["18-25", "26-40"\],  
-"interests": \["Mode", "Fritid"\],  
-"occasion": \["Fødselsdag", "Bare fordi"\],  
-"brand": \["BrandX"\],  
-"color": \["Blå"\],  
-"size": \["Medium"\]  
-}  
-}  
-\]
+  1. **It removes a manual dependency.** We do not need to provide the AI with the current product list; it retrieves its own context, making the task fully self-sufficient and suitable for scheduled, automated execution.  
+  2. **It enables robust de-duplication.** The prompt explicitly requires the agent to cross-reference every potential new product against the live catalog. If a duplicate is found, the agent is instructed to discard it and find another, ensuring our database remains clean and efficient.
 
-Let’s break down why we wrote the prompt this way:
 
-- We start by defining the **Role** of the AI. By saying it is an “expert e-commerce curator and data analyst specializing in unique high-quality gifts in Denmark,” we prime the AI to think like a knowledgeable shopper who knows what's special and also can analyze data (meaning not just list random things but provide structured info). This helps set the context that we want both creativity (finding unique gifts) and analytical output (structured tags and details).
-- The **Objective** clearly states what we want: 10 unique gift ideas for a specific niche. (We would fill in or contextualize what niche we want before running it – e.g., we might prompt specifically for “gaming gadgets” or “eco-friendly products” depending on need). For each, we need name, description, price, URLs (product and image), and tags. This basically outlines the fields we want in each JSON object.
-- The **Critical Instruction** is extremely important: it instructs the AI to first check our products.json (we gave the exact URL) and treat all names and URLs inside it as an exclusion list. "Do NOT suggest any product already on this list." We put this in bold and uppercase "MUST" to emphasize how crucial it is.
-- Reason: We don't want duplicates of what's already in our database. Since the AI might not know what we have, we actually give it the data of what we have (by letting it fetch products.json content).
-- This is a clever hack to use the AI’s ability to do web requests (some AI systems can fetch a URL if allowed) or we might feed it ourselves if using a local tool. But conceptually, it cross-references to avoid recommending the same item again.
-- This ensures novelty of suggestions and avoids wasted suggestions on duplicates.
-- It's also a guard: by reading our product list, the AI might get a sense of style and format (which could help consistency, though it might also stick to similar ideas, but presumably, we ask for a niche so it will branch out).
-- The **Variation Handling Clause**: We instruct the AI how to deal with product variations. We realized that many e-commerce items have variants (colors, sizes). Instead of treating them as one product with options (which is how an online store might), our system architecture chooses to list each variant as a separate entry (with differentiator tags).
-- We explicitly say: if a product has variations, create separate JSON for each variant. And these do not count towards the "10 distinct products".
-- This means if it picks "Classic T-shirt" which comes in 3 colors and 4 sizes, it will output 12 objects (all with same base name but different parenthetical details in name perhaps). But still find 9 other distinct base products to meet the goal of 10 distinct product ideas.
-- This is to avoid the AI thinking "I'll just give variants as separate products to reach 10 easily". We want 10 base ideas, with variants in addition if needed.
-- This clause ensures our database ends up listing each variant and we don't have to manually add missing variants later.
-- **Tagging & Variation Analysis Instructions**: This is the guidance for populating the tags object.
-- Step 1: Identify what the variation dimensions are (color, size, subscription length, etc.) and list them in differentiator_tags. And note that that should be the same for all variants of the product. So e.g., all T-shirt variants have differentiator_tags \["color","size"\].
-- Step 2: Fill in other tag categories:
-  - For gender, age, interests, occasion, brand – we instruct it to use best judgment from description, title, category of product.
-  - We explicitly list possible values or examples for each category to guide consistency (e.g., gender should be one of Mand, Kvinde, alle).
-  - Age ranges we define as buckets.
-  - For interests we give examples, but it's open-ended depending on product (like "Outdoor", "Madlavning", etc).
-  - Occasions examples given.
-  - Brand: just get the brand name from the product page.
-  - Then importantly, any differentiator categories identified should also be included as tags with the specific value for that variant (so e.g., for a given variant: color: \["Blue"\] or size: \["Medium"\] matching that variant).
-- This granular instruction aims to get consistent, structured tags, which is something an AI might not do well without guidance. We basically taught it our tagging schema.
-- **Output Format (Strict)**: We explicitly require a valid JSON array of objects in the structure we want. We even provide a mini example within the prompt, formatted as JSON, to illustrate exactly how it should look (with keys in quotes, using arrays for each tag category).
-- The example "Klassisk T-shirt (Blå, Medium)" shows a variant of a product with multiple differentiators. This example demonstrates:
-  - The naming convention we expect (including variant attributes in parentheses in name, though AI might not perfectly follow that but it's a hint).
-  - The fields: name (string), description (string), price (number, presumably integer DKK without currency symbol to keep it numeric), url (the affiliate link which we want fully formed), image (direct link to image).
-  - differentiator_tags as an array of strings.
-  - tags as an object with all keys and values shown as arrays of strings (except maybe brand but we even make brand an array).
-- We have brand as an array too because some products might have multiple brands? Usually not, but maybe something like co-branded items or bundles. We just made everything an array for consistency except price.
+#### **7.1.2 The Technical & Human Workflow for Product Discovery**
 
-This prompt is quite long and complex, but it needed to be. LLMs often need explicit and repetitive clarity to output exactly in the format needed. We prefer to get JSON back so we can easily integrate it (just parse and append to products.json after review).
+The execution of this prompt follows a precise operational sequence:
 
-The expected use: We feed a variant of this prompt into an AI like GPT-4 (which can browse or we provide relevant pages) along with a niche specification. The AI returns JSON. We as humans then review that JSON: - Remove any obvious bad suggestions (if some product isn't actually good or is already in our list and it missed that). - Possibly verify the info (the price and links might need checking). - Then incorporate the new products via the admin (or directly commit the JSON).
+1. **Input:** The Human Partner provides the agentic AI with a list of one or more partner webshop URLs (e.g., \[ "https://www.imerco.dk/", "https://www.ditur.dk/" \]).  
+2. AI Execution (Autonomous):
 
-This process can generate a lot of new entries quickly. It's much faster than manually scouting websites for products, and the structured output saves us typing and mistakes.
+a. The agent fetches and parses the live products.json file.  
+b. It navigates to the first webshop URL.  
+c. It browses the site and selects at least five promising gift products that are not already in its fetched catalog data.  
+d. For each of the five selected products, it performs the full analysis and generation loop, creating a perfectly formatted JSON object.  
+e. It repeats this process for every other webshop URL in the input list.
 
-By building this with an AI, we maintain low operational costs for content generation. It's a one-time cost when we run it (just the API calls).
+3. **Output:** The agent's final output is a single, clean JSON array containing all the newly discovered and analyzed product objects.
 
-We do ensure that there's still **Human Review & Curation**, which leads to the next prompt and our workflow steps.
+4. **Human Action:** The Human Partner copies this JSON array and pastes it into the "Live Editor" in the admin.html panel, appending it to the existing list of products. After a final review, the "Save to GitHub" button is clicked, and the new products are committed to the repository and deployed to the live site.
 
-### 7.1.1 LLM Prompt for Processing Pre-selected Affiliate Links
+### **7.2 AI-Driven Workflow: Single Product Analysis & Enrichment**
 
-This prompt handles a different scenario: sometimes we might already have a list of specific products (perhaps from an affiliate network or partner) that we want to add. In that case, we don't need the AI to find new ideas, we just need it to scrape and format data for known URLs.
+For situations where a specific product has been pre-vetted or needs to be added to the catalog quickly, we utilize a second, more focused master prompt. This workflow tasks the agentic AI with performing the same deep analysis and data generation, but for a single, pre-given product URL.
 
-For instance, maybe we joined a new affiliate program that provided us 5 product links that fit our site. We want to import those. Instead of manually copying each product’s details, we use the AI to parse those pages and output JSON.
+The complete, unabridged master prompt for this task is maintained externally in the **Appendix** of the document: product-discovery-prompt-blueprint.md.
 
-The prompt:
+#### **7.2.1 The Philosophy and Structure of the Analysis Prompt**
 
-**Role:** You are an expert e-commerce curator and data analyst. Your task is to process a list of provided product URLs, visit each one, and convert them into a structured JSON format.
+While the single-URL prompt shares the same core logic as the discovery prompt, its structure is optimized for depth over breadth. The key philosophical underpinnings are focused on creating the richest possible dataset from a single source.
 
-**Objective:** For each affiliate URL provided in the list below, you must visit the webpage and perform a detailed analysis. Extract the product's name, a short compelling description, its exact price in DKK, a direct URL to a high-quality product image, and a comprehensive set of structured tags.
+* **The Tagging Philosophy (The Core of Our Data Strategy):** The most critical section of the prompt is the detailed explanation of our tagging methodology. This is how we translate a product's features into a structured format that our quiz engine can understand and leverage. The philosophy is divided into two tag types:  
+  * **Core Tags (tags):** These are the broad, foundational attributes that map directly to the initial, user-facing questions in our quiz (e.g., gender, age, price). They allow the engine to perform the first major filtering and scoring pass. A crucial instruction here is for the interest tag to be **analytical and open-ended**. The prompt explicitly tells the agent *not* to use a predefined list, but to identify all specific interests a product serves (e.g., a cookbook might generate interest:madlavning, interest:foodie, and interest:italiensk\_mad). This approach ensures we capture nuanced data that can be used to build more intelligent quiz questions in the future.
 
-**CRITICAL INSTRUCTION: The url field in your final JSON output for each product MUST be the exact affiliate URL I provide below.**
+  * **Differentiator Tags (differentiator\_tags):** This is the key to the advanced intelligence and future scalability of our quiz engine. The prompt instructs the agent to be **exhaustive** in extracting every relevant technical specification and granular attribute. The philosophy here is **"collect now, use later."** By instructing the agent to err on the side of too much detail (e.g., for a watch, capturing case\_size, band\_material, dial\_color, movement, water\_resistance, etc.), we are building a rich, structured dataset. In the future, as we analyze this data, we can identify common differentiators and build new, highly specific questions into our quiz ("Do they prefer a watch with a leather or steel band?"). This transforms our products.json file from a simple catalog into a dynamic, evolving knowledge base that powers the continuous improvement of our recommendation engine.
 
-**Tagging & Variation Analysis Instructions:**  
-For each product, you must deduce the following attributes and structure them in a tags object.  
-1\. **Analyze Variations:** Examine the product page for options like color, size, material, or subscription duration. List these variation types in the differentiator_tags array. 2. **Populate Tags:** Based on the product's description, title, and category, populate the tags object. Use your best judgment.  
-\- gender: "Mand", "Kvinde", or "alle".  
-\- age: Estimate appropriate age ranges (e.g., "18-25", "26-40", "41-60", "60+").  
-\- interests: Deduce relevant interests (e.g., "Mode", "Gaming", "Madlavning", "Outdoor").  
-\- occasion: Suggest suitable occasions (e.g., "Fødselsdag", "Jul", "Årsdag").  
-\- brand: Identify the product's brand name.  
-\- color, size, etc.: If you identified these as differentiators, list the specific option for the product URL you are providing (e.g., color: \["Blå"\], size: \["Medium"\]).
+* **Automated Affiliate Link Construction:** The prompt hard-codes the structure of our Partner-ads affiliate links. The agent is instructed to take the product's direct URL and append it to a static base URL. This removes the possibility of human error in link creation and fully automates a critical part of our monetization strategy.
 
-**Product List to Process:**  
-\[  
-"<https://www.partner-site.dk/product-a?affiliate_id=123>",  
-"<https://www.another-site.com/item-b?ref=xyz>",  
-"<https://www.example-store.com/product-c/variant-1?tracking_code=abc>"  
-\]
+#### **7.2.2 The Technical & Human Workflow for Single Product Enrichment**
 
-**Output Format (Strict):**  
-The output MUST be a valid JSON array. Each object must follow this exact structure, corresponding to one of the URLs I provided.
-
-\[  
-{  
-"name": "Produkt A Navn",  
-"description": "En fantastisk beskrivelse af produkt A.",  
-"price": 899,  
-"url": "<https://www.partner-site.dk/product-a?affiliate_id=123>",  
-"image": "<https://www.partner-site.dk/images/product-a.jpg>",  
-"differentiator_tags": \["material"\],  
-"tags": {  
-"gender": \["alle"\], "age": \["26-40"\], "interests": \["Hjemmet", "Design"\],  
-"occasion": \["Indflyttergave"\], "brand": \["BrandA"\], "material": \["Eg"\]  
-}  
-}  
-\]
-
-Analysis: - It's similar to the previous prompt but simpler in some ways. We are not asking the AI to come up with new ideas, just to process given URLs. - **Role & Objective:** We set context that it needs to visit each provided URL and extract details into JSON. It's a straightforward web scraping task with analysis for tags. - **Critical Instruction:** We emphasize that the url in output must exactly match the affiliate URL given. This is because sometimes an AI might convert an affiliate link to a canonical link or omit parameters. We need that tracking info intact to get our commission. So we explicitly instruct not to change the URL. - **Tagging instructions:** It's basically the same as before, but simplified because now if a product has variations, we only have one URL (maybe one variant's URL or main product page). - Actually, if an affiliate link is to a specific variant, the AI will treat it as one product (we might in these cases need to add other variants separately via other links or manually). - But we still have it list differentiator_tags if applicable (like if this specific URL is one color of a product, identify that). - Then fill tags (gender, age, etc.) as before. - We provide a **Product List to Process** embedded right in the prompt as a JSON array of URLs (so the AI clearly sees them as data to iterate through). - **Output Format:** We again demand a JSON array output, one object per input URL, with the example showing the structure. - The example is shorter (only one object example) but covers fields. - We used a "material" differentiator example just to illustrate something beyond color/size.
-
-The idea is the AI will produce an array with one object per link we gave, in matching order ideally (though order isn't critical if we know to match by URL). Each should have all required fields filled in.
-
-We as humans then take that JSON, verify content: - We ensure description is good Danish (the AI might output in Danish because our prompt examples were Danish, which is what we want). - Check price is correct and numeric. - Confirm the image URL is high-quality (not a thumbnail ideally). - Possibly check tags if they make sense (adjust if needed). - Then integrate them to our products list.
-
-This approach saves time especially for bulk adding from affiliate data. For example, an affiliate network might give us a CSV of top products with tracking links. Instead of adding each manually, we feed the links to this prompt, get structured JSON.
-
-After generation and curation, those products enter our system and then users will see them in recommendations if they match relevant tags.
-
-### 7.2 Content Curation Workflow
-
-Now, combining the above automated steps with human oversight, here’s the entire content pipeline workflow:
-
-1. **Automated LLM Run:** We periodically run the LLM with the "Automated Discovery" prompt (7.1) to generate a batch of new product leads (for example, "10 new eco-friendly gifts", etc.). The result is a JSON list of new candidate products complete with details. This is done perhaps monthly or when we need to expand our catalog in a certain area (like if we notice we lack products for a certain interest or occasion).
-2. **Human Review & Curation:** Once the AI outputs the suggestions, a human (likely the admin or content curator) reviews the list.
-3. During this review, they will **discard** any low-quality or unsuitable products. For instance, the AI might have included something that's not actually a great gift or is from a dubious source. Those would be removed.
-4. Also, check for duplicates or too-similar items, and remove as needed.
-5. Perhaps compare with our business model: ensure each product can be affiliated (if a suggestion is from a store we have no affiliate program for, we might discard it, or find if that store has one).
-6. Essentially filter down to the truly good suggestions.
-7. The curated, approved ones are then kept for the next step.
-8. **Verify & Enhance Data:** For the products that are approved:
-9. The curator double-checks that all the information is accurate. For example, verify that the price is correct and updated, maybe open the actual product page manually to see if description can be refined.
-10. Ensure the affiliate URLs are correct and active (maybe even test clicking them).
-11. Possibly shorten descriptions if the AI output something too long or salesy. We aim for a concise, compelling 1-2 sentence description, so edit if needed.
-12. Ensure tags make sense: e.g., if a product clearly is "for women", ensure gender tag is Kvinde, etc. The AI is good but might sometimes put "Mand" where not appropriate. We fix any such anomalies.
-13. If any differentiator tags are present and we might want separate entries for each, ensure the AI provided them all. If the AI only gave one variant but the product has others we want, we might manually replicate that entry for each variant or rerun a query for variants.
-14. Essentially polish the data to be ready for users. This step is important to maintain quality; we don’t trust AI blindly.
-15. **Publish to Live Site (via Admin Panel):** Now, with verified JSON data for new products:
-16. The admin can add them to products.json. This could be done by copying the JSON output (or a subset that was approved) and pasting into the Live Editor in the admin panel or directly into the repo file. We have to ensure proper JSON format (like merging with existing array).
-17. If using admin panel: perhaps copy the entire updated array from admin’s Live Editor after merging, then commit to GitHub as "Add new products".
-18. Mark the site for deployment. Once deployed, those products are now accessible to the front-end.
-19. The admin can also prepare any images if needed (the image URLs might be external, which is okay since we use direct links). If we wanted to host images ourselves we could download and host them, but that’s a heavy process; likely we just use the direct links from the store (less control but easier).
-20. Note: For affiliate model, sometimes direct image links can break (if store changes them). But we accept that risk or occasionally run a broken image check (maybe flagged by users).
-21. **Monitoring:** After going live, we monitor how these products perform (via user ratings and flags).
-22. If something gets flagged or low-rated, we might reconsider if it was a good addition or if data needs tweaking (like maybe the price changed and now is wrong, we'd update it).
-23. This closes the loop with Admin Panel usage.
-24. **Iteration:** We repeat the above periodically:
-25. Over time, we may accumulate a large and diverse database of gifts.
-26. We always maintain curation control; AI helps with discovery and grunt work, but humans ensure alignment with our quality standards and strategy.
-
-As depicted in the **workflow summary**: - The process begins with an **Automated LLM Run** producing JSON leads. - Next is **Human Review & Curation** where we either **Discard** or **Approve** each suggestion. - Approved ones go into **Verify & Enhance** stage where details are confirmed and cleaned. - Finally, the curated data is **Published** via Admin Panel to the live site.
-
-This pipeline ensures that while we benefit from AI’s ability to comb through lots of data and produce structured output quickly, we do not compromise on content quality. We maintain a human-in-the-loop approach. The result is a semi-automated content curation pipeline: - Saves time (we're not manually writing descriptions or collecting images for every new product). - Reduces oversight (AI might catch details or categories we might miss or get tags for us, etc.). - Still, leverages human insight for taste and brand alignment (we only put forth products that match our vision of "unique, high-quality gifts").
-
-Also included in planning: - In the future, as the prompt updates hint, we foresee possibly an **Update 4: Smarter LLM Curation Pipeline** which might incorporate more automation or refined AI usage, maybe even an AI model fine-tuned on what we liked vs discarded so it suggests better initially, etc. (This ties into Roadmap.)
-
-Overall, our lead generation and content update approach is a blend of **automation and manual curation** that fits our low-cost, one-person (or small team) operation style. It allows us to continuously grow and refresh our product recommendations so the site stays relevant and comprehensive, without needing a large content team.
+1. **Input:** The Human Partner provides the agentic AI with a single product URL.  
+2. AI Execution (Autonomous):  
+   a. The agent fetches the live products.json file to use as context for de-duplication.  
+   b. It verifies that the input URL is not already in the catalog.  
+   c. It performs the deep analysis and tagging of the product.  
+   d. It constructs the affiliate link.  
+3. **Output:** The agent's final output is a single, perfectly formatted JSON object.  
+4. **Human Action:** The Human Partner copies the JSON object, adds it to the array in the "Live Editor" of the admin.html panel, reviews, and saves the changes to GitHub.
 
 ## 8.0 Go-to-Market & Launch Strategy (Phase 1)
 
