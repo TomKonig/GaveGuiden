@@ -1,5 +1,12 @@
-const { connectToDatabase } = require('./utils/mongodb-client');
+const { Octokit } = require("@octokit/rest");
 const { requireAuth } = require('./utils/auth-middleware');
+
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const REPO_OWNER = process.env.GITHUB_REPO_OWNER;
+const REPO_NAME = process.env.GITHUB_REPO_NAME;
+const FILE_PATH = 'assets/products.json';
+
+const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
 const handler = async (event) => {
     if (event.httpMethod !== 'POST') {
@@ -7,40 +14,46 @@ const handler = async (event) => {
     }
 
     try {
-        const { productId, reason } = JSON.parse(event.body);
+        const { content } = JSON.parse(event.body);
+        if (!content) {
+            return { statusCode: 400, body: 'Bad Request: Missing content.' };
+        }
 
         // --- Stricter Validation ---
-        if (!productId || typeof productId !== 'string' || productId.trim() === '') {
-            return { statusCode: 400, body: 'Bad Request: Invalid or missing productId.' };
-        }
-        if (!reason || typeof reason !== 'string' || reason.trim() === '') {
-            return { statusCode: 400, body: 'Bad Request: Invalid or missing reason.' };
+        try {
+            JSON.parse(content);
+        } catch (e) {
+            return { statusCode: 400, body: 'Bad Request: Content is not valid JSON.' };
         }
 
-        const db = await connectToDatabase();
-        const flagsCollection = db.collection('flags');
+        const { data: fileData } = await octokit.repos.getContent({
+            owner: REPO_OWNER,
+            repo: REPO_NAME,
+            path: FILE_PATH,
+        });
 
-        const result = await flagsCollection.updateMany(
-            { productId: productId.trim(), reason: reason.trim(), status: 'open' },
-            { $set: { status: 'resolved', resolvedAt: new Date() } }
-        );
-
-        if (result.matchedCount === 0) {
-            return {
-                statusCode: 404,
-                body: JSON.stringify({ message: 'No open flags found for this product and reason.' }),
-            };
-        }
+        await octokit.repos.createOrUpdateFileContents({
+            owner: REPO_OWNER,
+            repo: REPO_NAME,
+            path: FILE_PATH,
+            message: `feat: Update products.json via admin panel [skip ci]`,
+            content: Buffer.from(content).toString('base64'),
+            sha: fileData.sha,
+            committer: {
+                name: 'GaveGuiden Bot',
+                email: 'bot@gaveguiden.dk'
+            }
+        });
 
         return {
             statusCode: 200,
-            body: JSON.stringify({ message: `Successfully resolved ${result.modifiedCount} flag(s).` }),
+            body: JSON.stringify({ message: 'Products updated successfully! Changes will be live in a minute.' }),
         };
     } catch (error) {
-        console.error('Error resolving flag:', error);
+        console.error('GitHub API Error:', error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ message: 'Failed to resolve flag(s).' }),
+            body: JSON.stringify({ message: 'Failed to update products.json on GitHub.' }),
         };
     }
 };
