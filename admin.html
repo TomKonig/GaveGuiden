@@ -148,231 +148,260 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const authView = document.getElementById('auth-view');
-            const adminView = document.getElementById('admin-view');
-            const passwordInput = document.getElementById('password-input');
-            const loginBtn = document.getElementById('login-btn');
-            const errorMsg = document.getElementById('error-msg');
-            const jsonEditor = document.getElementById('json-editor');
-            const copyBtn = document.getElementById('copy-btn');
-            const copyFeedback = document.getElementById('copy-feedback');
-            const tabs = document.querySelectorAll('.tab-btn');
-            const tabContents = document.querySelectorAll('.tab-content');
-            const productSelector = document.getElementById('product-selector');
-            const editFormContainer = document.getElementById('edit-form-container');
-            const saveChangesBtn = document.getElementById('save-changes-btn');
-            const saveFeedback = document.getElementById('save-feedback');
-            const flagsTableBody = document.getElementById('flags-table-body');
-            const thresholdInput = document.getElementById('threshold-input');
-            const alertContainer = document.getElementById('alert-container');
-            const ratingsTableBody = document.getElementById('ratings-table-body');
+<script>
+    const loginView = document.getElementById('login-view');
+    const adminView = document.getElementById('admin-view');
+    const passwordInput = document.getElementById('password');
+    const loginButton = document.getElementById('login-button');
+    const loginError = document.getElementById('login-error');
+    const jsonEditor = document.getElementById('json-editor');
+    const copyButton = document.getElementById('copy-button');
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const productSelector = document.getElementById('product-selector');
+    const editForm = document.getElementById('edit-form');
 
-            let productData = [];
-            let flagsData = [];
-            let ratingsData = [];
-            let authToken = null;
+    // Check for existing token
+    const token = localStorage.getItem('jwt_token');
+    if (token) {
+        // You might want to validate the token here
+        loginView.classList.add('hidden');
+        adminView.classList.remove('hidden');
+        loadAdminData();
+    }
 
-            async function login() {
-                const password = passwordInput.value;
-                errorMsg.classList.add('hidden');
-                loginBtn.disabled = true;
-                loginBtn.textContent = 'Logging in...';
+    loginButton.addEventListener('click', async () => {
+        const password = passwordInput.value;
+        loginError.classList.add('hidden');
 
-                try {
-                    const response = await fetch('/.netlify/functions/admin-login', {
-                        method: 'POST',
-                        body: JSON.stringify({ password })
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        authToken = data.token;
-                        sessionStorage.setItem('drg-auth-token', authToken);
-                        authView.classList.add('hidden');
-                        adminView.classList.remove('hidden');
-                        await loadAllData();
-                    } else {
-                        errorMsg.classList.remove('hidden');
-                    }
-                } catch (err) {
-                    console.error("Login request failed:", err);
-                    errorMsg.textContent = "An error occurred. Please try again.";
-                    errorMsg.classList.remove('hidden');
-                } finally {
-                    loginBtn.disabled = false;
-                    loginBtn.textContent = 'Login';
-                }
-            }
-
-            async function loadAllData() {
-                if (!authToken) return;
-                try {
-                    const [productsRes, flagsRes, ratingsRes] = await Promise.all([
-                        fetch('./assets/products.json'),
-                        fetch('./assets/flags.json'),
-                        fetch('/.netlify/functions/get-ratings', {
-                            headers: { 'Authorization': `Bearer ${authToken}` }
-                        })
-                    ]);
-                    
-                    if (!productsRes.ok) throw new Error('Failed to fetch products');
-                    productData = await productsRes.json();
-                    
-                    flagsData = flagsRes.ok ? await flagsRes.json() : [];
-                    
-                    if (ratingsRes.ok) {
-                        ratingsData = await ratingsRes.json();
-                    } else {
-                        console.warn('Could not fetch ratings, maybe unauthorized or error.');
-                        ratingsData = [];
-                    }
-                    
-                    jsonEditor.value = JSON.stringify(productData, null, 2);
-                    populateProductSelector();
-                    renderFlags();
-                    renderRatings();
-
-                } catch (error) {
-                    console.error("Error loading data:", error);
-                    alert("Failed to load critical data. Please check the console for errors.");
-                }
-            }
-            
-            function renderFlags() {
-                if (!flagsData) return;
-                const threshold = parseInt(thresholdInput.value) || 3;
-                let highAlert = false;
-
-                const aggregatedFlags = flagsData
-                    .filter(flag => flag.status === 'unresolved')
-                    .reduce((acc, flag) => {
-                        const key = `${flag.product_id}-${flag.issue_type}`;
-                        if (!acc[key]) {
-                            acc[key] = { product_id: flag.product_id, issue_type: flag.issue_type, reports: 0, last_reported: '1970-01-01T00:00:00Z', flag_ids: [] };
-                        }
-                        acc[key].reports++;
-                        if (flag.timestamp > acc[key].last_reported) acc[key].last_reported = flag.timestamp;
-                        acc[key].flag_ids.push(flag.flag_id);
-                        return acc;
-                    }, {});
-
-                flagsTableBody.innerHTML = '';
-                const sortedFlags = Object.values(aggregatedFlags).sort((a, b) => b.reports - a.reports);
-
-                if (sortedFlags.length === 0) {
-                     flagsTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No unresolved flags found.</td></tr>`;
-                     alertContainer.classList.add('hidden');
-                     return;
-                }
-
-                sortedFlags.forEach(aggFlag => {
-                    const product = productData.find(p => p.id === aggFlag.product_id);
-                    const productName = product ? `${product.id}: ${product.name}` : `Unknown (ID: ${aggFlag.product_id})`;
-                    const lastReportedDate = new Date(aggFlag.last_reported).toLocaleString('da-DK');
-                    if (aggFlag.reports >= threshold) highAlert = true;
-                    const row = `<tr class="${aggFlag.reports >= threshold ? 'bg-red-50' : ''}"><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${productName}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${aggFlag.issue_type}</td><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${aggFlag.reports}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lastReportedDate}</td><td class="px-6 py-4 whitespace-nowrap text-sm font-medium"><button class="text-indigo-600 hover:text-indigo-900 resolve-btn" data-flag-ids='${JSON.stringify(aggFlag.flag_ids)}'>Resolve</button></td></tr>`;
-                    flagsTableBody.innerHTML += row;
-                });
-                alertContainer.classList.toggle('hidden', !highAlert);
-            }
-            
-            function renderRatings() {
-                if (!ratingsData || ratingsData.length === 0) {
-                    ratingsTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No ratings submitted yet.</td></tr>`;
-                    return;
-                }
-                ratingsTableBody.innerHTML = '';
-                ratingsData.slice().reverse().forEach(rating => {
-                    const ratingDate = new Date(rating.timestamp).toLocaleString('da-DK');
-                    const answers = JSON.stringify(rating.quiz_answers, null, 2);
-                    const row = `<tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${rating.product_name}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-500 font-bold">${'★'.repeat(rating.rating)}${'☆'.repeat(5 - rating.rating)}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${ratingDate}</td><td class="px-6 py-4 text-xs text-gray-500"><pre>${answers}</pre></td></tr>`;
-                    ratingsTableBody.innerHTML += row;
-                });
-            }
-            
-            function populateProductSelector() {
-                productSelector.innerHTML = '<option value="-1">-- Vælg et produkt --</option>';
-                productData.forEach((product, index) => {
-                    const option = document.createElement('option');
-                    option.value = index;
-                    option.textContent = `${product.id}: ${product.name}`;
-                    productSelector.appendChild(option);
-                });
-            }
-
-            // Check for existing token on page load
-            authToken = sessionStorage.getItem('drg-auth-token');
-            if (authToken) {
-                authView.classList.add('hidden');
-                adminView.classList.remove('hidden');
-                loadAllData();
-            }
-
-            loginBtn.addEventListener('click', login);
-            passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') login(); });
-
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    tabContents.forEach(c => c.classList.toggle('active', c.id === tab.dataset.tab));
-                });
-            });
-            
-            flagsTableBody.addEventListener('click', (e) => {
-                if (e.target.classList.contains('resolve-btn')) {
-                    const flagIdsToResolve = JSON.parse(e.target.dataset.flagIds);
-                    flagIdsToResolve.forEach(id => {
-                        const flag = flagsData.find(f => f.flag_id === id);
-                        if (flag) flag.status = 'resolved';
-                    });
-                    // This would ideally send an update to a 'resolve-flags' function
-                    console.log("Resolved flags:", flagIdsToResolve, "You would now need to save the updated flags.json");
-                    renderFlags();
-                }
+        try {
+            const response = await fetch('/api/admin-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
             });
 
-            thresholdInput.addEventListener('change', renderFlags);
+            if (!response.ok) {
+                throw new Error('Login failed');
+            }
 
-            productSelector.addEventListener('change', () => {
-                selectedProductIndex = parseInt(productSelector.value);
-                if (selectedProductIndex > -1) {
-                    const product = productData[selectedProductIndex];
-                    document.getElementById('edit-name').value = product.name;
-                    document.getElementById('edit-description').value = product.description;
-                    document.getElementById('edit-price').value = product.price;
-                    document.getElementById('edit-image').value = product.image;
-                    document.getElementById('edit-tags-interests').value = product.tags.interests.join(', ');
-                    editFormContainer.classList.remove('hidden');
+            const { token } = await response.json();
+            localStorage.setItem('jwt_token', token);
+
+            loginView.classList.add('hidden');
+            adminView.classList.remove('hidden');
+            loadAdminData();
+        } catch (error) {
+            loginError.textContent = 'Invalid password.';
+            loginError.classList.remove('hidden');
+        }
+    });
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('border-indigo-500', 'text-indigo-600'));
+            tab.classList.add('border-indigo-500', 'text-indigo-600');
+
+            tabContents.forEach(content => {
+                if (content.id === `${tab.dataset.tab}-content`) {
+                    content.classList.remove('hidden');
                 } else {
-                    editFormContainer.classList.add('hidden');
+                    content.classList.add('hidden');
                 }
-            });
-
-            saveChangesBtn.addEventListener('click', () => {
-                if (selectedProductIndex > -1) {
-                    const product = productData[selectedProductIndex];
-                    product.name = document.getElementById('edit-name').value;
-                    product.description = document.getElementById('edit-description').value;
-                    product.price = parseFloat(document.getElementById('edit-price').value);
-                    product.image = document.getElementById('edit-image').value;
-                    product.tags.interests = document.getElementById('edit-tags-interests').value.split(',').map(s => s.trim());
-                    
-                    jsonEditor.value = JSON.stringify(productData, null, 2);
-                    saveFeedback.classList.remove('hidden');
-                    setTimeout(() => saveFeedback.classList.add('hidden'), 2000);
-                }
-            });
-
-            copyBtn.addEventListener('click', () => {
-                jsonEditor.select();
-                document.execCommand('copy');
-                copyFeedback.classList.remove('hidden');
-                setTimeout(() => copyFeedback.classList.add('hidden'), 2000);
             });
         });
-    </script>
+    });
+
+    async function loadAdminData() {
+        // Load data for all tabs
+        loadLiveEditor();
+        loadFlags();
+        loadRatings();
+    }
+
+    async function loadLiveEditor() {
+        try {
+            const response = await fetch('/assets/products.json');
+            const products = await response.json();
+            jsonEditor.value = JSON.stringify(products, null, 2);
+            populateProductSelector(products);
+        } catch (error) {
+            console.error('Error loading products.json:', error);
+            jsonEditor.value = 'Error loading products.json.';
+        }
+    }
+
+    copyButton.addEventListener('click', () => {
+        jsonEditor.select();
+        document.execCommand('copy');
+        copyButton.textContent = 'Copied!';
+        setTimeout(() => { copyButton.textContent = 'Copy to Clipboard'; }, 2000);
+    });
+    
+    // --- THIS IS THE UPDATED FUNCTION ---
+    async function loadFlags() {
+        const flagsTableBody = document.getElementById('flags-table-body');
+        const flagsLoading = document.getElementById('flags-loading');
+        const flagsError = document.getElementById('flags-error');
+        flagsLoading.classList.remove('hidden');
+        flagsError.classList.add('hidden');
+        flagsTableBody.innerHTML = '';
+
+        try {
+            const token = localStorage.getItem('jwt_token');
+            if (!token) throw new Error('Not authenticated');
+
+            const response = await fetch('/api/get-flags', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch flags. Status: ${response.status}`);
+            }
+            const flags = await response.json();
+
+            // Aggregate flags by productId
+            const flagCounts = flags.reduce((acc, flag) => {
+                acc[flag.productId] = (acc[flag.productId] || 0) + 1;
+                return acc;
+            }, {});
+
+            const productsResponse = await fetch('/assets/products.json');
+            const products = await productsResponse.json();
+            const productMap = products.reduce((acc, p) => {
+                acc[p.id] = p.name;
+                return acc;
+            }, {});
+
+            flagsTableBody.innerHTML = ''; // Clear existing rows
+            Object.entries(flagCounts).forEach(([productId, count]) => {
+                const productName = productMap[productId] || 'Unknown Product';
+                const row = `
+                    <tr>
+                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">${productName} (ID: ${productId})</td>
+                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${count}</td>
+                        <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                            <a href="#" class="text-indigo-600 hover:text-indigo-900">Resolve<span class="sr-only">, ${productName}</span></a>
+                        </td>
+                    </tr>
+                `;
+                flagsTableBody.innerHTML += row;
+            });
+
+        } catch (error) {
+            console.error('Error loading flags:', error);
+            flagsError.classList.remove('hidden');
+        } finally {
+            flagsLoading.classList.add('hidden');
+        }
+    }
+    
+    async function loadRatings() {
+        const ratingsContent = document.getElementById('ratings-content-body');
+        ratingsContent.innerHTML = 'Loading ratings...';
+        
+        try {
+            const token = localStorage.getItem('jwt_token');
+            if (!token) throw new Error('Not authenticated');
+            
+            const response = await fetch('/api/get-ratings', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch ratings');
+
+            const ratings = await response.json();
+
+            const productsResponse = await fetch('/assets/products.json');
+            const products = await productsResponse.json();
+            const productMap = products.reduce((acc, p) => {
+                acc[p.id] = p.name;
+                return acc;
+            }, {});
+
+            // Calculate average ratings
+            const averageRatings = ratings.reduce((acc, rating) => {
+                if (!acc[rating.productId]) {
+                    acc[rating.productId] = { total: 0, count: 0 };
+                }
+                acc[rating.productId].total += rating.rating;
+                acc[rating.productId].count += 1;
+                return acc;
+            }, {});
+            
+            ratingsContent.innerHTML = '';
+            for (const productId in averageRatings) {
+                const avg = (averageRatings[productId].total / averageRatings[productId].count).toFixed(2);
+                const productName = productMap[productId] || 'Unknown Product';
+                const div = document.createElement('div');
+                div.className = 'p-4 border rounded-lg';
+                div.innerHTML = `<h4 class="font-semibold">${productName}</h4><p>Average Rating: ${avg} / 5</p><p>Based on ${averageRatings[productId].count} ratings.</p>`;
+                ratingsContent.appendChild(div);
+            }
+
+        } catch(e) {
+            ratingsContent.innerHTML = `<p class="text-red-500">Error loading ratings. ${e.message}</p>`;
+        }
+    }
+
+    function populateProductSelector(products) {
+        productSelector.innerHTML = '<option>Select a product to edit...</option>';
+        products.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.id;
+            option.textContent = product.name;
+            productSelector.appendChild(option);
+        });
+    }
+
+    productSelector.addEventListener('change', async (e) => {
+        const productId = e.target.value;
+        if (!productId) {
+            editForm.classList.add('hidden');
+            return;
+        }
+
+        const response = await fetch('/assets/products.json');
+        const products = await response.json();
+        const product = products.find(p => p.id === productId);
+
+        if (product) {
+            document.getElementById('edit-id').value = product.id;
+            document.getElementById('edit-name').value = product.name;
+            document.getElementById('edit-description').value = product.description;
+            document.getElementById('edit-price').value = product.price;
+            document.getElementById('edit-url').value = product.url;
+            document.getElementById('edit-image').value = product.image;
+            document.getElementById('edit-tags').value = product.tags.join(', ');
+            document.getElementById('edit-differentiator_tags').value = product.differentiator_tags ? product.differentiator_tags.join(', ') : '';
+            document.getElementById('edit-status').value = product.status;
+            editForm.classList.remove('hidden');
+        }
+    });
+
+    document.getElementById('save-edit-button').addEventListener('click', () => {
+        const productId = document.getElementById('edit-id').value;
+        const products = JSON.parse(jsonEditor.value);
+        const productIndex = products.findIndex(p => p.id === productId);
+
+        if (productIndex > -1) {
+            products[productIndex] = {
+                id: document.getElementById('edit-id').value,
+                name: document.getElementById('edit-name').value,
+                description: document.getElementById('edit-description').value,
+                price: parseFloat(document.getElementById('edit-price').value),
+                url: document.getElementById('edit-url').value,
+                image: document.getElementById('edit-image').value,
+                tags: document.getElementById('edit-tags').value.split(',').map(t => t.trim()),
+                differentiator_tags: document.getElementById('edit-differentiator_tags').value.split(',').map(t => t.trim()),
+                status: document.getElementById('edit-status').value,
+            };
+            jsonEditor.value = JSON.stringify(products, null, 2);
+            alert('Changes applied to the Live Editor. Copy to clipboard and save to GitHub.');
+        }
+    });
+</script>
 </body>
 </html>
