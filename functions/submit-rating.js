@@ -1,50 +1,38 @@
-const fs = require('fs').promises;
-const path = require('path');
+const { connectToDatabase } = require('./utils/mongodb-client');
 
-// UPDATED: Path now points to the secure 'data' folder.
-const DATA_DIR = path.join(__dirname, '..', 'data');
-const filePath = path.join(DATA_DIR, 'ratings.json');
+exports.handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
+  }
 
-exports.handler = async (event, context) => {
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: 'Method Not Allowed' };
+  try {
+    const { productId, rating } = JSON.parse(event.body);
+
+    if (!productId || !rating || typeof rating !== 'number' || rating < 1 || rating > 5) {
+      return { statusCode: 400, body: 'Bad Request: Invalid productId or rating.' };
     }
 
-    try {
-        const ratingData = JSON.parse(event.body);
+    const db = await connectToDatabase();
+    const ratingsCollection = db.collection('ratings');
 
-        if (!ratingData.product_id || !ratingData.rating || !ratingData.quiz_answers) {
-            return { statusCode: 400, body: 'Bad Request: Missing required fields.' };
-        }
+    const newRating = {
+      productId,
+      rating: parseInt(rating),
+      createdAt: new Date(),
+    };
 
-        if (ratingData.quiz_answers && ratingData.quiz_answers.name) {
-            delete ratingData.quiz_answers.name;
-        }
+    await ratingsCollection.insertOne(newRating);
 
-        await fs.mkdir(DATA_DIR, { recursive: true });
-        
-        let ratings = [];
-        try {
-            const data = await fs.readFile(filePath, 'utf8');
-            ratings = JSON.parse(data);
-        } catch (error) {
-            if (error.code !== 'ENOENT') throw error;
-        }
-
-        ratings.push(ratingData);
-
-        await fs.writeFile(filePath, JSON.stringify(ratings, null, 2));
-
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ message: 'Rating submitted successfully' })
-        };
-
-    } catch (error) {
-        console.error('Error processing rating:', error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: 'Internal Server Error' })
-        };
-    }
+    return {
+      statusCode: 201,
+      body: JSON.stringify({ message: 'Rating submitted successfully!' }),
+      headers: { 'Content-Type': 'application/json' },
+    };
+  } catch (error) {
+    console.error('Error submitting rating:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: 'Internal Server Error' }),
+    };
+  }
 };
