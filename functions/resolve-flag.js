@@ -1,36 +1,27 @@
 const { connectToDatabase } = require('./utils/mongodb-client');
-const jwt = require('jsonwebtoken');
+const { requireAuth } = require('./utils/auth-middleware');
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
-exports.handler = async (event) => {
-    // 1. Authentication and Authorization
+const handler = async (event) => {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
-    const token = event.headers.authorization?.split(' ')[1];
-    if (!token) {
-        return { statusCode: 401, body: 'Unauthorized' };
-    }
-    try {
-        jwt.verify(token, JWT_SECRET);
-    } catch (error) {
-        return { statusCode: 401, body: 'Invalid token' };
-    }
-
-    // 2. Get productId and reason from the request body
-    const { productId, reason } = JSON.parse(event.body);
-    if (!productId || !reason) {
-        return { statusCode: 400, body: 'Bad Request: Missing productId or reason.' };
-    }
 
     try {
+        const { productId, reason } = JSON.parse(event.body);
+
+        // --- Stricter Validation ---
+        if (!productId || typeof productId !== 'string' || productId.trim() === '') {
+            return { statusCode: 400, body: 'Bad Request: Invalid or missing productId.' };
+        }
+        if (!reason || typeof reason !== 'string' || reason.trim() === '') {
+            return { statusCode: 400, body: 'Bad Request: Invalid or missing reason.' };
+        }
+
         const db = await connectToDatabase();
         const flagsCollection = db.collection('flags');
 
-        // 3. Update all open flags that match BOTH the productId and the reason
         const result = await flagsCollection.updateMany(
-            { productId: productId, reason: reason, status: 'open' },
+            { productId: productId.trim(), reason: reason.trim(), status: 'open' },
             { $set: { status: 'resolved', resolvedAt: new Date() } }
         );
 
@@ -53,3 +44,5 @@ exports.handler = async (event) => {
         };
     }
 };
+
+exports.handler = requireAuth(handler);
