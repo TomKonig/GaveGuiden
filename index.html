@@ -137,6 +137,7 @@
         let allProducts = [];
         let allQuestions = [];
         let quizState = {};
+        let totalDiscoverableQuestions = 0;
 
         // --- INITIALIZATION ---
         const initializeQuizState = () => {
@@ -145,6 +146,7 @@
                 productScores: {}, // e.g., { 'prod1': 5.0, 'prod2': 3.5 }
                 askedQuestionIds: new Set(),
                 availableProducts: [...allProducts],
+                answeredDiscoveryQuestions: 0
             };
         };
 
@@ -156,6 +158,7 @@
                 ]);
                 allProducts = await productsRes.json();
                 allQuestions = await questionsRes.json();
+                totalDiscoverableQuestions = allQuestions.filter(q => !q.is_initial && !q.is_differentiator).length;
             } catch (error) {
                 console.error("Failed to fetch initial data:", error);
                 // Display an error message to the user
@@ -201,6 +204,11 @@
         };
 
         const handleAnswerSelection = (tag, questionId) => {
+            const question = allQuestions.find(q => q.id === questionId);
+            if (question && !question.is_initial && !question.is_differentiator) {
+                quizState.answeredDiscoveryQuestions++;
+            }
+
             quizState.askedQuestionIds.add(questionId);
 
             const [key, value] = tag.split(':');
@@ -222,16 +230,14 @@
         const updateScores = () => {
             // Filter products first based on hard constraints like price
             let availableProducts = allProducts.filter(product => {
-                // Price filtering
                 if (quizState.answers.price) {
                     const priceTag = `price:${quizState.answers.price}`;
                     if (!product.tags.includes(priceTag)) return false;
                 }
-                // Differentiator filtering
                 for (const key in quizState.answers) {
-                    if (key.startsWith('color')) { // Example differentiator
-                         if (!product.differentiator_tags.includes(`${key}:${quizState.answers[key]}`)) return false;
-                    }
+                    const answerTag = `${key}:${quizState.answers[key]}`;
+                    const isDifferentiator = allQuestions.some(q => q.id.includes(key) && q.is_differentiator);
+                     if (isDifferentiator && !product.differentiator_tags.includes(answerTag)) return false;
                 }
                 return true;
             });
@@ -244,11 +250,9 @@
                     const [key, value] = tag.split(':');
                     const weight = TAG_WEIGHTS[key] || 1.0;
                     
-                    // Direct match
                     if (quizState.answers[key] === value) {
                         score += weight;
                     }
-                    // "Alle" is a half-match for gender
                     else if (key === 'gender' && value === 'alle' && quizState.answers.gender) {
                         score += weight / 2;
                     }
@@ -263,7 +267,6 @@
                 .sort((a, b) => b[1] - a[1]);
 
             if (sortedProducts.length === 0) {
-                 // No products match the criteria, find the best we had before the last filter
                  const lastAnswerKey = Object.keys(quizState.answers).pop();
                  delete quizState.answers[lastAnswerKey];
                  updateScores();
@@ -272,7 +275,6 @@
                     const bestProduct = allProducts.find(p => p.id === lastChanceSorted[0][0]);
                     return { type: 'result', product: bestProduct };
                  }
-                 // If still nothing, show a "not found" message
                  return { type: 'result', product: null };
             }
             
@@ -280,12 +282,10 @@
             const secondScore = sortedProducts.length > 1 ? sortedProducts[1][1] : 0;
             const bestProduct = allProducts.find(p => p.id === sortedProducts[0][0]);
 
-            // Condition 1: Clear winner
             if (topScore > 0 && (topScore / (secondScore + 0.1)) > SCORE_THRESHOLD) {
                 return { type: 'result', product: bestProduct };
             }
 
-            // Condition 2: Find the best question to ask
             const topProductIds = sortedProducts.slice(0, TOP_N_PRODUCTS_FOR_DIFFERENTIATION).map(p => p[0]);
             const topProducts = allProducts.filter(p => topProductIds.includes(p.id));
 
@@ -298,7 +298,6 @@
                 return { type: 'question', question: nextQuestion };
             }
 
-            // Condition 3: No more questions, return the best guess
             return { type: 'result', product: bestProduct };
         };
 
@@ -306,7 +305,7 @@
             let bestQuestion = null;
             let maxDifferentiation = -1;
 
-            const potentialQuestions = allQuestions.filter(q => !askedIds.has(q.id) && !q.is_initial);
+            const potentialQuestions = allQuestions.filter(q => !askedIds.has(q.id) && q.is_differentiator);
 
             potentialQuestions.forEach(question => {
                 const tagsInQuestion = new Set(question.answers.map(a => a.tag));
@@ -315,7 +314,6 @@
                 let splits = 0;
                 for (const tag of tagsInQuestion) {
                     const productsWithTag = productTagSets.filter(pt => pt.has(tag)).length;
-                    // A good differentiator splits the group
                     if (productsWithTag > 0 && productsWithTag < topProducts.length) {
                         splits++;
                     }
@@ -344,50 +342,111 @@
             question.answers.forEach(answer => {
                 const answerDiv = document.createElement('div');
                 answerDiv.className = "px-4 py-4 sm:px-0";
-                answerDiv.innerHTML = `<button type="button" class="group relative flex w-full justify-center rounded-md border border-gray-300 bg-white py-3 px-4 text-md font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">${answer.text}</button>`;
-                answerDiv.querySelector('button').onclick = () => handleAnswerSelection(answer.tag, question.id);
+                
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = "group relative flex w-full justify-center rounded-md border border-gray-300 bg-white py-3 px-4 text-md font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2";
+                button.textContent = answer.text;
+                button.onclick = () => handleAnswerSelection(answer.tag, question.id);
+
+                answerDiv.appendChild(button);
                 answersContainer.appendChild(answerDiv);
             });
 
-            const progress = (quizState.askedQuestionIds.size / (allQuestions.length - 2)) * 100;
+            const progress = totalDiscoverableQuestions > 0 ? (quizState.answeredDiscoveryQuestions / totalDiscoverableQuestions) * 100 : 0;
             progressBar.style.width = `${Math.min(progress, 100)}%`;
         };
         
         const renderResults = (product) => {
             quizView.classList.add('hidden');
             resultView.classList.remove('hidden');
+            resultCard.innerHTML = ''; // Clear previous results
 
             if (!product) {
-                resultCard.innerHTML = `
-                    <h3 class="text-xl font-semibold text-gray-800">Beklager!</h3>
-                    <p class="mt-2 text-gray-600">Vi kunne ikke finde en gave, der passede præcist til dine kriterier. Prøv venligst igen med lidt andre svar.</p>
-                `;
-                 // Hide report button if no product is found
+                const messageHeader = document.createElement('h3');
+                messageHeader.className = 'text-xl font-semibold text-gray-800';
+                messageHeader.textContent = 'Beklager!';
+                
+                const messageText = document.createElement('p');
+                messageText.className = 'mt-2 text-gray-600';
+                messageText.textContent = 'Vi kunne ikke finde en gave, der passede præcist til dine kriterier. Prøv venligst igen med lidt andre svar.';
+                
+                resultCard.appendChild(messageHeader);
+                resultCard.appendChild(messageText);
+
                 reportProblemButton.classList.add('hidden');
                 return;
             }
-             reportProblemButton.classList.remove('hidden');
+            reportProblemButton.classList.remove('hidden');
 
+            const container = document.createElement('div');
+            container.className = 'bg-white rounded-lg shadow-lg overflow-hidden';
 
-            resultCard.innerHTML = `
-                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <img class="w-full h-56 object-cover object-center" src="${product.image}" alt="${product.name}">
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold text-gray-800">${product.name}</h3>
-                        <p class="mt-2 text-gray-600">${product.description}</p>
-                        <p class="mt-4 text-3xl font-bold text-gray-900">${product.price} kr.</p>
-                        <a href="${product.url}" target="_blank" class="mt-6 block w-full text-center rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Se gaven her</a>
-                        <div class="mt-4 flex justify-around">
-                            <button id="share-button" class="text-indigo-600 hover:text-indigo-800 font-medium">Del forslag</button>
-                            <div class="flex items-center">
-                                <span class="text-gray-600 mr-2">Bedøm forslag:</span>
-                                ${[1,2,3,4,5].map(star => `<svg data-rating="${star}" class="w-6 h-6 text-gray-300 cursor-pointer star-rating" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`).join('')}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            // Add event listeners for new elements
+            const img = document.createElement('img');
+            img.className = 'w-full h-56 object-cover object-center';
+            img.src = product.image;
+            img.alt = product.name;
+            container.appendChild(img);
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'p-6';
+            
+            const nameH3 = document.createElement('h3');
+            nameH3.className = 'text-xl font-semibold text-gray-800';
+            nameH3.textContent = product.name;
+            contentDiv.appendChild(nameH3);
+            
+            const descriptionP = document.createElement('p');
+            descriptionP.className = 'mt-2 text-gray-600';
+            descriptionP.textContent = product.description;
+            contentDiv.appendChild(descriptionP);
+
+            const priceP = document.createElement('p');
+            priceP.className = 'mt-4 text-3xl font-bold text-gray-900';
+            priceP.textContent = `${product.price} kr.`;
+            contentDiv.appendChild(priceP);
+
+            const linkA = document.createElement('a');
+            linkA.href = product.url;
+            linkA.target = '_blank';
+            linkA.className = 'mt-6 block w-full text-center rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500';
+            linkA.textContent = 'Se gaven her';
+            contentDiv.appendChild(linkA);
+
+            const buttonsDiv = document.createElement('div');
+            buttonsDiv.className = 'mt-4 flex justify-around';
+
+            const shareButton = document.createElement('button');
+            shareButton.id = 'share-button';
+            shareButton.className = 'text-indigo-600 hover:text-indigo-800 font-medium';
+            shareButton.textContent = 'Del forslag';
+            buttonsDiv.appendChild(shareButton);
+
+            const ratingDiv = document.createElement('div');
+            ratingDiv.className = 'flex items-center';
+
+            const ratingSpan = document.createElement('span');
+            ratingSpan.className = 'text-gray-600 mr-2';
+            ratingSpan.textContent = 'Bedøm forslag:';
+            ratingDiv.appendChild(ratingSpan);
+
+            for(let i = 1; i <= 5; i++) {
+                const starSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                starSvg.setAttribute('data-rating', i);
+                starSvg.setAttribute('class', 'w-6 h-6 text-gray-300 cursor-pointer star-rating');
+                starSvg.setAttribute('fill', 'currentColor');
+                starSvg.setAttribute('viewBox', '0 0 20 20');
+                const starPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                starPath.setAttribute('d', 'M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z');
+                starSvg.appendChild(starPath);
+                ratingDiv.appendChild(starSvg);
+            }
+
+            buttonsDiv.appendChild(ratingDiv);
+            contentDiv.appendChild(buttonsDiv);
+            container.appendChild(contentDiv);
+            resultCard.appendChild(container);
+
             setupResultCardListeners(product);
         };
         
@@ -398,7 +457,6 @@
                 star.addEventListener('click', () => {
                     const rating = star.dataset.rating;
                     submitRating(product.id, parseInt(rating));
-                    // Visuel feedback
                     document.querySelectorAll('.star-rating').forEach(s => {
                         s.classList.toggle('text-yellow-400', s.dataset.rating <= rating);
                         s.classList.toggle('text-gray-300', s.dataset.rating > rating);
@@ -408,7 +466,6 @@
 
             reportProblemButton.onclick = () => {
                 reportModal.classList.remove('hidden');
-                // Store product ID to use on submit
                 submitReportButton.dataset.productId = product.id;
             };
 
@@ -469,10 +526,14 @@
         };
 
         copyShareLinkButton.onclick = () => {
-            shareLinkInput.select();
-            document.execCommand('copy');
-            copyShareLinkButton.textContent = 'Kopieret!';
-            setTimeout(() => { copyShareLinkButton.textContent = 'Kopier Link'; }, 2000);
+            const link = shareLinkInput.value;
+            navigator.clipboard.writeText(link).then(() => {
+                copyShareLinkButton.textContent = 'Kopieret!';
+                setTimeout(() => { copyShareLinkButton.textContent = 'Kopier Link'; }, 2000);
+            }, (err) => {
+                console.error('Could not copy text: ', err);
+                alert('Fejl: Kunne ikke kopiere link.');
+            });
         };
 
         const loadSharedResult = async (shareId) => {
