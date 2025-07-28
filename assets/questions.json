@@ -1,7 +1,19 @@
 [
   {
+    "id": "q_initial_relation",
+    "question_text": "Hvem er gaven til?",
+    "is_initial": true,
+    "answers": [
+      { "text": "Min kæreste/partner", "tag": "relation:partner" },
+      { "text": "En ven eller veninde", "tag": "relation:friend" },
+      { "text": "Et familiemedlem", "tag": "relation:family" },
+      { "text": "En kollega", "tag": "relation:colleague" },
+      { "text": "Andet / Ved ikke", "tag": "relation:other" }
+    ]
+  },
+  {
     "id": "q_initial_gender",
-    "question_text": "Først og fremmest, hvem er gaven til?",
+    "question_text": "Hvad er modtagerens køn?",
     "is_initial": true,
     "answers": [
       { "text": "En mand", "tag": "gender:mand" },
@@ -41,6 +53,15 @@
     ]
   },
   {
+    "id": "q_discovery_price_preference_high",
+    "question_text": "Du har valgt et højt gavebudget. Er det vigtigt, at gaven også ser dyr ud?",
+    "trigger_tag": "price:dyr",
+    "answers": [
+      { "text": "Ja, prisen skal afspejle kvaliteten", "tag": "price_preference:high_only" },
+      { "text": "Nej, den bedste gave kan sagtens være billigere", "tag": "price_preference:any" }
+    ]
+  },
+  {
     "id": "q_discovery_occasion",
     "question_text": "Hvad er anledningen til gaven?",
     "answers": [
@@ -60,6 +81,19 @@
       { "text": "Praktisk & funktionelt", "tag": "interest:praktisk" },
       { "text": "Hjemmeligt & hyggeligt", "tag": "interest:hygge" },
       { "text": "Personligt & unikt", "tag": "interest:personlig_gave" }
+    ]
+  },
+  {
+    "id": "q_discovery_interest_main",
+    "question_text": "Hvad er de interesseret i? (Vælg det tætteste match)",
+    "answers": [
+      { "text": "God mad og drikke", "tag": "interest:foodie" },
+      { "text": "Teknologi & gadgets", "tag": "interest:tech" },
+      { "text": "Wellness & selvforkælelse", "tag": "interest:wellness" },
+      { "text": "Mode & accessories", "tag": "interest:fashion" },
+      { "text": "Boligindretning & design", "tag": "interest:design" },
+      { "text": "Sport & aktiv fritid", "tag": "interest:sport" },
+      { "text": "Noget andet", "tag": "interest:none" }
     ]
   },
   {
@@ -95,6 +129,17 @@
     ]
   },
   {
+    "id": "q_discovery_interest_cluster_sport",
+    "question_text": "De er sportsinteresserede. Hvilken slags sport er de mest til?",
+    "trigger_tag": "interest:sport",
+    "answers": [
+      { "text": "Fodbold", "tag": "interest:fodbold" },
+      { "text": "Golf", "tag": "interest:golf" },
+      { "text": "Fitness & træning", "tag": "interest:fitness" },
+      { "text": "Udendørs aktiviteter (vandring, camping)", "tag": "interest:udendørs" }
+    ]
+  },
+  {
     "id": "q_discovery_theme",
     "question_text": "Er de til en gave med et bestemt tema?",
     "answers": [
@@ -102,6 +147,30 @@
       { "text": "Ja, noget spirituelt eller symbolsk", "tag": "interest:spirituel" },
       { "text": "Ja, noget med dansk design", "tag": "interest:dansk_design" },
       { "text": "Nej, ikke rigtigt", "tag": "theme:none" }
+    ]
+  },
+  {
+    "id": "q_discovery_personalization",
+    "question_text": "Kunne en personlig gave med navn eller tekst være noget?",
+    "answers": [
+      { "text": "Ja, en personliggjort gave ville være perfekt", "tag": "personalization:true" },
+      { "text": "Nej, det behøves ikke", "tag": "personalization:false" }
+    ]
+  },
+  {
+    "id": "q_discovery_adventure",
+    "question_text": "Er de en eventyrlysten type?",
+    "answers": [
+      { "text": "Ja, de elsker oplevelser og friluftsliv", "tag": "interest:outdoor" },
+      { "text": "Nej, de foretrækker hjemlig hygge", "tag": "interest:hygge" }
+    ]
+  },
+  {
+    "id": "q_discovery_luxury_preference",
+    "question_text": "Går de op i luksus og mærkevarer?",
+    "answers": [
+      { "text": "Ja, de elsker eksklusive mærker og luksus", "tag": "interest:luksus" },
+      { "text": "Nej, det behøver ikke være noget fancy", "tag": "interest:praktisk" }
     ]
   },
   {
