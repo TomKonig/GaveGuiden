@@ -1,76 +1,112 @@
 [
   {
     "id": "p1",
-    "name": "Smart Kaffekop",
-    "description": "En kop der holder din kaffe varm og kan oplade din telefon. Perfekt til tech-entusiasten.",
+    "name": "Smart Kaffekop med Trådløs Opladning",
+    "description": "En intelligent kop der holder din kaffe ved den perfekte temperatur og har en indbygget trådløs oplader i bunden til din telefon. Perfekt til den travle tech-entusiast.",
     "price": 349,
-    "url": "https://example.com/kaffekop",
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/kaffekop",
     "image": "https://images.unsplash.com/photo-1517554931362-a25e29300436?q=80&w=1974&auto=format&fit=crop",
-    "tags": [
-      "gender:mand",
-      "gender:kvinde",
-      "age:ung",
-      "age:voksen",
-      "interest:tech",
-      "interest:hjem",
-      "price:mellem"
-    ],
-    "differentiator_tags": ["color:sort", "color:hvid"],
+    "tags": ["gender:alle", "age:ung", "age:voksen", "price:mellem", "interest:tech", "interest:kaffe", "interest:hjem"],
+    "differentiator_tags": ["color:black", "capacity:350ml"],
     "status": "active"
   },
   {
     "id": "p2",
-    "name": "Læder Pung",
-    "description": "Klassisk og stilfuld læderpung. En tidløs gave til manden der har alt.",
+    "name": "Håndlavet Læder Pung",
+    "description": "Klassisk og stilfuld pung i ægte læder. En tidløs gave til manden der værdsætter kvalitet og godt håndværk.",
     "price": 499,
-    "url": "https://example.com/pung",
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/pung",
     "image": "https://images.unsplash.com/photo-1620905380598-634587371981?q=80&w=2070&auto=format&fit=crop",
-    "tags": [
-      "gender:mand",
-      "age:ung",
-      "age:voksen",
-      "age:senior",
-      "interest:fashion",
-      "price:mellem",
-      "occasion:fødselsdag"
-    ],
-    "differentiator_tags": ["color:sort", "color:brun"],
+    "tags": ["gender:mand", "age:ung", "age:voksen", "age:senior", "price:mellem", "occasion:fødselsdag", "interest:fashion"],
+    "differentiator_tags": ["color:brown", "material:leather"],
     "status": "active"
   },
   {
     "id": "p3",
     "name": "Gourmet Chokolade Sæt",
-    "description": "Luksuriøst sæt med håndlavet chokolade. Den perfekte gave til en foodie.",
+    "description": "Luksuriøst sæt med håndlavet, økologisk chokolade og delikate smagsnoter. Den perfekte gave til en foodie med en sød tand.",
     "price": 250,
-    "url": "https://example.com/chokolade",
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/chokolade",
     "image": "https://images.unsplash.com/photo-1570832130343-2410a5a36b43?q=80&w=1964&auto=format&fit=crop",
-    "tags": [
-      "gender:alle",
-      "age:voksen",
-      "age:senior",
-      "interest:foodie",
-      "price:mellem",
-      "occasion:jul",
-      "occasion:romantik"
-    ],
-    "differentiator_tags": [],
+    "tags": ["gender:alle", "age:voksen", "age:senior", "price:mellem", "occasion:jul", "occasion:romantik", "interest:foodie", "interest:luksus"],
+    "differentiator_tags": ["type:dark_chocolate", "origin:ecuador"],
     "status": "active"
   },
   {
     "id": "p4",
-    "name": "Trådløse Hovedtelefoner",
-    "description": "Høj kvalitets hovedtelefoner med støjreduktion. Til musikelskeren eller pendleren.",
+    "name": "High-Fidelity Trådløse Hovedtelefoner",
+    "description": "Høj kvalitets hovedtelefoner med aktiv støjreduktion og overlegen lyd. Til musikelskeren, pendleren eller gameren.",
     "price": 799,
-    "url": "https://example.com/headphones",
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/headphones",
     "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=2070&auto=format&fit=crop",
-    "tags": [
-      "gender:alle",
-      "age:ung",
-      "age:voksen",
-      "interest:tech",
-      "price:dyr"
-    ],
-    "differentiator_tags": ["color:sort", "color:hvid"],
+    "tags": ["gender:alle", "age:ung", "age:voksen", "price:dyr", "interest:tech", "interest:musik", "interest:gaming"],
+    "differentiator_tags": ["color:black", "connectivity:bluetooth5"],
+    "status": "active"
+  },
+  {
+    "id": "p5",
+    "name": "Skagen Grenen Dameur",
+    "description": "Et klassisk og minimalistisk dameur fra danske Skagen. Perfekt til den modebevidste kvinde, der elsker skandinavisk design.",
+    "price": 1295,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/skagen_dameur",
+    "image": "https://images.unsplash.com/photo-1594576722539-a71959d243de?q=80&w=1974&auto=format&fit=crop",
+    "tags": ["gender:kvinde", "age:voksen", "age:senior", "price:dyr", "occasion:fødselsdag", "interest:fashion", "interest:dansk_design"],
+    "differentiator_tags": ["dial_color:white", "band_material:mesh", "case_size:36mm"],
+    "status": "active"
+  },
+  {
+    "id": "p6",
+    "name": "Bæredygtig Yoga Måtte",
+    "description": "En miljøvenlig yogamåtte lavet af naturligt kork. Perfekt til den aktive og miljøbevidste person.",
+    "price": 450,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/yogamat",
+    "image": "https://images.unsplash.com/photo-1599447462858-a78b544b8b84?q=80&w=2070&auto=format&fit=crop",
+    "tags": ["gender:alle", "age:ung", "age:voksen", "price:mellem", "interest:sport", "interest:yoga", "interest:bæredygtighed"],
+    "differentiator_tags": ["material:cork", "thickness:4mm"],
+    "status": "active"
+  },
+  {
+    "id": "p7",
+    "name": "Whisky Smage Sæt",
+    "description": "Et eksklusivt sæt med tre forskellige skotske single malt whiskyer. En fantastisk gave til kenderen eller den nysgerrige nybegynder.",
+    "price": 399,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/whisky",
+    "image": "https://images.unsplash.com/photo-1614213936909-545234938a15?q=80&w=2070&auto=format&fit=crop",
+    "tags": ["gender:mand", "age:voksen", "age:senior", "price:mellem", "occasion:jul", "interest:foodie", "interest:luksus", "interest:alkohol"],
+    "differentiator_tags": ["region:islay", "type:single_malt"],
+    "status": "active"
+  },
+  {
+    "id": "p8",
+    "name": "LEGO Technic Bil",
+    "description": "Et avanceret LEGO Technic sæt til voksne og ældre børn, der elsker at bygge og er fascineret af mekanik.",
+    "price": 650,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/lego",
+    "image": "https://images.unsplash.com/photo-1633469923348-3c316f7336e3?q=80&w=2070&auto=format&fit=crop",
+    "tags": ["gender:mand", "gender:alle", "age:teenager", "age:voksen", "price:dyr", "interest:kreativ", "interest:biler", "interest:tech"],
+    "differentiator_tags": ["pieces:905", "brand:lego"],
+    "status": "active"
+  },
+  {
+    "id": "p9",
+    "name": "Smart Garden Krydderurtehave",
+    "description": "En indendørs have, der automatisk vander og giver lys til dine krydderurter. Perfekt til den madglade med eller uden grønne fingre.",
+    "price": 550,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/smartgarden",
+    "image": "https://images.unsplash.com/photo-1611843467160-25afb8df1074?q=80&w=1974&auto=format&fit=crop",
+    "tags": ["gender:alle", "age:voksen", "age:senior", "price:dyr", "interest:hjem", "interest:foodie", "interest:tech", "interest:have"],
+    "differentiator_tags": ["pods:3", "color:white"],
+    "status": "active"
+  },
+  {
+    "id": "p10",
+    "name": "Luksus Uldplaid",
+    "description": "Et utrolig blødt og varmt tæppe i 100% ren, ny uld. Den perfekte gave til en, der elsker hygge og indretning.",
+    "price": 899,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/plaid",
+    "image": "https://images.unsplash.com/photo-1577714884784-a82d56a394a8?q=80&w=2070&auto=format&fit=crop",
+    "tags": ["gender:alle", "age:voksen", "age:senior", "price:dyr", "occasion:jul", "interest:hjem", "interest:luksus"],
+    "differentiator_tags": ["material:wool", "color:grey"],
     "status": "active"
   }
 ]
