@@ -1,101 +1,128 @@
 [
   {
-    "id": "q_gender",
-    "question_text": "Hvem er gaven til?",
+    "id": "q_initial_gender",
+    "question_text": "Først og fremmest, hvem er gaven til?",
     "is_initial": true,
     "answers": [
       { "text": "En mand", "tag": "gender:mand" },
       { "text": "En kvinde", "tag": "gender:kvinde" },
-      { "text": "Det ved jeg ikke", "tag": "gender:alle" }
+      { "text": "Køn er underordnet", "tag": "gender:alle" }
     ]
   },
   {
-    "id": "q_age",
-    "question_text": "Hvor gammel er vedkommende?",
+    "id": "q_initial_age",
+    "question_text": "Hvor gammel er vedkommende cirka?",
     "is_initial": true,
     "answers": [
-      { "text": "Under 18", "tag": "age:teenager" },
-      { "text": "18-30", "tag": "age:ung" },
-      { "text": "31-50", "tag": "age:voksen" },
-      { "text": "Over 50", "tag": "age:senior" }
+      { "text": "Barn (0-12)", "tag": "age:barn" },
+      { "text": "Teenager (13-19)", "tag": "age:teenager" },
+      { "text": "Ung voksen (20-30)", "tag": "age:ung" },
+      { "text": "Voksen (31-50)", "tag": "age:voksen" },
+      { "text": "Senior (50+)", "tag": "age:senior" }
     ]
   },
   {
-    "id": "q_price",
-    "question_text": "Hvad er dit budget?",
+    "id": "q_initial_price",
+    "question_text": "Hvad må gaven koste?",
     "is_initial": true,
     "answers": [
       { "text": "Under 200 kr.", "tag": "price:billig" },
-      { "text": "200-500 kr.", "tag": "price:mellem" },
+      { "text": "200 - 500 kr.", "tag": "price:mellem" },
       { "text": "Over 500 kr.", "tag": "price:dyr" }
     ]
   },
   {
-    "id": "q_occasion",
-    "question_text": "Hvad er anledningen?",
+    "id": "q_discovery_price_preference",
+    "question_text": "Du har valgt et lidt højere budget. Er det vigtigt, at gaven også ser dyr ud?",
+    "trigger_tag": "price:mellem",
+    "answers": [
+      { "text": "Ja, prisen skal afspejle kvaliteten", "tag": "price_preference:high_only" },
+      { "text": "Nej, den bedste gave kan sagtens være billigere", "tag": "price_preference:any" }
+    ]
+  },
+  {
+    "id": "q_discovery_occasion",
+    "question_text": "Hvad er anledningen til gaven?",
     "answers": [
       { "text": "Fødselsdag", "tag": "occasion:fødselsdag" },
       { "text": "Jul", "tag": "occasion:jul" },
-      { "text": "Valentinsdag / Romantik", "tag": "occasion:romantik" }
+      { "text": "Romantik (f.eks. Valentinsdag)", "tag": "occasion:romantik" },
+      { "text": "En særlig mærkedag (Fars/Mors Dag)", "tag": "occasion:fars_dag" },
+      { "text": "Indflytter- eller værtindegave", "tag": "occasion:indflytterfest" }
     ]
   },
   {
-    "id": "q_interest_tech_gadgets",
-    "question_text": "Er de interesseret i teknologi og gadgets?",
-    "category": "interest",
+    "id": "q_discovery_personality_vibe",
+    "question_text": "Hvad beskriver bedst deres stil?",
     "answers": [
-      { "text": "Ja, meget", "tag": "interest:tech" },
-      { "text": "Lidt", "tag": "interest_low:tech" },
-      { "text": "Nej, slet ikke", "tag": "negative_interest:tech" }
+      { "text": "Moderne & stilrent design", "tag": "interest:design" },
+      { "text": "Luksuriøs & elegant", "tag": "interest:luksus" },
+      { "text": "Praktisk & funktionelt", "tag": "interest:praktisk" },
+      { "text": "Hjemmeligt & hyggeligt", "tag": "interest:hygge" },
+      { "text": "Personligt & unikt", "tag": "interest:personlig_gave" }
     ]
   },
   {
-    "id": "q_interest_home_decor",
-    "question_text": "Går de op i indretning og ting til hjemmet?",
-    "category": "interest",
+    "id": "q_discovery_interest_cluster_skonhed",
+    "question_text": "Hvis gaven er til selvforkælelse, hvad er så vigtigst?",
+    "trigger_tag": "interest:wellness",
     "answers": [
-        { "text": "Ja, de elsker boligindretning", "tag": "interest:hjem" },
-        { "text": "Nogen gange", "tag": "interest_low:hjem" },
-        { "text": "Nej, ikke specielt", "tag": "negative_interest:hjem" }
+      { "text": "Hudpleje (cremer, serum osv.)", "tag": "interest:hudpleje" },
+      { "text": "Hårpleje & styling", "tag": "interest:hårpleje" },
+      { "text": "En lækker parfume", "tag": "interest:parfume" },
+      { "text": "Makeup", "tag": "interest:makeup" }
     ]
   },
   {
-    "id": "q_interest_foodie",
-    "question_text": "Er de en 'foodie' der elsker god mad og drikke?",
-    "category": "interest",
+    "id": "q_discovery_interest_cluster_foodie",
+    "question_text": "De elsker god mad og drikke. Hvilken retning skal vi gå?",
+    "trigger_tag": "interest:foodie",
     "answers": [
-      { "text": "Ja, de elsker det!", "tag": "interest:foodie" },
-      { "text": "Lidt", "tag": "interest_low:foodie" },
-      { "text": "Nej", "tag": "negative_interest:foodie" }
-    ]
-  },
-    {
-    "id": "q_interest_fashion_style",
-    "question_text": "Er stil og mode vigtigt for dem?",
-    "category": "interest",
-    "answers": [
-      { "text": "Ja, helt sikkert", "tag": "interest:fashion" },
-      { "text": "Lidt", "tag": "interest_low:fashion" },
-      { "text": "Nej, ikke rigtigt", "tag": "negative_interest:fashion" }
+      { "text": "Gourmet snacks & chokolade", "tag": "interest:snacks" },
+      { "text": "Specialøl eller spiritus", "tag": "interest:alkohol" },
+      { "text": "Kaffe eller te", "tag": "interest:kaffe" },
+      { "text": "Grill & BBQ", "tag": "interest:barbeque" }
     ]
   },
   {
-    "id": "q_interest_creative_hobbies",
-    "question_text": "Har de kreative hobbies, som f.eks. at bygge eller tegne?",
-    "category": "interest",
+    "id": "q_discovery_interest_cluster_tech",
+    "question_text": "De er til tech. Hvilken slags gadget?",
+    "trigger_tag": "interest:tech",
     "answers": [
-      { "text": "Ja", "tag": "interest:kreativ" },
-      { "text": "Måske", "tag": "interest_low:kreativ" },
-      { "text": "Nej", "tag": "negative_interest:kreativ" }
+      { "text": "Noget med musik & lyd", "tag": "interest:musik" },
+      { "text": "En smart ting til hjemmet", "tag": "interest:hjem" },
+      { "text": "Noget praktisk til hverdagen", "tag": "interest:praktisk" }
+    ]
+  },
+  {
+    "id": "q_discovery_theme",
+    "question_text": "Er de til en gave med et bestemt tema?",
+    "answers": [
+      { "text": "Ja, noget med vikinger eller nordisk mytologi", "tag": "theme:viking" },
+      { "text": "Ja, noget spirituelt eller symbolsk", "tag": "interest:spirituel" },
+      { "text": "Ja, noget med dansk design", "tag": "interest:dansk_design" },
+      { "text": "Nej, ikke rigtigt", "tag": "theme:none" }
+    ]
+  },
+  {
+    "id": "q_differentiator_material",
+    "question_text": "Hvilket materiale tror du, de ville foretrække?",
+    "is_differentiator": true,
+    "answers": [
+      { "text": "Læder", "tag": "material:læder" },
+      { "text": "Stål eller sølv", "tag": "material:rustfrit_stål" },
+      { "text": "Guld eller forgyldt", "tag": "material:forgyldt_stål" }
     ]
   },
   {
     "id": "q_differentiator_brand",
-    "question_text": "Foretrækker de et bestemt mærke?",
+    "question_text": "Er der et bestemt mærke, de er glade for?",
     "is_differentiator": true,
     "answers": [
-      { "text": "LEGO", "tag": "brand:lego" },
-      { "text": "Skagen", "tag": "brand:skagen" }
+      { "text": "Kreafunk", "tag": "brand:kreafunk" },
+      { "text": "byRavn", "tag": "brand:byravn" },
+      { "text": "Julie Sandlau", "tag": "brand:julie_sandlau" },
+      { "text": "GHD", "tag": "brand:ghd" }
     ]
   }
 ]
