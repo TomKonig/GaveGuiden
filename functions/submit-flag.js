@@ -8,8 +8,15 @@ exports.handler = async (event) => {
   try {
     const { productId, reason, quizAnswers } = JSON.parse(event.body);
 
-    if (!productId || !reason) {
-      return { statusCode: 400, body: 'Bad Request: Missing productId or reason.' };
+    // --- Stricter Validation ---
+    if (!productId || typeof productId !== 'string' || productId.trim() === '') {
+        return { statusCode: 400, body: 'Bad Request: Invalid or missing productId.' };
+    }
+    if (!reason || typeof reason !== 'string' || reason.trim() === '') {
+        return { statusCode: 400, body: 'Bad Request: Invalid or missing reason.' };
+    }
+    if (quizAnswers && typeof quizAnswers !== 'object') {
+        return { statusCode: 400, body: 'Bad Request: Invalid quizAnswers format.' };
     }
     
     // Privacy: remove user's name if present in quiz answers
@@ -22,10 +29,10 @@ exports.handler = async (event) => {
     const flagsCollection = db.collection('flags');
 
     const newFlag = {
-      productId,
-      reason,
+      productId: productId.trim(),
+      reason: reason.trim(),
       quizAnswers: safeQuizAnswers,
-      status: 'open', // New field to track resolution
+      status: 'open',
       createdAt: new Date(),
     };
 
@@ -34,7 +41,6 @@ exports.handler = async (event) => {
     return {
       statusCode: 201,
       body: JSON.stringify({ message: 'Problem reported successfully. Thank you for your feedback!' }),
-      headers: { 'Content-Type': 'application/json' },
     };
   } catch (error) {
     console.error('Error submitting flag:', error);
