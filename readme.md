@@ -151,9 +151,8 @@ Let’s unpack each part:
 - index.html is the main application container. It includes the layout for the landing page and placeholders (or sections) for the quiz and results. It likely also includes references to our scripts (either inline &lt;script&gt; or a linked JS file) and sets up the basic structure (header, footer). When we built the SPA, we included the quiz and results sections in this file (hidden or shown as needed by JS) so that we wouldn’t navigate away from index.html during use. It also pulls in the Tailwind CSS and any global dependencies.
 - admin.html is a separate page for the admin dashboard. This is not linked from the main site (only those who know the URL or have access should use it). It contains the structure and scripts for our admin panel (login form, tabs for different admin functions like editing products, viewing flags, etc.). This file also includes Tailwind and likely some inline script or separate JS for admin functionality. It’s kept separate from index.html because we don’t want to bloat the main app with admin code, and it has its own distinct UI.
 - privacy-policy.html and terms-of-service.html are static informational pages. They are linked from the footer of the site (as required legally). Keeping them as separate files is straightforward since they’re simple text pages – no need to load those contents into the SPA. They can be simple static pages (and search engines can index them easily). They share the overall styling (we include the same CSS and fonts).
-  
 - **Assets directory:**  
-    This folder is served publicly. That means any file here can be fetched by a user’s browser via a URL like denrettegave.dk/assets/&lt;filename&gt;. We place here the data files that the front-end needs to load.
+   This folder is served publicly. That means any file here can be fetched by a user’s browser via a URL like denrettegave.dk/assets/&lt;filename&gt;. We place here the data files that the front-end needs to load.
 - products.json is **the heart of our product database**. It contains an array of all gift products available in the system. Each product object includes fields like:
   - id: a unique identifier (e.g., numeric or string) for the product.
   - name: the product name.
@@ -165,41 +164,41 @@ Let’s unpack each part:
   - tags: an object containing all the classification tags for matching, e.g. { gender: \["Mand","alle"\], age: \["18-25","26-40"\], interests: \["Outdoor"\], occasion: \["Fødselsdag"\], brand: \["BrandX"\], color: \["Blå"\], size: \["Medium"\] }. These correspond to quiz answers and help the algorithm score matches.
 - This JSON essentially replaces what a more traditional app might store in a database. The front-end fetches this at startup (or it could even be embedded in index.html if we wanted) and then has all product info in memory to evaluate for recommendations.
 - We made products.json public for simplicity – the user seeing it doesn’t pose a big issue (it’s just product info and affiliate links, which are fine to be exposed). Also, making it public means our static site can fetch it directly without needing a function call, improving performance (no extra latency to get product list). We just have to ensure not to include anything sensitive in it (and we don’t).
-- questions.json – *This file contains the _pool of all quiz questions_ (the text, answer options, and related metadata). It does **not** encode any decision logic or ordering. Instead, it’s a simple list of question definitions that the quiz engine can draw from as needed. Each question object includes:
+- questions.json – \*This file contains the _pool of all quiz questions_ (the text, answer options, and related metadata). It does **not** encode any decision logic or ordering. Instead, it’s a simple list of question definitions that the quiz engine can draw from as needed. Each question object includes:
 - **id:** A unique identifier for the question (used internally by the system).
 - **question:** The question text (in Danish) presented to the user.
 - **key:** The category or tag that this question corresponds to (e.g., "relation", "age", "interests"). This key links the user’s answer to product attributes in products.json for scoring purposes.
 - **type:** The input format or UI control for the question (for example, "text-input" for a free text answer, "single-choice-card" for a single-select multiple-choice question, or "multi-select-tag" for a question where multiple options can be chosen).
 - **options:** An array of possible answer choices (only applicable for multiple-choice types). For instance, for the relation question, options might be \["Partner", "Forælder", "Ven", "Søskende", "Kollega", "Andet"\]. For a multi-select interests question, the options list would include various interests like \["Kaffe", "Hjemmet", "Bøger", ...\]. (Questions that accept free text or number input won’t have an options array.)
 - **placeholder:** _(Optional)_ A placeholder hint for text-input questions. For example, for the name question (“Hvad hedder den heldige?”), the placeholder might suggest an example input like _“F.eks. Mormor eller Anders”_.
-- **is_discovery:** _(Optional)_ A boolean flag indicating a _Discovery_ question. Discovery questions are general or offbeat questions (e.g., “Er de en eventyrlysten type?” – “Are they the adventurous type?”) that the engine may inject occasionally to broaden the quiz’s perspective. Marking a question with is_discovery: true means the engine can use it to explore new gift ideas outside the user’s already stated preferences.
-**Important:** There are _no trigger conditions or fixed sequence rules in questions.json._ It’s a content-only file. In earlier versions we had a trigger field to script conditional flows, but in the new system this has been removed. The logic of **when** to ask each question is handled entirely by our dynamic quiz engine in the front-end code (based on the user’s answers and the state of product scoring). This separation makes the system flexible – content managers can add or edit questions in this file without worrying about breaking the quiz flow. The engine will automatically decide if and when a new question should be asked. In summary, questions.json serves as a **library of questions** available to the quiz, and the intelligence in the code pulls from it as appropriate.
+- **is_discovery:** _(Optional)_ A boolean flag indicating a _Discovery_ question. Discovery questions are general or offbeat questions (e.g., “Er de en eventyrlysten type?” – “Are they the adventurous type?”) that the engine may inject occasionally to broaden the quiz’s perspective. Marking a question with `is_discovery`: true means the engine can use it to explore new gift ideas outside the user’s already stated preferences.
+  **Important:** There are \_no trigger conditions or fixed sequence rules in questions.json.\* It’s a content-only file. In earlier versions we had a trigger field to script conditional flows, but in the new system this has been removed. The logic of **when** to ask each question is handled entirely by our dynamic quiz engine in the front-end code (based on the user’s answers and the state of product scoring). This separation makes the system flexible – content managers can add or edit questions in this file without worrying about breaking the quiz flow. The engine will automatically decide if and when a new question should be asked. In summary, questions.json serves as a **library of questions** available to the quiz, and the intelligence in the code pulls from it as appropriate.
 - flags.json is where we accumulate user reports of problems. Each time a user clicks a report option on a product result, a new entry is appended here by the submit-flag function. We decided to keep this file in the public assets for now simply to allow the admin panel (which runs client-side in the browser) to fetch it directly (fetch('/assets/flags.json')). There’s a small consideration: since it’s public, theoretically anyone could fetch flags.json, but it contains no personal data – just product IDs and issue types and timestamps – so it’s not sensitive. In the future, we might restrict it or move it to private if needed. Each flag entry might look like:
 - {  
-    "flag_id": 1627500000000,  
-    "product_id": 42,  
-    "issue_type": "Linket virker ikke",  
-    "timestamp": "2025-07-27T15:30:00Z",  
-    "status": "unresolved"  
-    }
+   "flag_id": 1627500000000,  
+   "product_id": 42,  
+   "issue_type": "Linket virker ikke",  
+   "timestamp": "2025-07-27T15:30:00Z",  
+   "status": "unresolved"  
+   }
 - The flag_id could be a timestamp or unique number, issue_type is one of the preset categories (like image missing, broken link, wrong price, “Andet” (other) if we allow custom input – possibly not implemented yet), status indicates if we’ve addressed it. Initially, flags are saved as "unresolved". In the admin panel, when an admin marks it fixed, we plan to update the status to "resolved" (so it can be filtered out or counted differently). The **admin panel** reads this file and aggregates by product to show, for example, “Product X has 3 reports of type ‘Price is incorrect’, last reported 2 days ago”. The threshold in the admin panel (default 3) tells when to show an alert. Because flags.json is public, the admin panel can fetch it without needing an authenticated function (we considered making it private, but that would require building a separate admin-only function to serve it – which we might still do later for security, but it’s low sensitivity data).
 - When an admin marks issues as resolved, currently the interface just updates the flagsData in memory and would ideally call a resolve-flag function to update this file. We haven’t fully implemented that function yet (marked as a future to-do), so at present the process might involve manually editing the file or just keeping track mentally after fixing the product. Down the line, we will allow the admin panel to persist that change (so that resolved flags don’t keep triggering alerts). Resolved flags could remain in the file but with "status": "resolved", and our alert logic in admin ignores those.
 - analytics.json stores site analytics data. Right now, this might simply be a collection of event counts or logs updated by update-analytics function. For example, it could be structured as:
 - {  
-    "page_views": 1240,  
-    "quiz_starts": 300,  
-    "quiz_completions": 250,  
-    "affiliate_clicks": 200  
-    }
+   "page_views": 1240,  
+   "quiz_starts": 300,  
+   "quiz_completions": 250,  
+   "affiliate_clicks": 200  
+   }
 - Or it might be an array of events:
 - \[  
-    { "event": "page_view", "timestamp": "...", "referer": "..." },  
-    ...  
-    \]
+   { "event": "page_view", "timestamp": "...", "referer": "..." },  
+   ...  
+   \]
 - The exact structure is something we’re refining as we integrate more advanced analytics (see Roadmap). The key point is it’s publicly readable, because again, the admin panel might fetch it directly to show some stats. Since it contains no personal info (just aggregate metrics or anonymized events), it’s okay for it to be public. If we ever felt this info is sensitive (competitors might glean our traffic numbers, for instance), we could secure it behind a function in the future.
 - **Other assets:** This folder likely also contains static assets like our logo image (logo.jpeg as seen in index.html reference), maybe a favicon, and possibly a compiled CSS or JS file if we had one (though with Tailwind via CDN and inline scripts, we might not have separate compiled files). All these are static and can be cached by the CDN.
 - **Data directory:**  
-    This directory is **not publicly accessible**. On Netlify, we ensure this by not publishing it as part of the site’s public folder. Instead, these files are deployed along with functions or stored in environment but are only reachable by server-side code.
+   This directory is **not publicly accessible**. On Netlify, we ensure this by not publishing it as part of the site’s public folder. Instead, these files are deployed along with functions or stored in environment but are only reachable by server-side code.
 - ratings.json holds the list of user ratings (the feedback from the results page). Each entry includes the rating and the context of that rating:
   - rating_id: a unique ID for the rating (in our system, we generate it as a timestamp – e.g., 1669500000000 – which happens to also sort chronologically).
   - product_id: the ID of the product that was recommended.
@@ -207,24 +206,24 @@ Let’s unpack each part:
   - rating: the star rating given (1 through 5).
   - quiz_answers: an object capturing what the user answered in the quiz, which led to this recommendation. For example,
   - "quiz_answers": {  
-        "relation": "Partner",  
-        "gender": "Kvinde",  
-        "age": "26-40",  
-        "occasion": "Fødselsdag",  
-        "interests": \["Kaffe", "Hjemmet"\]  
-        }
+     "relation": "Partner",  
+     "gender": "Kvinde",  
+     "age": "26-40",  
+     "occasion": "Fødselsdag",  
+     "interests": \["Kaffe", "Hjemmet"\]  
+     }
   - This tells us the user was looking for a gift for a female partner aged 26-40 for a birthday, interested in coffee and home-related things. This context is extremely useful when analyzing ratings – if this user gave a low rating (say 2 stars), we might infer that our current top suggestion for that demographic isn’t hitting the mark and we should find better products for those criteria.
 - **Privacy note:** We deliberately **do not** store any personally identifying information (PII) here. The quiz asks for the recipient’s name in the first question (“Hvad hedder den heldige?”), but that is purely to personalize the language (we might say “gaveidé til Anders” on results or something). That name is never used in matching logic and we do not save it to ratings.json. Before sending the rating data from the browser to the submit-rating function, we strip out the name field from the answers. This way, the ratings data is anonymized – it cannot be traced to a specific individual’s name or the user who submitted it. We only care about attributes relevant to the gift selection.
   - timestamp: an ISO timestamp of when the rating was submitted (e.g., "2025-07-27T12:00:00Z"). This helps us track trends over time (e.g., did a change we made after a certain date improve ratings?) and also is used as the unique key (we combine timestamp and maybe product_id to ensure uniqueness if needed).
 - The ratings.json file is private because we consider this our internal feedback data. There’s no need for the public or regular users to see potentially hundreds of entries of ratings and quiz contexts, and exposing it might raise privacy questions. Instead, the admin panel (which is behind a login) can retrieve this data via the get-ratings function, which ensures only authorized access.
 - shares.json stores records for shared links generated. Each time someone uses the "Share Results" feature, we create an entry here. It might look like:
 - {  
-    "share_id": "ABC123",  
-    "product_id": 42,  
-    "product_name": "Test Kaffekop (Blå)",  
-    "timestamp": "2025-07-27T12:05:00Z",  
-    "quiz_answers": { ... possibly store the answers or at least key ones ... }  
-    }
+   "share_id": "ABC123",  
+   "product_id": 42,  
+   "product_name": "Test Kaffekop (Blå)",  
+   "timestamp": "2025-07-27T12:05:00Z",  
+   "quiz_answers": { ... possibly store the answers or at least key ones ... }  
+   }
 - There are a few ways we could implement sharing:
   - We could store the entire recommended product object (name, description, image, price, etc.) under the share ID, essentially freezing the recommendation details at the time of sharing. That way, even if the product later changes or is removed, the person with the link sees what the original user saw.
   - Or we could store just a reference (product_id) and regenerate the view based on current product data when the link is opened. The risk there is if product data changes or the product gets deactivated, the link might break or show updated info (maybe fine or maybe confusing).
@@ -232,75 +231,73 @@ Let’s unpack each part:
 - The create-share-link function writes to this file (generating a new ID, ensuring it’s unique) and returns the ID. The get-shared-result reads from it. We ensure that share IDs are sufficiently random (not guessable) – often a short hash or using NanoID/UUID etc. – so that there’s no practical way to guess a valid share link without having seen it.
 - Over time, this file can grow as share links accumulate. We might implement an expiration (like share links valid for X months) to avoid indefinite growth, or archive old ones.
 - **Functions directory:**  
-    Each JavaScript file here is an AWS Lambda function (through Netlify’s function packaging). They act as API endpoints under our site’s domain (Netlify typically makes them available at /.netlify/functions/&lt;name&gt; path). Let’s detail each:
+   Each JavaScript file here is an AWS Lambda function (through Netlify’s function packaging). They act as API endpoints under our site’s domain (Netlify typically makes them available at /.netlify/functions/&lt;name&gt; path). Let’s detail each:
 - **admin-login.js:** This function handles the authentication of admin access. When the admin page login form is submitted, it sends the password to this function (via HTTPS, of course). The function checks the provided password against the true admin password, which we have stored as an environment variable (ADMIN_PASSWORD) in Netlify (this is configured in Netlify settings, as described in the admin panel’s Settings tab instructions). The password itself is not stored in code or in any file – only in the environment – so if someone were to browse our repository or public files, they cannot find it. When the function runs, it typically does something like:
 - const provided = JSON.parse(event.body).password;  
-    const actual = process.env.ADMIN_PASSWORD;  
-    if(provided === actual) {  
-    // generate a token (could be a simple random string or a JWT)  
-    return {  
-    statusCode: 200,  
-    body: JSON.stringify({ token: "&lt;some auth token&gt;" })  
-    };  
-    } else {  
-    return { statusCode: 401, body: "Unauthorized" };  
-    }
+   const actual = process.env.ADMIN_PASSWORD;  
+   if(provided === actual) {  
+   // generate a token (could be a simple random string or a JWT)  
+   return {  
+   statusCode: 200,  
+   body: JSON.stringify({ token: "&lt;some auth token&gt;" })  
+   };  
+   } else {  
+   return { statusCode: 401, body: "Unauthorized" };  
+   }
 - We often use a JWT (JSON Web Token) or a random securely-generated string as the token. In our case, since we trust our own admin use and it's a single-user scenario, we might use a simple short-lived JWT signed with a secret, or even a static token that changes when environment variable changes. The token is sent back to the admin.html script, which stores it (in sessionStorage for example) and includes it in subsequent requests (like get-ratings).
 - The result is that after a successful login, the admin’s browser holds a token that proves they logged in. We chose to do a token rather than just open up access because it’s stateless and secure – the token can have an expiry encoded (say valid for 1 hour), and the functions that require admin will check for a valid token.
 - This approach avoids storing any session on server (truly serverless friendly). We instruct in admin Settings that to change the password, one must update the environment variable in Netlify’s dashboard (which requires redeploy or restart to take effect).
 - **create-share-link.js:** This function is called when a user wants a shareable link. The client likely sends the needed data (maybe the product_id of the recommended gift, and possibly the quiz answers or some identifier of the session). The function’s job is to:
-
-    1. Generate a unique share ID. This could be a random string, e.g., using Node’s crypto or a library to generate something like “q1w2e3” or a UUID. We want it short enough to be shareable (maybe 6-8 characters).
-    2. Gather the data to save. It may read the product_id from the request, look up the full product details from products.json (to save name, etc.), or the client might send the necessary fields in the request body to avoid an extra read. We should be careful not to trust client blindly; ideally, we verify that product_id exists in our database.
-    3. Write a new entry into shares.json. For example, add:
-
+  1. Generate a unique share ID. This could be a random string, e.g., using Node’s crypto or a library to generate something like “q1w2e3” or a UUID. We want it short enough to be shareable (maybe 6-8 characters).
+  2. Gather the data to save. It may read the product_id from the request, look up the full product details from products.json (to save name, etc.), or the client might send the necessary fields in the request body to avoid an extra read. We should be careful not to trust client blindly; ideally, we verify that product_id exists in our database.
+  3. Write a new entry into shares.json. For example, add:
   - { "share_id": "ABC123", "product_id": 42, "timestamp": "...", "quiz_answers": {...} }
   - We might include all needed fields to display the result. Perhaps we include the product_name and maybe an excerpt of description or image URL to ensure the share rendering doesn’t depend on current products.json (which could change).
-
     1. Return the generated share ID (or a full URL including our domain and route).
+
 - The admin panel or no other part needs to be involved; it’s a direct user-driven action. Because this is writing to a private file, only our function can do it.
 - **Note:** Writing to a JSON file in a serverless function often involves reading the current file, parsing JSON, pushing new data, and writing it back. Netlify’s environment gives limited ephemeral storage. Actually, Netlify functions cannot _directly_ write to the deployed file system permanently (they run in an ephemeral container). So how do we persist the change to shares.json or ratings.json? Under the hood, we likely use Netlify’s built-in support for storing to “Site’s files” or use an alternative like storing in an external service (like writing to an AWS S3 or using Netlify’s new Storage API if any). For now, we assume Netlify provides a way (possibly Netlify Identity or its small GoTrue DB, but we haven’t listed any such dependency).
 - It’s possible that, for simplicity at this stage, we rely on very low volume and just reading from memory – meaning the data might reset on new deploys. However, given the importance of not losing ratings or flags, we likely set up form handling or use GitHub as a storage (some Netlify functions can commit back to the repo, albeit that’s advanced). This is a technical detail we plan to refine; nonetheless, the conceptual design is that these JSON files act as if they are persistent storage.
 - When the function succeeds, the browser receives the share ID and then shows the user something like “Your shareable link: denrettegave.dk/share?id=ABC123”. The user can copy it.
 - **get-shared-result.js:** This function corresponds to when someone visits a shareable link. We have a route (noted in the content, e.g., maybe we made a page or we handle it in index.html by checking URL params for id). When the front-end detects a share?id=XYZ parameter, it knows to fetch from this function: It will call /.netlify/functions/get-shared-result?id=XYZ (could also be a POST with the ID in body, but GET is intuitive here). The function will:
-    1. Read the shares.json file.
-    2. Find the entry with share_id: XYZ.
-    3. If found, return the associated product data (it could return the same format as a normal recommendation result: name, description, image, price, etc., plus possibly the quiz context if we want to display it).
-    4. If not found or expired, return an error or a 404 which our front-end can handle (showing “This shared link is invalid or expired” message).
+  1. Read the shares.json file.
+  2. Find the entry with share_id: XYZ.
+  3. If found, return the associated product data (it could return the same format as a normal recommendation result: name, description, image, price, etc., plus possibly the quiz context if we want to display it).
+  4. If not found or expired, return an error or a 404 which our front-end can handle (showing “This shared link is invalid or expired” message).
 - The front-end then uses this data to render a results page as if the user just got that suggestion via the quiz. Essentially, it’s a shortcut to view a stored recommendation. The person viewing the shared link can also choose to go take the quiz themselves via navigation, but at least they see what was shared with them.
 - Security: No auth token is required here, because share links are meant to be open (anyone with the link can view). That’s why the share IDs must be unguessable.
 - **get-ratings.js:** This function is used by the admin panel to retrieve all user ratings (so the admin can see feedback details). It **requires authentication.** Specifically, the admin’s browser will include an Authorization header with a Bearer token (the token obtained from admin-login). For example: Authorization: Bearer &lt;token&gt;. This function will:
-    1. Check for the auth header and validate the token. If the token is missing or invalid, it returns 401 Unauthorized. The admin script will then probably redirect back to login or show an error. This ensures only a logged-in admin can get the ratings.
-    2. If auth is valid, it reads ratings.json (from private storage) and returns its contents, likely as JSON. We might choose to filter or format it nicely (e.g., perhaps the admin panel doesn’t need to see absolutely all data if large, but in our case we likely return everything and let the client side display in a table).
+  1. Check for the auth header and validate the token. If the token is missing or invalid, it returns 401 Unauthorized. The admin script will then probably redirect back to login or show an error. This ensures only a logged-in admin can get the ratings.
+  2. If auth is valid, it reads ratings.json (from private storage) and returns its contents, likely as JSON. We might choose to filter or format it nicely (e.g., perhaps the admin panel doesn’t need to see absolutely all data if large, but in our case we likely return everything and let the client side display in a table).
 - The admin interface will call this function on page load (after login) to populate the Ratings tab. It will then iterate over entries and produce a table where each row might show Product name, rating (stars or number), date (formatted from timestamp), and quiz answers (maybe concatenated or in a tooltip).
 - **submit-flag.js:** Handles when a user submits a problem report (flag). The front-end, when the user selects an issue type in the “Report a problem” modal and confirms, will send a POST request to this function with details such as:
 - {  
-    "product_id": 42,  
-    "issue_type": "Linket virker ikke",  
-    "timestamp": "2025-07-27T15:30:00Z"  
-    }
+   "product_id": 42,  
+   "issue_type": "Linket virker ikke",  
+   "timestamp": "2025-07-27T15:30:00Z"  
+   }
 - (The front-end sets the timestamp at sending, or the function can add the current time itself). The function will then:
-    1. Possibly generate a flag_id (if we want a unique id for each report – using maybe Date.now() or an incrementing sequence).
-    2. Append a new entry to flags.json with status "unresolved".
-    3. Return a success response (the front-end doesn’t necessarily need any data back other than to know it succeeded).
+  1. Possibly generate a flag_id (if we want a unique id for each report – using maybe Date.now() or an incrementing sequence).
+  2. Append a new entry to flags.json with status "unresolved".
+  3. Return a success response (the front-end doesn’t necessarily need any data back other than to know it succeeded).
 - As discussed, how exactly the function appends to a JSON file in a serverless environment might require reading and rewriting the entire file (since it’s not a database). That is fine for now given the expected volume (even 100 flags is trivial to parse and write).
 - After this call returns OK, the front-end shows a “Thank you for your feedback!” message to the user and closes the modal. The user’s job is done. On our side, this flag now sits in flags.json until an admin addresses it.
 - No authentication is needed for this function; any user can report an issue. We do trust users somewhat here – theoretically a malicious user could spam this endpoint. To mitigate spam, we could implement simple measures: e.g., not allow more than X flags from one session or IP in a short time, or require a page refresh (since after one flag we hide the UI). At our scale, spam is unlikely, and an occasional prank flag is not harmful (we can ignore if silly).
 - **submit-rating.js:** This function logs a user’s rating for a suggestion. When the user clicks on a star rating (1-5 stars), the front-end immediately reflects that (like highlighting the stars selected) and simultaneously sends the data to this function. The payload includes:
 - {  
-    "product_id": 42,  
-    "product_name": "Test Kaffekop (Blå)",  
-    "rating": 5,  
-    "quiz_answers": {  
-    "relation": "Partner",  
-    "gender": "Kvinde",  
-    "age": "26-40",  
-    "occasion": "Fødselsdag",  
-    "interests": \["Kaffe", "Hjemmet"\]  
-    },  
-    "timestamp": "2025-07-27T12:00:00Z"  
-    }
-- The quiz_answers object is the key context for us. The front-end has this readily available (it knows what the user input for each question). Before sending, the front-end will _remove the name field_ if it was present in quiz answers. This is an important privacy step – the user might have typed the recipient’s name (like “Anders”) for personalizing the language, but we do not want to store that in our database. Our function double-checks and omits any name or personal identifiers. We only care about categorical info like relation, age range, etc. By doing this, we ensure compliance with privacy best practices (no personal data retention) and avoid any GDPR complications (names can be considered personal data especially if combined with other details).
+   "product_id": 42,  
+   "product_name": "Test Kaffekop (Blå)",  
+   "rating": 5,  
+   "quiz_answers": {  
+   "relation": "Partner",  
+   "gender": "Kvinde",  
+   "age": "26-40",  
+   "occasion": "Fødselsdag",  
+   "interests": \["Kaffe", "Hjemmet"\]  
+   },  
+   "timestamp": "2025-07-27T12:00:00Z"  
+   }
+- The `quiz_answers` object is the key context for us. The front-end has this readily available (it knows what the user input for each question). Before sending, the front-end will \_remove the name field\_ if it was present in quiz answers. This is an important privacy step – the user might have typed the recipient’s name (like “Anders”) for personalizing the language, but we do not want to store that in our database. Our function double-checks and omits any name or personal identifiers. We only care about categorical info like relation, age range, etc. By doing this, we ensure compliance with privacy best practices (no personal data retention) and avoid any GDPR complications (names can be considered personal data especially if combined with other details).
 - The function will: 1. Assign a rating_id. In our design, we use the timestamp (in milliseconds since epoch) as a unique ID. The example 1669500000000 corresponds to a datetime. Using timestamp as ID is convenient for sorting by time and is unique enough (two ratings might technically happen in the same millisecond, but it’s incredibly rare with our scale; if needed, we could append a random small number to ensure uniqueness). 2. Write an entry to ratings.json with all the fields (as shown in Appendix A example). This likely involves reading the current ratings.json (which is an array), pushing the new object, and writing it back. 3. Possibly return a success message. The front-end might not even wait for response beyond maybe logging success or error (maybe we show a quick toast “Feedback received!” which we can show regardless of outcome, but ideally only on success).
 - No auth needed; any user can submit a rating. The content is not sensitive (they are rating our suggestion, not rating themselves or anything personal).
 - Over time, ratings.json grows. It’s private, and only accessible via admin or by deploying and examining file. We should monitor size – if we have thousands of ratings, reading the whole file for each new rating and writing back could become slow. If needed in future, we might move to a more robust storage (like a real database or at least a partitioned store).
@@ -313,9 +310,9 @@ Let’s unpack each part:
 - The payload typically has an event name and maybe some metadata (like the product id for affiliate_click, or maybe an increment count). The function will update analytics.json accordingly. If we use a simple counter approach, it might increment numeric fields. If we use a log approach, it might append an entry. We need to be careful with concurrency if multiple events come in very close – but likely fine given low volume and short execution.
 - Example: The front-end might do:
 - fetch('/.netlify/functions/update-analytics', {  
-    method: 'POST',  
-    body: JSON.stringify({ event: 'affiliate_click', product_id: 42 })  
-    });
+   method: 'POST',  
+   body: JSON.stringify({ event: 'affiliate_click', product_id: 42 })  
+   });
 - The function might then increment a counter affiliate_clicks in analytics.json or record the timestamp and product id in an array for deeper analysis later.
 - Because analytics are not critical path, we often fire-and-forget these calls (not awaiting them in front-end). If they fail, it doesn’t impact user experience. But when they succeed, we get valuable data.
 - No auth required (we expect events only from our own front-end; even if someone manually calls it, it’s not a big issue if they fake a page view or something).
@@ -457,12 +454,12 @@ We believe this design philosophy contributes greatly to user satisfaction: a us
 
 The color palette is intentionally limited to create a clean, modern, and trustworthy aesthetic. We use a few key colors consistently throughout the UI. Here is a summary of our palette and how each color is used:
 
-| **Role** | **Color Name** | **Hex Code** | **Tailwind Class** | **Usage** |
-| --- | --- | --- | --- | --- |
-| **Primary (Action)** | Slate Blue | #4F46E5 | bg-blue-600 | Used for primary buttons (e.g., "Start Guiden", Next/Submit buttons) and other key interactive elements or highlights. This bold blue draws user attention to actions they can take. It’s a color that conveys trust and stability (blue is often associated with reliability), but with a modern vibrant twist in this shade. |
-| **Text & Headers** | Charcoal | #1F2937 | text-slate-800 | Used for nearly all text (headings and body text). It’s a very dark gray (almost black) which ensures maximum readability against light backgrounds without the harshness of pure black. This color choice for text provides excellent contrast (meeting accessibility standards) on our off-white background, making sure content is easy to read. |
-| **Background** | Off-White | #F9FAFB | bg-slate-50 | Used as the main background color of the application (pages, sections). It’s a very light gray with a hint of warmth, rather than stark white, to be easier on the eyes. This forms the base that everything sits on – it keeps the interface feeling open and uncluttered. Large portions of the app use this color to create that clean canvas look. |
-| **Borders & Accents** | Light Gray | #E5E7EB | border-slate-200 | Used for subtle dividers, borders of cards or inputs, and background of inactive elements. For example, cards containing questions or results might have a light gray border or shadow to distinguish them from the background. Also used for things like the border of text input fields, dividing lines in the admin table, or the background of disabled buttons. It’s a neutral tone that adds structure without drawing much attention to itself. |
+| **Role**              | **Color Name** | **Hex Code** | **Tailwind Class** | **Usage**                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------- | -------------- | ------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Primary (Action)**  | Slate Blue     | #4F46E5      | bg-blue-600        | Used for primary buttons (e.g., "Start Guiden", Next/Submit buttons) and other key interactive elements or highlights. This bold blue draws user attention to actions they can take. It’s a color that conveys trust and stability (blue is often associated with reliability), but with a modern vibrant twist in this shade.                                                                                                                         |
+| **Text & Headers**    | Charcoal       | #1F2937      | text-slate-800     | Used for nearly all text (headings and body text). It’s a very dark gray (almost black) which ensures maximum readability against light backgrounds without the harshness of pure black. This color choice for text provides excellent contrast (meeting accessibility standards) on our off-white background, making sure content is easy to read.                                                                                                    |
+| **Background**        | Off-White      | #F9FAFB      | bg-slate-50        | Used as the main background color of the application (pages, sections). It’s a very light gray with a hint of warmth, rather than stark white, to be easier on the eyes. This forms the base that everything sits on – it keeps the interface feeling open and uncluttered. Large portions of the app use this color to create that clean canvas look.                                                                                                 |
+| **Borders & Accents** | Light Gray     | #E5E7EB      | border-slate-200   | Used for subtle dividers, borders of cards or inputs, and background of inactive elements. For example, cards containing questions or results might have a light gray border or shadow to distinguish them from the background. Also used for things like the border of text input fields, dividing lines in the admin table, or the background of disabled buttons. It’s a neutral tone that adds structure without drawing much attention to itself. |
 
 By limiting ourselves to these core colors (with some variations like hover or lighter/darker shades provided by Tailwind automatically), we ensure a cohesive look. It also simplifies the user's cognitive load – they subconsciously learn that blue elements are interactive, gray elements are structural, etc.
 
@@ -573,13 +570,13 @@ Once logged in, the admin sees the **Operations Dashboard**, which is divided in
 - This tab might allow sorting or filtering in future (like filter by product to see all ratings for product X, or by rating value to see all 1-stars quickly). Currently, it's just a raw table. If we find it unwieldy as data grows, we’ll consider adding such features.
 - **Settings:** This tab is for administrative settings and instructions for maintenance tasks:
 - Right now, the main focus is **Change Admin Password** instructions. We include a step-by-step as we wrote in the code:
-    1. Log in to Netlify.
-    2. Go to the site’s settings.
-    3. Navigate to Environment variables.
-    4. Find ADMIN_PASSWORD, edit it.
-    5. Save and redeploy.
-    6. We provided these steps in simple language in case the person managing the site is not very technical but knows how to follow this guide (or for memory’s sake).
-    7. The reason we do this manually: implementing an in-app password change would require a function to update environment var (which Netlify doesn’t allow directly at runtime) or some storage, so it’s simpler to document how to do it outside the app.
+  1. Log in to Netlify.
+  2. Go to the site’s settings.
+  3. Navigate to Environment variables.
+  4. Find ADMIN_PASSWORD, edit it.
+  5. Save and redeploy.
+  6. We provided these steps in simple language in case the person managing the site is not very technical but knows how to follow this guide (or for memory’s sake).
+  7. The reason we do this manually: implementing an in-app password change would require a function to update environment var (which Netlify doesn’t allow directly at runtime) or some storage, so it’s simpler to document how to do it outside the app.
 - If we had any other settings (like analytics or integration keys, threshold default etc.), we could put them here too.
 - Essentially, anything not directly related to content or user feedback but rather system config could live under Settings.
 - The design is straightforward: maybe a list of subheadings and text. We don't have interactive elements here except maybe a link to Netlify.
@@ -1037,12 +1034,12 @@ This comprehensive structure ensures we have all needed info for matching and di
   - "quiz_answers": an object capturing what the user answered in the quiz (excluding name/personal data):
   - For example:
   - {  
-        "relation": "Partner",  
-        "gender": "Kvinde",  
-        "age": "26-40",  
-        "occasion": "Fødselsdag",  
-        "interests": \["Kaffe", "Hjemmet"\]  
-        }
+     "relation": "Partner",  
+     "gender": "Kvinde",  
+     "age": "26-40",  
+     "occasion": "Fødselsdag",  
+     "interests": \["Kaffe", "Hjemmet"\]  
+     }
   - Each key here corresponds to a question key (same as in questions.json).
   - We remove 'name' key for anonymity.
   - "timestamp": ISO datetime string of when the rating was submitted.
@@ -1081,21 +1078,21 @@ Example (from the document, repeated for clarity):
 - This file is stored in assets (public), since we considered ease of fetch in admin, but we treat its content as non-sensitive (no user info, just issue logs).
 - Example:
 - \[  
-    {  
-    "flag_id": 1691000000000,  
-    "product_id": 42,  
-    "issue_type": "Linket virker ikke",  
-    "timestamp": "2025-08-01T09:30:00Z",  
-    "status": "unresolved"  
-    },  
-    {  
-    "flag_id": 1691000500000,  
-    "product_id": 42,  
-    "issue_type": "Linket virker ikke",  
-    "timestamp": "2025-08-01T10:00:00Z",  
-    "status": "unresolved"  
-    }  
-    \]
+   {  
+   "flag_id": 1691000000000,  
+   "product_id": 42,  
+   "issue_type": "Linket virker ikke",  
+   "timestamp": "2025-08-01T09:30:00Z",  
+   "status": "unresolved"  
+   },  
+   {  
+   "flag_id": 1691000500000,  
+   "product_id": 42,  
+   "issue_type": "Linket virker ikke",  
+   "timestamp": "2025-08-01T10:00:00Z",  
+   "status": "unresolved"  
+   }  
+   \]
 - (This suggests two users reported broken link for product 42 about 30 minutes apart.)
 - As admin resolves issues, they would set status "resolved" (the panel currently doesn't persist that, but intended).
 - **questions.json schema:** (For completeness)
@@ -1110,23 +1107,23 @@ Example (from the document, repeated for clarity):
 - This drives quiz flow as described.
 - Example excerpt:
 - {  
-    "id": "q_interests",  
-    "question": "Hvad interesserer de sig for? (Vælg op til 3)",  
-    "key": "interests",  
-    "type": "multi-select-tag",  
-    "options": \["Kaffe", "Hjemmet", "Bøger", "Læsning", "Teknologi", "Madlavning", "Mode"\]  
-    },  
-    {  
-    "id": "q_coffee_color",  
-    "question": "Vælg en farve til koppen:",  
-    "key": "color",  
-    "type": "single-choice-card",  
-    "options": \["Blå", "Grøn"\],  
-    "trigger": {  
-    "key": "interests",  
-    "value": "Kaffe"  
-    }  
-    }
+   "id": "q_interests",  
+   "question": "Hvad interesserer de sig for? (Vælg op til 3)",  
+   "key": "interests",  
+   "type": "multi-select-tag",  
+   "options": \["Kaffe", "Hjemmet", "Bøger", "Læsning", "Teknologi", "Madlavning", "Mode"\]  
+   },  
+   {  
+   "id": "q_coffee_color",  
+   "question": "Vælg en farve til koppen:",  
+   "key": "color",  
+   "type": "single-choice-card",  
+   "options": \["Blå", "Grøn"\],  
+   "trigger": {  
+   "key": "interests",  
+   "value": "Kaffe"  
+   }  
+   }
 - (The first is asked to everyone, the second only triggers if "Kaffe" was in interests.)
 
 These schemas ensure a shared understanding of our data structures for anyone maintaining the system.
@@ -1136,70 +1133,70 @@ These schemas ensure a shared understanding of our data structures for anyone ma
 For reference, here are the endpoints provided by our serverless functions, including their purpose, authentication requirements, and actions. These APIs are not public (except a couple) but used internally by the client-side or admin:
 
 - **POST /.netlify/functions/admin-login**  
-    _Purpose:_ Securely authenticate an admin user.  
-    _Input:_ Expects a JSON body like { "password": "theAttemptedPassword" }.  
-    _Action:_ Checks the provided password against the ADMIN_PASSWORD environment variable stored on the server.  
-    _Output:_ If authentication succeeds, returns a JSON response { "token": "&lt;JWT or token string&gt;" }. If fails, returns 401 Unauthorized.  
-    _Post-conditions:_ On success, the client (admin panel) stores the token and uses it for subsequent admin requests. The token is required for protected endpoints.
+   _Purpose:_ Securely authenticate an admin user.  
+   _Input:_ Expects a JSON body like { "password": "theAttemptedPassword" }.  
+   _Action:_ Checks the provided password against the ADMIN*PASSWORD environment variable stored on the server.  
+   \_Output:* If authentication succeeds, returns a JSON response { "token": "&lt;JWT or token string&gt;" }. If fails, returns 401 Unauthorized.  
+   _Post-conditions:_ On success, the client (admin panel) stores the token and uses it for subsequent admin requests. The token is required for protected endpoints.
 - **POST /.netlify/functions/submit-rating**  
-    _Purpose:_ Log a user’s rating for a gift suggestion and their (anonymized) quiz answers.  
-    _Input:_ JSON body containing the rating data, for example:
+   _Purpose:_ Log a user’s rating for a gift suggestion and their (anonymized) quiz answers.  
+   _Input:_ JSON body containing the rating data, for example:
 - {  
-    "product_id": 1,  
-    "product_name": "Test Kaffekop (Blå)",  
-    "rating": 5,  
-    "quiz_answers": {  
-    "relation": "Partner",  
-    "gender": "Kvinde",  
-    "age": "26-40",  
-    "occasion": "Fødselsdag",  
-    "interests": \["Kaffe", "Hjemmet"\]  
-    }  
-    }
+   "product_id": 1,  
+   "product_name": "Test Kaffekop (Blå)",  
+   "rating": 5,  
+   "quiz_answers": {  
+   "relation": "Partner",  
+   "gender": "Kvinde",  
+   "age": "26-40",  
+   "occasion": "Fødselsdag",  
+   "interests": \["Kaffe", "Hjemmet"\]  
+   }  
+   }
 - (The front-end ensures to strip out any personally identifiable info like the 'name' field before sending.)  
-    _Action:_ The function assigns a rating_id (timestamp) and a timestamp field, then appends this entry to the private ratings.json. It omits the user's name or any personal data, logging only categorical answers.  
-    _Output:_ Typically returns a 200 OK with maybe a success message or nothing in body (the client doesn't necessarily use the response beyond acknowledging success).  
-    _Notes:_ No authentication required (any user can submit a rating). The function sanitizes input (removing name if somehow present) to maintain privacy.
+  _Action:_ The function assigns a `rating_id` (timestamp) and a timestamp field, then appends this entry to the private ratings.json. It omits the user's name or any personal data, logging only categorical answers.
+  \_Output:\* Typically returns a 200 OK with maybe a success message or nothing in body (the client doesn't necessarily use the response beyond acknowledging success).  
+   \_Notes:\* No authentication required (any user can submit a rating). The function sanitizes input (removing name if somehow present) to maintain privacy.
 - **GET /.netlify/functions/get-ratings**  
-    _Purpose:_ Provide the admin panel with all collected user ratings.  
-    _Authentication:_ Requires a valid admin token in the Authorization header (Bearer token).  
-    _Action:_ If token is valid, reads the entire ratings.json from private storage and returns it as JSON. If not auth, returns 401.  
-    _Output:_ JSON array of rating objects (as in Appendix A). The admin panel uses this to populate the Ratings table.  
-    _Security:_ Only accessible to logged-in admin. The function verifies JWT signature/validity.
+   _Purpose:_ Provide the admin panel with all collected user ratings.  
+   _Authentication:_ Requires a valid admin token in the Authorization header (Bearer token).  
+   _Action:_ If token is valid, reads the entire ratings.json from private storage and returns it as JSON. If not auth, returns 401.  
+   _Output:_ JSON array of rating objects (as in Appendix A). The admin panel uses this to populate the Ratings table.  
+   _Security:_ Only accessible to logged-in admin. The function verifies JWT signature/validity.
 - **POST /.netlify/functions/submit-flag**  
-    _Purpose:_ Record a user-submitted error report (flag) about a product.  
-    _Input:_ JSON body, for example:
+   _Purpose:_ Record a user-submitted error report (flag) about a product.  
+   _Input:_ JSON body, for example:
 - {  
-    "product_id": 42,  
-    "issue_type": "Linket virker ikke"  
-    }
+   "product_id": 42,  
+   "issue_type": "Linket virker ikke"  
+   }
 - (We might also accept a timestamp or derive it, and we set status=unresolved by default in code.)  
-    _Action:_ The function will create a flag entry: assign a flag_id (could be a timestamp or unique number), add current timestamp, set status "unresolved". Then append this entry to flags.json.  
-    _Output:_ Could return a simple success message or status code 200. The front-end doesn't need any data back except to know it succeeded (we already show "Thank you" to user regardless).  
-    _Notes:_ No auth needed (any user can flag). We trust users not to spam; we might implement basic throttling in future. Flags.json is in public assets, but writing to it via function still keeps it controlled (only via this endpoint).
+  _Action:_ The function will create a flag entry: assign a `flag_id` (could be a timestamp or unique number), add current timestamp, set status "unresolved". Then append this entry to flags.json.
+  \_Output:\* Could return a simple success message or status code 200. The front-end doesn't need any data back except to know it succeeded (we already show "Thank you" to user regardless).  
+   \_Notes:\* No auth needed (any user can flag). We trust users not to spam; we might implement basic throttling in future. Flags.json is in public assets, but writing to it via function still keeps it controlled (only via this endpoint).
 - **POST /.netlify/functions/create-share-link**  
-    _Purpose:_ Generate a shareable link for a quiz result.  
-    _Input:_ The client likely sends the relevant product info to share. Possibly the body includes:
+   _Purpose:_ Generate a shareable link for a quiz result.  
+   _Input:_ The client likely sends the relevant product info to share. Possibly the body includes:
 - {  
-    "product_id": 5,  
-    "quiz_answers": { ... } // or maybe we don't need answers, just product is enough for share  
-    }
-- Actually, since the share link retrieval only needs to display the product (and perhaps some context), we might store minimal data. Let's assume input has at least product_id or the whole product object.  
-    _Action:_ The function generates a unique share_id (random string or number). It then creates an entry in shares.json (private) mapping that ID to the product details (maybe we store product_id, and perhaps we store the quiz_answers or result context just for reference). It writes that out.  
-    _Output:_ Returns a JSON with the share link or ID, e.g., { "share_id": "XYZ123" }. The front-end then composes the full URL like denrettegave.dk/share?code=XYZ123 to present to user.  
-    _Security:_ No auth needed; any user can create a share. We ensure the share ID is not guessable (random enough).
+   "product_id": 5,  
+   "quiz_answers": { ... } // or maybe we don't need answers, just product is enough for share  
+   }
+- Actually, since the share link retrieval only needs to display the product (and perhaps some context), we might store minimal data. Let's assume input has at least `product_id` or the whole product object.
+  \_Action:_ The function generates a unique `share_id` (random string or number). It then creates an entry in shares.json (private) mapping that ID to the product details (maybe we store product_id, and perhaps we store the quiz_answers or result context just for reference). It writes that out.
+  \_Output:_ Returns a JSON with the share link or ID, e.g., { "share_id": "XYZ123" }. The front-end then composes the full URL like denrettegave.dk/share?code=XYZ123 to present to user.
+  \_Security:\* No auth needed; any user can create a share. We ensure the share ID is not guessable (random enough).
 - **GET /.netlify/functions/get-shared-result**  
-    _Purpose:_ Retrieve the product information associated with a shared link ID, so that the share page can display it.  
-    _Input:_ Likely we pass the share_id as a query parameter, e.g., /get-shared-result?id=XYZ123.  
-    _Action:_ The function reads shares.json (private) and finds the entry with that ID. It then returns the stored data (which might be the product's name, description, price, image, etc., basically what we need to render a result card). We may choose to store the entire product info at share creation time to avoid issues if product later changes or is removed.  
-    _Output:_ JSON of product data similar to a single item from products.json. If not found or expired, it might return 404 or an error message the front-end can handle.  
-    _Notes:_ No auth required (the link is open to anyone who has it). We trust the random ID to keep it semi-private.
+   _Purpose:_ Retrieve the product information associated with a shared link ID, so that the share page can display it.  
+   _Input:_ Likely we pass the share_id as a query parameter, e.g., /get-shared-result?id=XYZ123.
+  \_Action:\* The function reads shares.json (private) and finds the entry with that ID. It then returns the stored data (which might be the product's name, description, price, image, etc., basically what we need to render a result card). We may choose to store the entire product info at share creation time to avoid issues if product later changes or is removed.  
+   \_Output:\* JSON of product data similar to a single item from products.json. If not found or expired, it might return 404 or an error message the front-end can handle.  
+   \_Notes:\* No auth required (the link is open to anyone who has it). We trust the random ID to keep it semi-private.
 - **POST /.netlify/functions/update-analytics**  
-    _Purpose:_ Log an analytics event (page view, quiz start, affiliate click, etc.) anonymously.  
-    _Input:_ JSON body with event details, e.g., { "event": "affiliate_click", "product_id": 42 } or { "event": "quiz_start" }. Possibly include timestamp if needed, or function can add it.  
-    _Action:_ The function appends this event to analytics.json (public asset). Could either add an entry to an array log or increment counters in an object. We currently treat analytics.json as simple store for aggregated counts or logs.  
-    _Output:_ Perhaps 200 OK with no body. The front-end will fire-and-forget.  
-    _Notes:_ No auth. We have to be mindful of growth of this file or privacy (but since no user identifiers, it's fine privacy-wise). If log gets large, we might archive or purge older events to keep file manageable.
+   _Purpose:_ Log an analytics event (page view, quiz start, affiliate click, etc.) anonymously.  
+   _Input:_ JSON body with event details, e.g., { "event": "`affiliate_click`", "product_id": 42 } or { "event": "quiz_start" }. Possibly include timestamp if needed, or function can add it.
+  \_Action:\* The function appends this event to analytics.json (public asset). Could either add an entry to an array log or increment counters in an object. We currently treat analytics.json as simple store for aggregated counts or logs.  
+   \_Output:\* Perhaps 200 OK with no body. The front-end will fire-and-forget.  
+   \_Notes:\* No auth. We have to be mindful of growth of this file or privacy (but since no user identifiers, it's fine privacy-wise). If log gets large, we might archive or purge older events to keep file manageable.
 
 These are the primary serverless endpoints at this stage. By understanding these, a developer can integrate with or modify backend interactions.
 
