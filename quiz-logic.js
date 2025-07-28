@@ -7,32 +7,18 @@ const views = {
 const startQuizBtn = document.getElementById('start-quiz-btn');
 const restartQuizBtn = document.getElementById('restart-quiz-btn');
 const quizContainer = document.getElementById('quiz-container');
-const questionTitle = document.getElementById('question-title');
-const questionText = document.getElementById('question-text');
-const answersContainer = document.getElementById('answers-container');
-const earlyExitBtn = document.getElementById('early-exit-btn');
-const resultsTitle = document.getElementById('results-title');
 const resultsContainer = document.getElementById('results-container');
 
-// Modals & Banners
-const howItWorksModal = document.getElementById('how-it-works-modal');
-const reportProblemModal = document.getElementById('report-problem-modal');
-const shareModal = document.getElementById('share-modal');
-const contactModal = document.getElementById('contact-modal');
-const cookieBanner = document.getElementById('cookie-banner');
-
 // --- CONFIGURATION ---
-const SCORE_THRESHOLD = 1.8;
-const MIN_ANSWERS_FOR_THRESHOLD = 3;
-const TOP_N_PRODUCTS_FOR_DIFFERENTIATION = 5;
-const DIFFERENTIATOR_BONUS = 10.0;
+const INITIAL_SCORE_THRESHOLD = 1.8;
+const AGGRESSIVE_SCORE_THRESHOLD = 1.5; // Lower threshold after several questions
+const AGGRESSION_ONSET_QUESTION_COUNT = 5; // When to become more aggressive
+const MIN_ANSWERS_FOR_THRESHOLD = 3; 
+const TOP_N_PRODUCTS_FOR_DISCOVERY = 5;
 const TAG_WEIGHTS = {
-    gender: 3.0,
-    age: 2.5,
-    price: 5.0,
-    occasion: 1.5,
-    interest: 4.0,
-    "interest_low": 2.0,
+    gender: 3.0, age: 2.5, price: 5.0, occasion: 1.5,
+    interest: 4.0, "interest_low": 2.0, theme: 2.0,
+    // Add other keys as needed
 };
 
 // --- STATE ---
@@ -45,9 +31,8 @@ let currentReportProductId = null;
 // --- INITIALIZATION ---
 const initializeQuizState = () => {
     quizState = {
-        answers: {},
-        productScores: {},
-        askedQuestionIds: new Set(),
+        answers: {}, productScores: {}, askedQuestionIds: new Set(),
+        discoveryQuestionsAsked: 0
     };
 };
 
@@ -92,12 +77,16 @@ const handleAnswerSelection = (tag, questionId) => {
     if (currentWrapper) currentWrapper.classList.add('exiting');
 
     setTimeout(() => {
+        const question = allQuestions.find(q => q.id === questionId);
+        if (question && !question.is_initial && !question.is_differentiator) {
+            quizState.discoveryQuestionsAsked++;
+        }
+        
         quizState.askedQuestionIds.add(questionId);
         const [key, value] = tag.split(':');
-
         quizState.answers[key] = value;
+        
         updateScores();
-
         const nextStep = selectNextQuestion();
 
         if (nextStep.type === 'question') {
@@ -108,19 +97,16 @@ const handleAnswerSelection = (tag, questionId) => {
     }, 500);
 };
 
-// --- CORE LOGIC: SCORING & SELECTION ---
+// --- CORE LOGIC (REBUILT FOR BALANCE) ---
 const updateScores = () => {
     const availableProducts = allProducts.filter(product => {
         if (quizState.answers.price) {
             const userPrice = quizState.answers.price;
             const productPriceTag = product.tags.find(t => t.startsWith('price:'));
             if (!productPriceTag) return true;
-
             const productPrice = productPriceTag.split(':')[1];
-
             if (userPrice === 'mellem' && productPrice === 'dyr') return false;
             if (userPrice === 'billig' && (productPrice === 'mellem' || productPrice === 'dyr')) return false;
-
             if (quizState.answers.price_preference === 'high_only') {
                 if (userPrice === 'mellem' && productPrice === 'billig') return false;
                 if (userPrice === 'dyr' && (productPrice === 'mellem' || productPrice === 'billig')) return false;
@@ -132,19 +118,13 @@ const updateScores = () => {
     const scores = {};
     availableProducts.forEach(product => {
         let score = 0;
-        if (product.differentiator_tags) {
-            product.differentiator_tags.forEach(d_tag => {
-                const [key, value] = d_tag.split(':');
-                if (quizState.answers[key] === value) score += DIFFERENTIATOR_BONUS;
-            });
-        }
-        product.tags.forEach(tag => {
+        const allProductTags = [...product.tags, ...(product.differentiator_tags || [])];
+        allProductTags.forEach(tag => {
             const [key, value] = tag.split(':');
             const answerValue = quizState.answers[key];
             if (answerValue) {
                 if (answerValue === value) score += TAG_WEIGHTS[key] || 1.0;
-                else if (key === 'interest' && answerValue === `somewhat_${value}`) score += TAG_WEIGHTS["interest_low"] || 1.0;
-                else if (key === 'gender' && value === 'alle') score += (TAG_WEIGHTS[key] || 1.0) / 2;
+                else if (key === 'gender' && value === 'alle') score += (TAG_WEIGHTS.gender || 1.0) / 2;
             }
         });
         scores[product.id] = score;
@@ -155,125 +135,94 @@ const updateScores = () => {
 const selectNextQuestion = () => {
     const sortedProducts = Object.entries(quizState.productScores).sort((a, b) => b[1] - a[1]);
     if (sortedProducts.length === 0) return { type: 'result', product: null };
+    
     const bestProduct = allProducts.find(p => p.id === sortedProducts[0][0]);
 
+    // Priority 1: Ask all initial questions.
     const nextInitial = allQuestions.find(q => q.is_initial && !quizState.askedQuestionIds.has(q.id));
     if (nextInitial) return { type: 'question', question: nextInitial };
 
+    // Priority 2: Ask any triggered questions.
     const lastAnswerKey = Object.keys(quizState.answers).pop();
     const lastAnswerValue = quizState.answers[lastAnswerKey];
-    const lastAnswerTag = `${lastAnswerKey}:${lastAnswerValue}`;
-    const triggeredQuestion = allQuestions.find(q => q.trigger_tag === lastAnswerTag && !quizState.askedQuestionIds.has(q.id));
-    if(triggeredQuestion) return { type: 'question', question: triggeredQuestion };
+    const triggeredQuestion = allQuestions.find(q => q.trigger_tag === `${lastAnswerKey}:${lastAnswerValue}` && !quizState.askedQuestionIds.has(q.id));
+    if (triggeredQuestion) return { type: 'question', question: triggeredQuestion };
 
+    // Priority 3: Check for a clear winner with dynamic aggression.
+    const currentThreshold = quizState.discoveryQuestionsAsked >= AGGRESSION_ONSET_QUESTION_COUNT ? AGGRESSIVE_SCORE_THRESHOLD : INITIAL_SCORE_THRESHOLD;
     const topScore = sortedProducts[0][1];
     const secondScore = sortedProducts.length > 1 ? sortedProducts[1][1] : 0;
-    if (Object.keys(quizState.answers).length >= MIN_ANSWERS_FOR_THRESHOLD && topScore > 0 && (topScore / (secondScore + 0.1)) > SCORE_THRESHOLD) {
+    if (Object.keys(quizState.answers).length >= MIN_ANSWERS_FOR_THRESHOLD && topScore > 0 && (topScore / (secondScore + 0.1)) > currentThreshold) {
         return { type: 'result', product: bestProduct };
     }
-    const topProducts = allProducts.filter(p => sortedProducts.slice(0, TOP_N_PRODUCTS_FOR_DIFFERENTIATION).map(sp => sp[0]).includes(p.id));
-    const discoveryQuestion = findDiscoveryQuestion(topProducts, quizState.askedQuestionIds);
+
+    // Priority 4: Find and ask the best discovery question.
+    const topProducts = allProducts.filter(p => sortedProducts.slice(0, TOP_N_PRODUCTS_FOR_DISCOVERY).map(sp => sp[0]).includes(p.id));
+    const discoveryQuestion = findBestDiscoveryQuestion(topProducts, quizState.askedQuestionIds);
     if (discoveryQuestion) return { type: 'question', question: discoveryQuestion };
-    if (sortedProducts.length >= 2 && isTieDefinitive(sortedProducts)) {
-        const dynamicDifferentiator = findDynamicDifferentiatorQuestion(sortedProducts.slice(0, 2).map(p => allProducts.find(prod => prod.id === p[0])), quizState.askedQuestionIds);
-        if (dynamicDifferentiator) return { type: 'question', question: dynamicDifferentiator };
+    
+    // Priority 5: If no discovery questions are left, try to find a differentiator to break a tie.
+    if (sortedProducts.length >= 2) {
+        const topTwoProducts = sortedProducts.slice(0, 2).map(p => allProducts.find(prod => prod.id === p[0]));
+        const differentiatorQuestion = findBestDifferentiatorQuestion(topTwoProducts, quizState.askedQuestionIds);
+        if (differentiatorQuestion) return { type: 'question', question: differentiatorQuestion };
     }
+
+    // Priority 6: No more useful questions can be asked. End the quiz.
     return { type: 'result', product: bestProduct };
 };
 
-const isTieDefinitive = (sortedScores) => {
-    if (sortedScores.length < 2) return false;
-    const topScore = sortedScores[0][1];
-    const challengerProducts = sortedScores.slice(2).map(p => allProducts.find(prod => prod.id === p[0]));
-    const unaskedTags = new Set();
-    allQuestions.forEach(q => {
-        if (!quizState.askedQuestionIds.has(q.id) && !q.is_initial && !q.is_differentiator) {
-            q.answers.forEach(a => unaskedTags.add(a.tag));
-        }
-    });
-    for (const challenger of challengerProducts) {
-        let maxPotentialScore = challenger.score;
-        challenger.tags.forEach(tag => {
-            if (unaskedTags.has(tag)) {
-                const [key] = tag.split(':');
-                maxPotentialScore += TAG_WEIGHTS[key] || 1.0;
+const findBestDiscoveryQuestion = (topProducts, askedIds) => {
+    let bestQuestion = null;
+    let maxRelevance = -1;
+    const potentialQuestions = allQuestions.filter(q => !q.is_initial && !q.is_differentiator && !q.trigger_tag && !askedIds.has(q.id));
+
+    potentialQuestions.forEach(question => {
+        let relevanceScore = 0;
+        const questionTags = new Set(question.answers.map(a => a.tag));
+        topProducts.forEach(product => {
+            const allProductTags = [...product.tags, ...(product.differentiator_tags || [])];
+            for (const pTag of allProductTags) {
+                if (questionTags.has(pTag)) {
+                    relevanceScore++;
+                }
             }
         });
-        if (maxPotentialScore >= topScore) return false;
-    }
-    return true;
-};
-
-const findDynamicDifferentiatorQuestion = (topTwoProducts, askedIds) => {
-    const product1 = topTwoProducts[0];
-    const product2 = topTwoProducts[1];
-    const allTags1 = new Set([...(product1.tags || []), ...(product1.differentiator_tags || [])]);
-    const allTags2 = new Set([...(product2.tags || []), ...(product2.differentiator_tags || [])]);
-    let difference = null;
-    for (const tag of allTags1) {
-        if (!allTags2.has(tag)) {
-            difference = { productWithTag: product1, tag: tag };
-            break;
-        }
-    }
-    if (!difference) {
-        for (const tag of allTags2) {
-            if (!allTags1.has(tag)) {
-                difference = { productWithTag: product2, tag: tag };
-                break;
-            }
-        }
-    }
-    if (difference) {
-        const [key, value] = difference.tag.split(':');
-        const existingQuestion = allQuestions.find(q => !askedIds.has(q.id) && q.answers.some(a => a.tag.startsWith(key)));
-        if (existingQuestion) return existingQuestion;
-        const otherValue = (difference.productWithTag.id === product1.id ?
-            [...allTags2].find(t => t.startsWith(key)) :
-            [...allTags1].find(t => t.startsWith(key))
-        )?.split(':')[1];
-        if (otherValue) {
-            return {
-                id: `dynamic_${key}`,
-                question_text: `Hvad er vigtigst: ${value} eller ${otherValue}?`,
-                is_differentiator: true,
-                answers: [
-                    { text: value, tag: `${key}:${value}` },
-                    { text: otherValue, tag: `${key}:${otherValue}` }
-                ]
-            }
-        }
-    }
-    return null;
-}
-
-const findDiscoveryQuestion = (topProducts, askedIds) => {
-    let bestQuestion = null;
-    let maxDifferentiation = -1;
-    const potentialQuestions = allQuestions.filter(q => !q.is_initial && !q.is_differentiator && !q.trigger_tag && !askedIds.has(q.id));
-    potentialQuestions.forEach(question => {
-        const tagsInQuestion = new Set(question.answers.map(a => a.tag.split(':')[1]));
-        let differentiation = 0;
-        for (const product of topProducts) {
-            if (product.tags.some(t => tagsInQuestion.has(t.split(':')[1]))) {
-                differentiation++;
-            }
-        }
-        if (differentiation > 0 && differentiation < topProducts.length && differentiation > maxDifferentiation) {
-            maxDifferentiation = differentiation;
+        if (relevanceScore > maxRelevance) {
+            maxRelevance = relevanceScore;
             bestQuestion = question;
         }
     });
     return bestQuestion;
 };
 
-// --- UI RENDERING (XSS HARDENED) ---
-const renderQuestion = (question) => {
-    if (Object.keys(quizState.answers).length >= 2) earlyExitBtn.classList.remove('hidden');
+const findBestDifferentiatorQuestion = (topTwoProducts, askedIds) => {
+    if (topTwoProducts.length < 2) return null;
+    const product1 = topTwoProducts[0];
+    const product2 = topTwoProducts[1];
+    const allTags1 = new Set([...(product1.tags || []), ...(product1.differentiator_tags || [])]);
+    const allTags2 = new Set([...(product2.tags || []), ...(product2.differentiator_tags || [])]);
+    const potentialQuestions = allQuestions.filter(q => q.is_differentiator && !askedIds.has(q.id));
 
+    for (const question of potentialQuestions) {
+        const answerTags = question.answers.map(a => a.tag);
+        const questionKey = answerTags[0].split(':')[0];
+        const product1HasKey = [...allTags1].some(t => t.startsWith(questionKey + ':'));
+        const product2HasKey = [...allTags2].some(t => t.startsWith(questionKey + ':'));
+        if (product1HasKey && product2HasKey) {
+            return question;
+        }
+    }
+    return null;
+};
+
+// --- UI RENDERING & OTHER FUNCTIONS ---
+const renderQuestion = (question) => {
+    const earlyExitBtn = document.getElementById('early-exit-btn');
+    if (Object.keys(quizState.answers).length >= 2) earlyExitBtn.classList.remove('hidden');
+    
     const wrapper = document.createElement('div');
     wrapper.className = 'question-wrapper active';
-
     const title = document.createElement('h3');
     title.className = 'text-2xl md:text-3xl font-bold text-center mb-8';
     title.textContent = question.question_text;
@@ -287,25 +236,24 @@ const renderQuestion = (question) => {
             card.className = 'quiz-card bg-white p-4 rounded-lg shadow cursor-pointer';
             card.dataset.tag = o.tag;
             card.dataset.questionId = question.id;
-
             const text = document.createElement('span');
             text.className = 'font-semibold pointer-events-none';
             text.textContent = o.text;
-
             card.appendChild(text);
             optionsGrid.appendChild(card);
         });
         wrapper.appendChild(optionsGrid);
     }
-    quizContainer.innerHTML = ''; // Clear previous content
+    quizContainer.innerHTML = '';
     quizContainer.appendChild(wrapper);
 };
 
 const showResults = (product, sharedAnswers) => {
     topProductResult = product;
     if (sharedAnswers) quizState.answers = sharedAnswers;
+    const resultsTitle = document.getElementById('results-title');
     resultsTitle.textContent = 'Her er vores forslag!';
-    resultsContainer.innerHTML = ''; // Clear previous content
+    resultsContainer.innerHTML = '';
     if (product) {
         resultsContainer.appendChild(createProductCard(product));
     } else {
@@ -320,14 +268,12 @@ const showResults = (product, sharedAnswers) => {
 const createProductCard = (product) => {
     const card = document.createElement('div');
     card.className = 'bg-white rounded-lg shadow-xl max-w-md mx-auto text-left overflow-hidden';
-
     const img = document.createElement('img');
     img.src = product.image;
     img.alt = product.name;
     img.className = 'w-full h-64 object-cover';
     img.onerror = () => { img.src = 'https://placehold.co/600x400/e2e8f0/475569?text=Billede+mangler'; };
     card.appendChild(img);
-
     card.innerHTML += `
         <div class="p-6">
             <h3 class="text-2xl font-bold mb-2">${escapeHTML(product.name)}</h3>
@@ -351,17 +297,24 @@ function escapeHTML(str) {
     return p.innerHTML;
 }
 
-// --- EVENT LISTENERS & API CALLS ---
 const setupEventListeners = () => {
+    const startQuizBtn = document.getElementById('start-quiz-btn');
+    const restartQuizBtn = document.getElementById('restart-quiz-btn');
+    const earlyExitBtn = document.getElementById('early-exit-btn');
+    const quizContainer = document.getElementById('quiz-container');
+    const resultsContainer = document.getElementById('results-container');
+    const reportProblemModal = document.getElementById('report-problem-modal');
+    const shareModal = document.getElementById('share-modal');
+    const cookieBanner = document.getElementById('cookie-banner');
+    const acceptCookiesBtn = document.getElementById('accept-cookies-btn');
+
     startQuizBtn.addEventListener('click', startQuiz);
     restartQuizBtn.addEventListener('click', () => { window.location.href = window.location.pathname; });
     earlyExitBtn.addEventListener('click', () => showResults(Object.values(quizState.productScores).length > 0 ? allProducts.find(p => p.id === Object.entries(quizState.productScores).sort((a,b) => b[1] - a[1])[0][0]) : null));
-    
     quizContainer.addEventListener('click', e => {
         const target = e.target.closest('[data-tag]');
         if (target) handleAnswerSelection(target.dataset.tag, target.dataset.questionId);
     });
-    
     resultsContainer.addEventListener('click', async e => {
         if (e.target.closest('.report-btn')) {
             currentReportProductId = e.target.closest('.report-btn').dataset.productId;
@@ -384,7 +337,6 @@ const setupEventListeners = () => {
             });
         }
     });
-
      reportProblemModal.querySelector('#report-options').addEventListener('click', e => {
         if (e.target.tagName === 'BUTTON') {
             submitFlag(currentReportProductId, e.target.dataset.reportType);
@@ -393,7 +345,6 @@ const setupEventListeners = () => {
             setTimeout(() => reportProblemModal.classList.remove('visible'), 1500);
         }
     });
-    
     document.getElementById('copy-share-link-button').onclick = () => {
         const link = document.getElementById('share-link-input').value;
         navigator.clipboard.writeText(link).then(() => {
@@ -402,8 +353,6 @@ const setupEventListeners = () => {
             setTimeout(() => feedback.classList.add('hidden'), 2000);
         });
     };
-
-    const acceptCookiesBtn = document.getElementById('accept-cookies-btn');
     if (!localStorage.getItem('cookieConsent')) {
         cookieBanner.classList.remove('hidden');
         setTimeout(() => cookieBanner.classList.remove('translate-y-full'), 100);
@@ -413,13 +362,11 @@ const setupEventListeners = () => {
         cookieBanner.classList.add('translate-y-full');
         setTimeout(() => cookieBanner.classList.add('hidden'), 500);
     });
-
     handleModal(howItWorksModal, [document.getElementById('how-it-works-btn')], document.querySelectorAll('#how-it-works-modal .close-modal-btn'));
     handleModal(contactModal, [document.getElementById('contact-btn')], document.querySelectorAll('#contact-modal .close-modal-btn'));
     handleModal(reportProblemModal, [], document.querySelectorAll('#report-problem-modal .close-modal-btn'));
     handleModal(shareModal, [], document.querySelectorAll('#share-modal .close-modal-btn'));
 };
-
 const submitRating = async (productId, rating) => {
     try {
         await fetch('/api/submit-rating', {
@@ -428,7 +375,6 @@ const submitRating = async (productId, rating) => {
         });
     } catch (error) { console.error('Failed to submit rating:', error); }
 };
-
 const submitFlag = async (productId, reason) => {
     try {
         await fetch('/api/submit-flag', {
@@ -437,7 +383,6 @@ const submitFlag = async (productId, reason) => {
         });
     } catch (error) { console.error('Failed to submit flag:', error); }
 };
-
 const createShareLink = async (productId, answers) => {
     try {
         const response = await fetch('/api/create-share-link', {
@@ -450,7 +395,6 @@ const createShareLink = async (productId, answers) => {
         shareModal.classList.add('visible');
     } catch (error) { console.error('Failed to create share link:', error); }
 };
-
 const loadSharedResult = async (shareId) => {
     try {
         const response = await fetch(`/api/get-shared-result?id=${shareId}`);
@@ -465,8 +409,6 @@ const loadSharedResult = async (shareId) => {
         document.getElementById('app').innerHTML = `<p class="text-red-500 text-center">Dette delingslink er ugyldigt eller udløbet.</p>`;
     }
 };
-
-// --- APP START ---
 const startApp = async () => {
     await fetchData();
     if (allProducts.length > 0 && allQuestions.length > 0) {
@@ -478,5 +420,4 @@ const startApp = async () => {
         setupEventListeners();
     }
 };
-
 document.addEventListener('DOMContentLoaded', startApp);
