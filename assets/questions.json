@@ -14,10 +14,10 @@
     "question_text": "Hvor gammel er vedkommende?",
     "is_initial": true,
     "answers": [
-      { "text": "Under 18", "tag": "age:barn" },
+      { "text": "Under 18", "tag": "age:teenager" },
       { "text": "18-30", "tag": "age:ung" },
       { "text": "31-50", "tag": "age:voksen" },
-      { "text": "50+", "tag": "age:senior" }
+      { "text": "Over 50", "tag": "age:senior" }
     ]
   },
   {
@@ -36,59 +36,66 @@
     "answers": [
       { "text": "Fødselsdag", "tag": "occasion:fødselsdag" },
       { "text": "Jul", "tag": "occasion:jul" },
-      { "text": "Valentinsdag", "tag": "occasion:romantik" },
-      { "text": "En anden anledning", "tag": "occasion:andet" }
+      { "text": "Valentinsdag / Romantik", "tag": "occasion:romantik" }
     ]
   },
   {
-    "id": "q_interest_tech",
+    "id": "q_interest_tech_gadgets",
     "question_text": "Er de interesseret i teknologi og gadgets?",
     "category": "interest",
     "answers": [
       { "text": "Ja, meget", "tag": "interest:tech" },
-      { "text": "Lidt", "tag": "interest:tech" },
+      { "text": "Lidt", "tag": "interest_low:tech" },
       { "text": "Nej, slet ikke", "tag": "negative_interest:tech" }
     ]
   },
   {
-    "id": "q_interest_fashion",
-    "question_text": "Går de op i mode og accessories?",
-    "category": "interest",
-    "answers": [
-      { "text": "Ja, helt sikkert", "tag": "interest:fashion" },
-      { "text": "Nogen gange", "tag": "interest:fashion" },
-      { "text": "Nej, ikke rigtigt", "tag": "negative_interest:fashion" }
-    ]
-  },
-  {
-    "id": "q_interest_food",
-    "question_text": "Er de en 'foodie' der elsker mad og drikke?",
-    "category": "interest",
-    "answers": [
-      { "text": "Ja, de elsker det!", "tag": "interest:foodie" },
-      { "text": "Ja, lidt", "tag": "interest:foodie" },
-      { "text": "Nej", "tag": "negative_interest:foodie" }
-    ]
-  },
-  {
-    "id": "q_interest_home",
-    "question_text": "Sætter de pris på ting til hjemmet og indretning?",
+    "id": "q_interest_home_decor",
+    "question_text": "Går de op i indretning og ting til hjemmet?",
     "category": "interest",
     "answers": [
         { "text": "Ja, de elsker boligindretning", "tag": "interest:hjem" },
-        { "text": "Nogen gange", "tag": "interest:hjem" },
+        { "text": "Nogen gange", "tag": "interest_low:hjem" },
         { "text": "Nej, ikke specielt", "tag": "negative_interest:hjem" }
     ]
   },
   {
-    "id": "q_differentiator_color",
-    "question_text": "Hvilken farve foretrækker de?",
+    "id": "q_interest_foodie",
+    "question_text": "Er de en 'foodie' der elsker god mad og drikke?",
+    "category": "interest",
+    "answers": [
+      { "text": "Ja, de elsker det!", "tag": "interest:foodie" },
+      { "text": "Lidt", "tag": "interest_low:foodie" },
+      { "text": "Nej", "tag": "negative_interest:foodie" }
+    ]
+  },
+    {
+    "id": "q_interest_fashion_style",
+    "question_text": "Er stil og mode vigtigt for dem?",
+    "category": "interest",
+    "answers": [
+      { "text": "Ja, helt sikkert", "tag": "interest:fashion" },
+      { "text": "Lidt", "tag": "interest_low:fashion" },
+      { "text": "Nej, ikke rigtigt", "tag": "negative_interest:fashion" }
+    ]
+  },
+  {
+    "id": "q_interest_creative_hobbies",
+    "question_text": "Har de kreative hobbies, som f.eks. at bygge eller tegne?",
+    "category": "interest",
+    "answers": [
+      { "text": "Ja", "tag": "interest:kreativ" },
+      { "text": "Måske", "tag": "interest_low:kreativ" },
+      { "text": "Nej", "tag": "negative_interest:kreativ" }
+    ]
+  },
+  {
+    "id": "q_differentiator_brand",
+    "question_text": "Foretrækker de et bestemt mærke?",
     "is_differentiator": true,
     "answers": [
-      { "text": "Blå", "tag": "color:blå" },
-      { "text": "Rød", "tag": "color:rød" },
-      { "text": "Grøn", "tag": "color:grøn" },
-      { "text": "Sort", "tag": "color:sort" }
+      { "text": "LEGO", "tag": "brand:lego" },
+      { "text": "Skagen", "tag": "brand:skagen" }
     ]
   }
 ]
