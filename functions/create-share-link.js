@@ -6,13 +6,17 @@ exports.handler = async (event) => {
     }
 
     try {
-        const data = JSON.parse(event.body);
+        const { product_id, quiz_answers } = JSON.parse(event.body);
 
-        if (!data.product_id || !data.quiz_answers) {
-            return { statusCode: 400, body: 'Bad Request: Missing product_id or quiz_answers.' };
+        // --- Stricter Validation ---
+        if (!product_id || typeof product_id !== 'string' || product_id.trim() === '') {
+            return { statusCode: 400, body: 'Bad Request: Invalid or missing product_id.' };
+        }
+        if (!quiz_answers || typeof quiz_answers !== 'object') {
+            return { statusCode: 400, body: 'Bad Request: Invalid or missing quiz_answers.' };
         }
         
-        const safeQuizAnswers = { ...data.quiz_answers };
+        const safeQuizAnswers = { ...quiz_answers };
         if (safeQuizAnswers && safeQuizAnswers.name) {
             delete safeQuizAnswers.name;
         }
@@ -21,7 +25,7 @@ exports.handler = async (event) => {
         const sharesCollection = db.collection('shares');
 
         const shareData = {
-            productId: data.product_id,
+            productId: product_id.trim(),
             quizAnswers: safeQuizAnswers,
             createdAt: new Date(),
         };
@@ -32,7 +36,6 @@ exports.handler = async (event) => {
         return {
             statusCode: 200,
             body: JSON.stringify({ shareId: shareId.toString() }),
-            headers: { 'Content-Type': 'application/json' },
         };
 
     } catch (error) {
