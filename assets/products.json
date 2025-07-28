@@ -7,25 +7,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=63765&htmlurl=https://www.byravn.dk/products/tx10-noglering-med-personlig-tekst",
     "image": "https://www.byravn.dk/cdn/shop/products/tx10-noglering-cognac.jpg",
     "tags": [
-      "gender:alle",
-      "age:voksen",
-      "age:senior",
-      "price:billig",
-      "occasion:fødselsdag",
-      "occasion:fars_dag",
-      "occasion:mors_dag",
-      "interest:personlig_gave",
-      "interest:håndværk",
-      "interest:læder",
-      "interest:accessories"
+      "gender:alle", "age:voksen", "age:senior", "price:billig", "occasion:fødselsdag", "occasion:fars_dag", "occasion:mors_dag", "interest:personlig_gave", "interest:håndværk", "interest:læder", "interest:accessories",
+      "relation:family"
     ],
     "differentiator_tags": [
-      "brand:byravn",
-      "product_type:nøglering",
-      "material:kernelæder",
-      "personalization:true",
-      "personalization_type:prægning",
-      "max_characters:10"
+      "brand:byravn", "product_type:nøglering", "material:læder", "personalization:true"
     ],
     "status": "active"
   },
@@ -37,23 +23,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=63765&htmlurl=https://www.byravn.dk/products/venus-armband-med-gravering",
     "image": "https://www.byravn.dk/cdn/shop/products/venus-armband.jpg",
     "tags": [
-      "gender:kvinde",
-      "age:ung",
-      "age:voksen",
-      "price:mellem",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "occasion:romantik",
-      "interest:personlig_gave",
-      "interest:smykker",
-      "interest:fashion"
+      "gender:kvinde", "age:ung", "age:voksen", "price:mellem", "occasion:fødselsdag", "occasion:jul", "occasion:romantik", "interest:personlig_gave", "interest:smykker", "interest:fashion",
+      "relation:partner", "relation:friend"
     ],
     "differentiator_tags": [
-      "brand:byravn",
-      "product_type:armbånd",
-      "material:forgyldt_stål",
-      "personalization:true",
-      "personalization_type:gravering"
+      "brand:byravn", "product_type:armbånd", "material:forgyldt_stål", "personalization:true"
     ],
     "status": "active"
   },
@@ -65,25 +39,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=63765&htmlurl=https://www.byravn.dk/products/skrivebordsunderlag-i-laeder",
     "image": "https://www.byravn.dk/cdn/shop/products/skrivebordsunderlag-cognac.jpg",
     "tags": [
-      "gender:alle",
-      "age:voksen",
-      "age:senior",
-      "price:dyr",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "occasion:indflytterfest",
-      "interest:hjemmekontor",
-      "interest:design",
-      "interest:læder",
-      "interest:luksus"
+      "gender:alle", "age:voksen", "age:senior", "price:dyr", "occasion:fødselsdag", "occasion:jul", "occasion:indflytterfest", "interest:hjemmekontor", "interest:design", "interest:læder", "interest:luksus",
+      "relation:colleague", "relation:family"
     ],
     "differentiator_tags": [
-      "brand:byravn",
-      "product_type:skrivebordsunderlag",
-      "material:vegetabilsk_garvet_kernelæder",
-      "color:cognac",
-      "color:sort",
-      "size:60x40cm"
+      "brand:byravn", "product_type:skrivebordsunderlag", "material:læder", "size:60x40cm"
     ],
     "status": "active"
   },
@@ -95,23 +55,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=63765&htmlurl=https://www.byravn.dk/products/coasters-i-laeder-med-etui",
     "image": "https://www.byravn.dk/cdn/shop/products/coasters-etui-sort.jpg",
     "tags": [
-      "gender:alle",
-      "age:voksen",
-      "age:senior",
-      "price:mellem",
-      "occasion:indflytterfest",
-      "occasion:værtindegave",
-      "occasion:bryllup",
-      "interest:hjem",
-      "interest:design",
-      "interest:læder"
+      "gender:alle", "age:voksen", "age:senior", "price:mellem", "occasion:indflytterfest", "occasion:værtindegave", "occasion:bryllup", "interest:hjem", "interest:design", "interest:læder",
+      "relation:other"
     ],
     "differentiator_tags": [
-      "brand:byravn",
-      "product_type:coasters",
-      "quantity:6",
-      "material:kernelæder",
-      "feature:etui_inkluderet"
+      "brand:byravn", "product_type:coasters", "quantity:6", "material:læder"
     ],
     "status": "active"
   },
@@ -123,21 +71,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=63765&htmlurl=https://www.byravn.dk/products/suttesnor-i-laeder-med-navn",
     "image": "https://www.byravn.dk/cdn/shop/products/suttesnor-natur.jpg",
     "tags": [
-      "gender:alle",
-      "age:barn",
-      "price:billig",
-      "occasion:dåb",
-      "occasion:barselsgave",
-      "interest:personlig_gave",
-      "interest:babyudstyr",
-      "interest:læder"
+      "gender:alle", "age:barn", "price:billig", "occasion:dåb", "occasion:barselsgave", "interest:personlig_gave", "interest:babyudstyr", "interest:læder",
+      "relation:family"
     ],
     "differentiator_tags": [
-      "brand:byravn",
-      "product_type:suttesnor",
-      "material:kernelæder",
-      "personalization:true",
-      "personalization_type:prægning"
+      "brand:byravn", "product_type:suttesnor", "material:læder", "personalization:true"
     ],
     "status": "active"
   },
@@ -149,23 +87,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=72060&htmlurl=https://www.dyrbergkern.dk/dyrberg/kern-dee-oerestikker.aspx",
     "image": "https://www.dyrbergkern.dk/images/products/450033-p.jpg",
     "tags": [
-      "gender:kvinde",
-      "age:ung",
-      "age:voksen",
-      "age:senior",
-      "price:mellem",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "occasion:romantik",
-      "interest:fashion",
-      "interest:smykker"
+      "gender:kvinde", "age:ung", "age:voksen", "age:senior", "price:mellem", "occasion:fødselsdag", "occasion:jul", "occasion:romantik", "interest:fashion", "interest:smykker",
+      "relation:partner"
     ],
     "differentiator_tags": [
-      "material:messing",
-      "plating:sølv",
-      "stone_type:faux_perle",
-      "stone_color:hvid",
-      "feature:aftageligt_vedhæng"
+      "material:messing", "plating:sølv", "stone:faux_perle", "stone_color:hvid"
     ],
     "status": "active"
   },
@@ -177,22 +103,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=72060&htmlurl=https://www.dyrbergkern.dk/dyrberg/kern-louise-halskaede-10689.aspx",
     "image": "https://www.dyrbergkern.dk/images/products/440115-p.jpg",
     "tags": [
-      "gender:kvinde",
-      "age:ung",
-      "age:voksen",
-      "price:mellem",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "occasion:romantik",
-      "interest:fashion",
-      "interest:smykker",
-      "interest:glamour"
+      "gender:kvinde", "age:ung", "age:voksen", "price:mellem", "occasion:fødselsdag", "occasion:jul", "occasion:romantik", "interest:fashion", "interest:smykker", "interest:glamour",
+      "relation:partner"
     ],
     "differentiator_tags": [
-      "material:rustfrit_stål",
-      "stone:swarovski_krystal",
-      "stone_color:klar",
-      "chain_length:45cm"
+      "material:rustfrit_stål", "stone:swarovski_krystal", "stone_color:klar", "chain_length:45cm"
     ],
     "status": "active"
   },
@@ -204,23 +119,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=72060&htmlurl=https://www.dyrbergkern.dk/dyrberg/kern-teresia-armbaand-370043.aspx",
     "image": "https://www.dyrbergkern.dk/images/products/430081-p.jpg",
     "tags": [
-      "gender:kvinde",
-      "age:ung",
-      "age:voksen",
-      "price:dyr",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "occasion:romantik",
-      "interest:fashion",
-      "interest:smykker",
-      "interest:glamour"
+      "gender:kvinde", "age:ung", "age:voksen", "price:dyr", "occasion:fødselsdag", "occasion:jul", "occasion:romantik", "interest:fashion", "interest:smykker", "interest:glamour",
+      "relation:partner"
     ],
     "differentiator_tags": [
-      "material:rustfrit_stål",
-      "finish:poleret_sølv",
-      "stone:swarovski_krystal",
-      "stone_color:rosa",
-      "style:tennis_armbånd"
+      "material:rustfrit_stål", "finish:poleret_sølv", "stone:swarovski_krystal", "stone_color:rosa", "style:tennis_armbånd"
     ],
     "status": "active"
   },
@@ -232,25 +135,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=90899&htmlurl=https://juliesandlau.dk/products/primering-goldplated-sapphireblue",
     "image": "https://juliesandlau.dk/cdn/shop/files/hgjgant601hbd81cimfz.png?width=2000",
     "tags": [
-      "gender:kvinde",
-      "age:voksen",
-      "age:senior",
-      "price:dyr",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "occasion:romantik",
-      "interest:fashion",
-      "interest:smykker",
-      "interest:design",
-      "interest:luksus"
+      "gender:kvinde", "age:voksen", "age:senior", "price:dyr", "occasion:fødselsdag", "occasion:jul", "occasion:romantik", "interest:fashion", "interest:smykker", "interest:design", "interest:luksus",
+      "relation:partner"
     ],
     "differentiator_tags": [
-      "material:925_sterling_sølv",
-      "plating:22k_guld",
-      "finish:satin",
-      "stone_type:krystal",
-      "stone_color:safirblå",
-      "stone_cut:cabochon"
+      "material:925_sterling_sølv", "plating:22k_guld", "finish:satin", "stone:krystal", "stone_color:safirblå", "stone_cut:cabochon"
     ],
     "status": "active"
   },
@@ -262,23 +151,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=90899&htmlurl=https://juliesandlau.dk/products/treeoflifependant-goldplated",
     "image": "https://juliesandlau.dk/cdn/shop/products/signature-bracelet-gold.png?width=2000",
     "tags": [
-      "gender:alle",
-      "age:voksen",
-      "age:senior",
-      "price:dyr",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "occasion:dåb",
-      "interest:smykker",
-      "interest:design",
-      "interest:symbolik",
-      "interest:familie"
+      "gender:alle", "age:voksen", "age:senior", "price:dyr", "occasion:fødselsdag", "occasion:jul", "occasion:dåb", "interest:smykker", "interest:design", "interest:symbolik", "interest:familie",
+      "relation:family"
     ],
     "differentiator_tags": [
-      "material:925_sterling_sølv",
-      "plating:22k_guld",
-      "motif:livets_træ",
-      "dimensions:29x16mm"
+      "material:925_sterling_sølv", "plating:22k_guld", "motif:livets_træ", "dimensions:29x16mm"
     ],
     "status": "active"
   },
@@ -290,22 +167,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=16528&htmlurl=https://www.smykker-online.dk/smykker/vikinge-smykker/vedhaeng-thors-hammer-soelv",
     "image": "https://www.smykker-online.dk/images/products/viking-thors-hammer.jpg",
     "tags": [
-      "gender:mand",
-      "gender:alle",
-      "age:ung",
-      "age:voksen",
-      "price:billig",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "interest:historie",
-      "interest:mytologi",
-      "interest:smykker"
+      "gender:mand", "gender:alle", "age:ung", "age:voksen", "price:billig", "occasion:fødselsdag", "occasion:jul", "interest:historie", "interest:mytologi", "interest:smykker",
+      "relation:friend"
     ],
     "differentiator_tags": [
-      "material:925_sterling_sølv",
-      "motif:thors_hammer",
-      "theme:viking",
-      "finish:oxideret"
+      "material:925_sterling_sølv", "motif:thors_hammer", "theme:viking", "finish:oxideret"
     ],
     "status": "active"
   },
@@ -317,21 +183,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=16528&htmlurl=https://www.smykker-online.dk/smykker/armbaand-til-maend/flettet-laederarmbaand-sort",
     "image": "https://www.smykker-online.dk/images/products/flettet-laederarmbaand.jpg",
     "tags": [
-      "gender:mand",
-      "age:ung",
-      "age:voksen",
-      "price:billig",
-      "occasion:fødselsdag",
-      "occasion:fars_dag",
-      "interest:fashion",
-      "interest:accessories"
+      "gender:mand", "age:ung", "age:voksen", "price:billig", "occasion:fødselsdag", "occasion:fars_dag", "interest:fashion", "interest:accessories",
+      "relation:family"
     ],
     "differentiator_tags": [
-      "material:læder",
-      "material:rustfrit_stål",
-      "color:sort",
-      "design:flettet",
-      "clasp_type:magnetisk"
+      "material:læder", "material:rustfrit_stål", "color:sort", "design:flettet", "clasp_type:magnetisk"
     ],
     "status": "active"
   },
@@ -343,18 +199,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=16528&htmlurl=https://www.smykker-online.dk/smykker/spirituelle-smykker/chakra-armbaand-7-sten",
     "image": "https://www.smykker-online.dk/images/products/chakra-armbaand.jpg",
     "tags": [
-      "gender:alle",
-      "age:voksen",
-      "price:mellem",
-      "occasion:fødselsdag",
-      "interest:spirituel",
-      "interest:yoga",
-      "interest:meditation",
-      "interest:wellness"
+      "gender:alle", "age:voksen", "price:mellem", "occasion:fødselsdag", "interest:spirituel", "interest:yoga", "interest:meditation", "interest:wellness",
+      "relation:friend"
     ],
     "differentiator_tags": [
-      "theme:chakra",
-      "stone_count:7"
+      "theme:chakra", "stone_count:7"
     ],
     "status": "active"
   },
@@ -366,24 +215,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=103790&htmlurl=https://kreafunk.dk/products/ago-2",
     "image": "https://kreafunk.dk/cdn/shop/files/aGO2BlackEditionPackPerspective.2492_400x.jpg",
     "tags": [
-      "gender:alle",
-      "age:teenager",
-      "age:ung",
-      "age:voksen",
-      "price:mellem",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "interest:musik",
-      "interest:tech",
-      "interest:rejse",
-      "interest:outdoor"
+      "gender:alle", "age:teenager", "age:ung", "age:voksen", "price:mellem", "occasion:fødselsdag", "occasion:jul", "interest:musik", "interest:tech", "interest:rejse", "interest:outdoor",
+      "relation:friend"
     ],
     "differentiator_tags": [
-      "product_type:transportabel_højttaler",
-      "battery_life:25h",
-      "connectivity:bluetooth_5.1",
-      "feature:stereo_play",
-      "water_resistance:ipx5"
+      "product_type:transportabel_højttaler", "battery_life:25h", "connectivity:bluetooth_5.1", "feature:stereo_play", "water_resistance:ipx5"
     ],
     "status": "active"
   },
@@ -395,21 +231,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=103790&htmlurl=https://kreafunk.dk/products/wicharge-stone",
     "image": "https://kreafunk.dk/cdn/shop/products/wiCHARGEStoneDustyRoseperspektive_400x.jpg",
     "tags": [
-      "gender:alle",
-      "age:ung",
-      "age:voksen",
-      "price:billig",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "interest:tech",
-      "interest:design",
-      "interest:hjem"
+      "gender:alle", "age:ung", "age:voksen", "price:billig", "occasion:fødselsdag", "occasion:jul", "interest:tech", "interest:design", "interest:hjem",
+      "relation:colleague"
     ],
     "differentiator_tags": [
-      "product_type:trådløs_oplader",
-      "standard:qi",
-      "power_output:15w",
-      "feature:anti-slip"
+      "product_type:trådløs_oplader", "standard:qi", "power_output:15w", "feature:anti-slip"
     ],
     "status": "active"
   },
@@ -421,21 +247,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=112253&htmlurl=https://smagfulddanmark.dk/produkt/gavekurv-tapas-krydderier-og-snacks/",
     "image": "https://smagfulddanmark.dk/wp-content/uploads/2025/01/Gavekurv10-4-1.jpg",
     "tags": [
-      "gender:alle",
-      "age:voksen",
-      "age:senior",
-      "price:mellem",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "occasion:værtindegave",
-      "interest:madlavning",
-      "interest:foodie"
+      "gender:alle", "age:voksen", "age:senior", "price:mellem", "occasion:fødselsdag", "occasion:jul", "occasion:værtindegave", "interest:madlavning", "interest:foodie",
+      "relation:other"
     ],
     "differentiator_tags": [
-      "theme:tapas",
-      "contents:krydderier",
-      "contents:snacks",
-      "origin:dansk"
+      "theme:tapas", "contents:krydderier", "contents:snacks", "origin:dansk"
     ],
     "status": "active"
   },
@@ -447,23 +263,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=112253&htmlurl=https://smagfulddanmark.dk/produkt/gavekurv-luksus-oel-snacks-barbeque/",
     "image": "https://smagfulddanmark.dk/wp-content/uploads/2025/01/Gavekurve240125_2-1.jpg",
     "tags": [
-      "gender:mand",
-      "age:voksen",
-      "age:senior",
-      "price:mellem",
-      "occasion:fødselsdag",
-      "occasion:fars_dag",
-      "occasion:jul",
-      "interest:øl",
-      "interest:barbeque",
-      "interest:foodie"
+      "gender:mand", "age:voksen", "age:senior", "price:mellem", "occasion:fødselsdag", "occasion:fars_dag", "occasion:jul", "interest:øl", "interest:barbeque", "interest:foodie",
+      "relation:family"
     ],
     "differentiator_tags": [
-      "theme:barbeque",
-      "contents:specialøl",
-      "contents:snacks",
-      "contents:bbq_sauce",
-      "origin:dansk"
+      "theme:barbeque", "contents:specialøl", "contents:snacks", "contents:bbq_sauce", "origin:dansk"
     ],
     "status": "active"
   },
@@ -475,20 +279,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=112253&htmlurl=https://smagfulddanmark.dk/produkt/den-lille-chili-gavekurv/",
     "image": "https://smagfulddanmark.dk/wp-content/uploads/2025/04/Gavekurv21.jpg",
     "tags": [
-      "gender:alle",
-      "age:voksen",
-      "price:billig",
-      "occasion:fødselsdag",
-      "occasion:værtindegave",
-      "interest:madlavning",
-      "interest:foodie",
-      "interest:chili"
+      "gender:alle", "age:voksen", "price:billig", "occasion:fødselsdag", "occasion:værtindegave", "interest:madlavning", "interest:foodie", "interest:chili",
+      "relation:other"
     ],
     "differentiator_tags": [
-      "theme:chili",
-      "contents:chili_sauce",
-      "contents:chili_snacks",
-      "origin:dansk"
+      "theme:chili", "contents:chili_sauce", "contents:chili_snacks", "origin:dansk"
     ],
     "status": "active"
   },
@@ -500,25 +295,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=106134&htmlurl=https://eaudeparfum.dk/giorgio-armani-si-eau-de-parfum-50ml",
     "image": "https://eaudeparfum.dk/images/products/armani-si-edp.jpg",
     "tags": [
-      "gender:kvinde",
-      "age:voksen",
-      "age:senior",
-      "price:dyr",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "occasion:romantik",
-      "interest:parfume",
-      "interest:skønhed",
-      "interest:luksus"
+      "gender:kvinde", "age:voksen", "age:senior", "price:dyr", "occasion:fødselsdag", "occasion:jul", "occasion:romantik", "interest:parfume", "interest:skønhed", "interest:luksus",
+      "relation:partner"
     ],
     "differentiator_tags": [
-      "brand:giorgio_armani",
-      "series:si",
-      "type:eau_de_parfum",
-      "size:50ml",
-      "top_notes:solbær",
-      "heart_notes:fresia_rose",
-      "base_notes:patchouli_vanilje"
+      "brand:giorgio_armani", "series:si", "type:eau_de_parfum", "size:50ml"
     ],
     "status": "active"
   },
@@ -530,22 +311,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=106134&htmlurl=https://eaudeparfum.dk/hugo-boss-bottled-gaveaeske-edt-deo",
     "image": "https://eaudeparfum.dk/images/products/boss-bottled-giftset.jpg",
     "tags": [
-      "gender:mand",
-      "age:voksen",
-      "age:senior",
-      "price:dyr",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "occasion:fars_dag",
-      "interest:parfume",
-      "interest:grooming"
+      "gender:mand", "age:voksen", "age:senior", "price:dyr", "occasion:fødselsdag", "occasion:jul", "occasion:fars_dag", "interest:parfume", "interest:grooming",
+      "relation:family"
     ],
     "differentiator_tags": [
-      "brand:hugo_boss",
-      "series:bottled",
-      "type:gaveæske",
-      "contents:eau_de_toilette",
-      "contents:deodorant_stick"
+      "brand:hugo_boss", "series:bottled", "type:gaveæske", "contents:eau_de_toilette", "contents:deodorant_stick"
     ],
     "status": "active"
   },
@@ -557,22 +327,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=30416&htmlurl=https://nicehair.dk/olaplex-no-3-hair-perfector-100-ml.html",
     "image": "https://nicehair.dk/images/products/olaplex-no3.jpg",
     "tags": [
-      "gender:alle",
-      "age:ung",
-      "age:voksen",
-      "price:mellem",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "interest:hårpleje",
-      "interest:skønhed",
-      "interest:wellness"
+      "gender:alle", "age:ung", "age:voksen", "price:mellem", "occasion:fødselsdag", "occasion:jul", "interest:hårpleje", "interest:skønhed", "interest:wellness",
+      "relation:friend"
     ],
     "differentiator_tags": [
-      "brand:olaplex",
-      "product_type:hårkur",
-      "hair_concern:skadet_hår",
-      "hair_concern:farvet_hår",
-      "size:100ml"
+      "brand:olaplex", "product_type:hårkur", "hair_concern:skadet_hår", "size:100ml"
     ],
     "status": "active"
   },
@@ -584,25 +343,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=30416&htmlurl=https://nicehair.dk/ghd-gold-styler.html",
     "image": "https://nicehair.dk/images/products/ghd-gold.jpg",
     "tags": [
-      "gender:kvinde",
-      "age:teenager",
-      "age:ung",
-      "age:voksen",
-      "price:dyr",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "occasion:konfirmation",
-      "interest:hårpleje",
-      "interest:skønhed",
-      "interest:styling"
+      "gender:kvinde", "age:teenager", "age:ung", "age:voksen", "price:dyr", "occasion:fødselsdag", "occasion:jul", "occasion:konfirmation", "interest:hårpleje", "interest:skønhed", "interest:styling",
+      "relation:partner"
     ],
     "differentiator_tags": [
-      "brand:ghd",
-      "product_type:glattejern",
-      "series:gold",
-      "technology:dual-zone",
-      "max_temp:185c",
-      "feature:auto_sleep_mode"
+      "brand:ghd", "product_type:glattejern", "series:gold", "technology:dual-zone", "max_temp:185c"
     ],
     "status": "active"
   },
@@ -614,21 +359,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=30416&htmlurl=https://nicehair.dk/cosrx-advanced-snail-96-mucin-power-essence-100ml.html",
     "image": "https://nicehair.dk/images/products/cosrx-snail.jpg",
     "tags": [
-      "gender:alle",
-      "age:ung",
-      "age:voksen",
-      "price:billig",
-      "occasion:fødselsdag",
-      "interest:hudpleje",
-      "interest:skønhed"
+      "gender:alle", "age:ung", "age:voksen", "price:billig", "occasion:fødselsdag", "interest:hudpleje", "interest:skønhed",
+      "relation:friend"
     ],
     "differentiator_tags": [
-      "brand:cosrx",
-      "product_type:essens",
-      "main_ingredient:sneglesekret_96_procent",
-      "skin_concern:fugtfattig_hud",
-      "theme:k-beauty",
-      "size:100ml"
+      "brand:cosrx", "product_type:essens", "main_ingredient:sneglesekret_96_procent", "theme:k-beauty", "size:100ml"
     ],
     "status": "active"
   },
@@ -640,22 +375,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=30416&htmlurl=https://nicehair.dk/sol-de-janeiro-brazilian-bum-bum-cream-240ml.html",
     "image": "https://nicehair.dk/images/products/sol-de-janeiro-bumbum.jpg",
     "tags": [
-      "gender:kvinde",
-      "age:ung",
-      "age:voksen",
-      "price:mellem",
-      "occasion:fødselsdag",
-      "occasion:jul",
-      "interest:hudpleje",
-      "interest:skønhed",
-      "interest:wellness"
+      "gender:kvinde", "age:ung", "age:voksen", "price:mellem", "occasion:fødselsdag", "occasion:jul", "interest:hudpleje", "interest:skønhed", "interest:wellness",
+      "relation:friend"
     ],
     "differentiator_tags": [
-      "brand:sol_de_janeiro",
-      "product_type:body_cream",
-      "scent:pistacie_saltkaramel",
-      "feature:opstrammende",
-      "size:240ml"
+      "brand:sol_de_janeiro", "product_type:body_cream", "scent:pistacie_saltkaramel", "feature:opstrammende", "size:240ml"
     ],
     "status": "active"
   },
@@ -667,23 +391,11 @@
     "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=30416&htmlurl=https://nicehair.dk/jack-black-the-jack-pack.html",
     "image": "https://nicehair.dk/images/products/jack-black-pack.jpg",
     "tags": [
-      "gender:mand",
-      "age:voksen",
-      "age:senior",
-      "price:mellem",
-      "occasion:fødselsdag",
-      "occasion:fars_dag",
-      "occasion:jul",
-      "interest:hudpleje",
-      "interest:grooming"
+      "gender:mand", "age:voksen", "age:senior", "price:mellem", "occasion:fødselsdag", "occasion:fars_dag", "occasion:jul", "interest:hudpleje", "interest:grooming",
+      "relation:family"
     ],
     "differentiator_tags": [
-      "brand:jack_black",
-      "product_type:gaveæske",
-      "contents:face_wash",
-      "contents:face_moisturizer",
-      "contents:lip_balm",
-      "skin_type:alle"
+      "brand:jack_black", "product_type:gaveæske", "contents:face_wash", "contents:face_moisturizer", "skin_type:alle"
     ],
     "status": "active"
   }
