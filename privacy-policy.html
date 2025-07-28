@@ -9,9 +9,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
 </head>
 <body class="bg-slate-50 text-slate-800">
-    <div class="max-w-4xl mx-auto p-4 md:p-8 flex flex-col min-h-screen">
+
+    <div id="app" class="max-w-4xl mx-auto p-4 md:p-8 flex flex-col min-h-screen">
         <header class="flex justify-between items-center mb-8">
             <a href="/" class="flex items-center gap-3 text-2xl md:text-3xl font-bold text-slate-700 hover:text-slate-900 transition-colors">
                 <img src="./assets/logo.jpeg" alt="Den Rette Gave Logo" class="h-10 w-10 rounded-md">
@@ -19,57 +21,79 @@
             </a>
         </header>
 
-        <main class="bg-white p-8 rounded-lg shadow-md content-container flex-grow">
-            <h1 class="text-3xl font-bold text-slate-800 mb-4">Privatlivspolitik for Den Rette Gave</h1>
-            <p class="text-slate-500">Sidst opdateret: 27. juli 2025</p>
+        <main class="prose max-w-none">
+            <h1>Privatlivspolitik for Den Rette Gave</h1>
+            <p class="lead">Sidst opdateret: 28. juli 2025</p>
+            
+            <p>Denne privatlivspolitik beskriver, hvordan Den Rette Gave ("vi", "os", "vores") indsamler, bruger og beskytter de oplysninger, du giver, når du bruger vores hjemmeside og tjenester. Vi er forpligtet til at beskytte dit privatliv og overholde den generelle forordning om databeskyttelse (GDPR).</p>
 
             <h2>1. Dataansvarlig</h2>
-            <p>Den Rette Gave er dataansvarlig for de oplysninger, vi indsamler om dig, og vi sikrer, at dine personoplysninger behandles i overensstemmelse med lovgivningen.</p>
+            <p>Den dataansvarlige for de oplysninger, der indsamles via denne hjemmeside, er:</p>
             <p>
                 Den Rette Gave<br>
-                CVR: [Dit CVR-nummer]<br>
-                Email: <a href="mailto:support@denrettegave.dk" class="text-blue-600 hover:underline">support@denrettegave.dk</a>
+                [Din virksomheds CVR-nummer]<br>
+                [Din virksomheds adresse]<br>
+                E-mail: <a href="mailto:support@denrettegave.dk">support@denrettegave.dk</a>
             </p>
 
-            <h2>2. Hvilke data indsamler vi og hvorfor?</h2>
-            <p>Vi behandler dine data med det formål at forbedre vores service. Vores retsgrundlag for behandling er EU's databeskyttelsesforordnings (GDPR) artikel 6, stk. 1, litra f (legitim interesse).</p>
-
-            <h3>2.1. Quiz-svar og Vurderinger</h3>
-            <p>Når du bruger vores quiz og giver en stjernevurdering, indsamler vi følgende data:</p>
+            <h2>2. Hvilke oplysninger indsamler vi?</h2>
+            <p>Vi indsamler forskellige typer oplysninger for at kunne levere og forbedre vores service:</p>
             <ul>
-                <li><strong>Navn på gavemodtager:</strong> Indsamles for at personalisere din oplevelse. Dette felt fjernes automatisk og permanent, før data gemmes, for at sikre anonymitet.</li>
-                <li><strong>Quiz-svar:</strong> Dine svar på spørgsmål om relation, køn, alder, anledning og interesser.</li>
-                <li><strong>Vurdering:</strong> Den stjernevurdering (1-5), du giver et produktforslag.</li>
-            </ul>
-            <p><strong>Formål og Opbevaring:</strong> Disse anonymiserede data bruges til at analysere og forbedre kvaliteten af vores anbefalinger. Data opbevares, så længe de er relevante for dette formål, typisk i op til 2 år.</p>
-
-            <h3>2.2. Fejlrapportering og Anonym Brugsanalyse</h3>
-            <p>Vi indsamler anonyme data om fejlrapporteringer og generel brug af siden (f.eks. klik på affiliate links) for at vedligeholde og forbedre tjenesten. Disse data indeholder ingen personlige oplysninger.</p>
-
-            <h2>3. Cookies og Trackere</h2>
-            <p>Vi bruger cookies for at sikre en funktionel og god brugeroplevelse. En cookie er en lille tekstfil, der gemmes på din computer. Vi bruger en funktionel cookie til at huske dit samtykke til vores cookie-politik. Derudover kan vores affiliate-partnere (f.eks. Partner-ads) placere en tredjeparts-cookie, når du klikker på et produktlink. Denne cookie er nødvendig for at spore eventuelle salg og er en kerne del af vores forretningsmodel. Ved at bruge vores tjeneste giver du samtykke til brugen af disse nødvendige cookies.</p>
-
-            <h2>4. Tredjepartsdatabehandlere</h2>
-            <p>Vi benytter os af tredjeparter til at drive vores tjeneste. Disse fungerer som databehandlere.</p>
-            <ul>
-                <li><strong>Hosting:</strong> Vores hjemmeside er hostet hos Netlify, Inc. (USA). Dataoverførsel er sikret under EU-U.S. Data Privacy Framework. <a href="https://www.netlify.com/privacy/" target="_blank" class="text-blue-600 hover:underline">Læs Netlifys privatlivspolitik</a>.</li>
-                <li><strong>Affiliate Netværk:</strong> Vi samarbejder med affiliate netværk som Partner-ads. Når du klikker på et affiliate link, kan de indsamle data i henhold til deres egne privatlivspolitikker.</li>
+                <li><strong>Anonyme Quiz-svar:</strong> De svar, du giver i vores gavefinder-quiz. Disse data er anonymiserede og bruges udelukkende til at generere gaveforslag og til intern analyse for at forbedre vores algoritme. Vi fjerner bevidst alle personligt identificerbare oplysninger (som f.eks. navn) fra disse data.</li>
+                <li><strong>Brugerfeedback (Ratings og Flags):</strong> Når du bedømmer et gaveforslag (giver stjerner) eller rapporterer et problem ("flag"), gemmer vi disse oplysninger. Dette inkluderer det pågældende produkt-ID, din bedømmelse eller årsagen til din rapport, samt dine anonymiserede quiz-svar på det tidspunkt. Dette hjælper os med at forbedre kvaliteten af vores anbefalinger.</li>
+                <li><strong>Nyhedsbrevstilmelding (fremtidig funktion):</strong> Hvis du vælger at tilmelde dig vores nyhedsbrev, indsamler vi din e-mailadresse. Dette sker kun med dit udtrykkelige samtykke.</li>
+                <li><strong>Tekniske data:</strong> Vores webserver (leveret af Netlify) kan midlertidigt logge din IP-adresse af sikkerheds- og driftsmæssige årsager. Disse logs slettes automatisk og bruges ikke til sporing.</li>
             </ul>
 
-            <h2>5. Dine Rettigheder (GDPR)</h2>
-            <p>Du har efter databeskyttelsesforordningen en række rettigheder i forhold til vores behandling af oplysninger om dig.</p>
+            <h2>3. Hvordan og hvorfor vi bruger dine oplysninger</h2>
+            <p>Vi bruger de indsamlede oplysninger til følgende formål:</p>
             <ul>
-                <li>Ret til at se oplysninger (indsigtsret)</li>
-                <li>Ret til berigtigelse (rettelse)</li>
-                <li>Ret til sletning</li>
-                <li>Ret til begrænsning af behandling</li>
-                <li>Ret til indsigelse</li>
-                <li>Ret til dataportabilitet</li>
+                <li><strong>For at levere vores service:</strong> Dine quiz-svar er nødvendige for, at vores algoritme kan finde relevante gaveforslag.</li>
+                <li><strong>For at forbedre vores service:</strong> Anonymiseret feedback og brugsdata hjælper os med at forstå, hvordan vores tjeneste bruges, så vi kan gøre den bedre, mere præcis og mere relevant.</li>
+                <li><strong>For at kommunikere med dig (med samtykke):</strong> Hvis du tilmelder dig vores nyhedsbrev, bruger vi din e-mail til at sende dig opdateringer, tips og relevant indhold.</li>
+                <li><strong>For at opretholde sikkerhed:</strong> Tekniske logs hjælper os med at beskytte vores service mod misbrug.</li>
             </ul>
-            <p>Da vi primært behandler anonymiserede data, kan udøvelsen af disse rettigheder være begrænset, da vi ikke kan identificere, hvilke data der tilhører dig. Du har ret til at indgive en klage til Datatilsynet, hvis du er utilfreds med den måde, vi behandler dine personoplysninger på. Du finder Datatilsynets kontaktoplysninger på <a href="http://www.datatilsynet.dk" target="_blank" class="text-blue-600 hover:underline">www.datatilsynet.dk</a>.</p>
+            <p>Vores retsgrundlag for behandling af disse data er primært dit samtykke og vores legitime interesse i at drive og forbedre vores tjeneste.</p>
+
+            <h2>4. Brug af tredjeparts databehandlere</h2>
+            <p>For at drive Den Rette Gave benytter vi os af specialiserede tredjepartstjenester. Disse tjenester fungerer som databehandlere på vores vegne:</p>
+            <ul>
+                <li><strong>Hosting:</strong> Vores hjemmeside er hostet hos Netlify, Inc. Netlify behandler tekniske data som f.eks. IP-adresser i deres serverlogs.</li>
+                <li><strong>Database:</strong> Al brugergenereret data (ratings, flags, og fremtidige nyhedsbrevstilmeldinger) opbevares sikkert i en database leveret af MongoDB, Inc. Deres servere kan være placeret uden for EU/EØS. I sådanne tilfælde sikrer vi, at overførslen er dækket af EU's standardkontraktbestemmelser, hvilket garanterer et tilstrækkeligt databeskyttelsesniveau.</li>
+            </ul>
+            <p>Vi har indgået databehandleraftaler med disse parter for at sikre, at de behandler dine data sikkert og i overensstemmelse med GDPR.</p>
+
+            <h2>5. Cookies</h2>
+            <p>Vores hjemmeside bruger et minimum af cookies for at fungere. Vi bruger en funktionel cookie til at huske dit samtykke til vores cookie-politik, så du ikke bliver spurgt igen ved hvert besøg. Vores kommende blog kan anvende yderligere cookies til analyseformål, hvilket vil blive specificeret her og kræve dit samtykke.</p>
+            
+            <h2>6. Datasikkerhed</h2>
+            <p>Vi tager din datasikkerhed alvorligt. Vi har truffet tekniske og organisatoriske foranstaltninger for at beskytte dine oplysninger mod hændeligt eller ulovligt tab, misbrug, uautoriseret adgang eller offentliggørelse. Al kommunikation med vores servere er krypteret via SSL (HTTPS).</p>
+
+            <h2>7. Dine rettigheder under GDPR</h2>
+            <p>Som bruger i EU har du en række rettigheder vedrørende dine personoplysninger:</p>
+            <ul>
+                <li><strong>Ret til indsigt:</strong> Du har ret til at anmode om en kopi af de oplysninger, vi har om dig.</li>
+                <li><strong>Ret til berigtigelse:</strong> Du har ret til at få urigtige oplysninger om dig selv rettet.</li>
+                <li><strong>Ret til sletning ("retten til at blive glemt"):</strong> Du har ret til at anmode om at få dine oplysninger slettet.</li>
+                <li><strong>Ret til at trække samtykke tilbage:</strong> Hvis du har givet samtykke (f.eks. til vores nyhedsbrev), kan du til enhver tid trække dette tilbage.</li>
+            </ul>
+            <p>Hvis du ønsker at gøre brug af dine rettigheder, bedes du kontakte os på <a href="mailto:support@denrettegave.dk">support@denrettegave.dk</a>. Vi vil behandle din anmodning i overensstemmelse med gældende lovgivning.</p>
+            <p>Du har også ret til at indgive en klage til Datatilsynet, hvis du mener, at vores behandling af dine personoplysninger er i strid med loven.</p>
+            
+            <h2>8. Ændringer til denne politik</h2>
+            <p>Vi kan opdatere denne privatlivspolitik fra tid til anden. Den seneste version vil altid være tilgængelig på denne side. Vi opfordrer dig til at gennemgå den jævnligt.</p>
         </main>
-        <footer class="text-center text-slate-500 mt-8 py-4">
-            <p>&copy; 2025 Den Rette Gave (CVR: [Dit CVR-nummer])</p>
+
+        <footer class="text-center text-slate-500 mt-16 py-4 border-t border-slate-200">
+            <div class="flex flex-col md:flex-row md:flex-nowrap justify-center items-center gap-2 md:gap-4">
+                <span class="whitespace-nowrap">&copy; 2025 Den Rette Gave (CVR: [Dit CVR-nummer])</span>
+                <span class="hidden md:inline">|</span>
+                <a href="./privacy-policy.html" target="_blank" class="hover:underline whitespace-nowrap">Privatlivspolitik</a>
+                <span class="hidden md:inline">|</span>
+                <a href="./terms-of-service.html" target="_blank" class="hover:underline whitespace-nowrap">Brugsbetingelser</a>
+                <span class="hidden md:inline">|</span>
+                <button id="contact-btn" class="hover:underline whitespace-nowrap">Kontakt os</button>
+            </div>
         </footer>
     </div>
 </body>
