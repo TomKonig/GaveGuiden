@@ -8,16 +8,20 @@ exports.handler = async (event) => {
   try {
     const { productId, rating } = JSON.parse(event.body);
 
-    if (!productId || !rating || typeof rating !== 'number' || rating < 1 || rating > 5) {
-      return { statusCode: 400, body: 'Bad Request: Invalid productId or rating.' };
+    // --- Stricter Validation ---
+    if (!productId || typeof productId !== 'string' || productId.trim() === '') {
+        return { statusCode: 400, body: 'Bad Request: Invalid or missing productId.' };
+    }
+    if (!rating || typeof rating !== 'number' || !Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return { statusCode: 400, body: 'Bad Request: Rating must be an integer between 1 and 5.' };
     }
 
     const db = await connectToDatabase();
     const ratingsCollection = db.collection('ratings');
 
     const newRating = {
-      productId,
-      rating: parseInt(rating),
+      productId: productId.trim(),
+      rating: rating,
       createdAt: new Date(),
     };
 
@@ -26,13 +30,9 @@ exports.handler = async (event) => {
     return {
       statusCode: 201,
       body: JSON.stringify({ message: 'Rating submitted successfully!' }),
-      headers: { 'Content-Type': 'application/json' },
     };
   } catch (error) {
     console.error('Error submitting rating:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ message: 'Internal Server Error' }),
-    };
+    return { statusCode: 500, body: 'Internal Server Error' };
   }
 };
