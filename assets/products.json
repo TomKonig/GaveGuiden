@@ -1,112 +1,690 @@
 [
   {
-    "id": "p1",
-    "name": "Smart Kaffekop med Trådløs Opladning",
-    "description": "En intelligent kop der holder din kaffe ved den perfekte temperatur og har en indbygget trådløs oplader i bunden til din telefon. Perfekt til den travle tech-entusiast.",
-    "price": 349,
-    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/kaffekop",
-    "image": "https://images.unsplash.com/photo-1517554931362-a25e29300436?q=80&w=1974&auto=format&fit=crop",
-    "tags": ["gender:alle", "age:ung", "age:voksen", "price:mellem", "interest:tech", "interest:kaffe", "interest:hjem"],
-    "differentiator_tags": ["color:black", "capacity:350ml"],
+    "id": "p_byravn_tx10_noeglering_personlig",
+    "name": "byRavn TX10 Nøglering med Personlig Tekst",
+    "description": "En håndlavet nøglering i kernelæder, hvor du kan få præget din egen personlige tekst. Den perfekte, personlige gave til fars dag, mors dag eller som en betænksom gave til en, du holder af.",
+    "price": 199,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=63765&htmlurl=https://www.byravn.dk/products/tx10-noglering-med-personlig-tekst",
+    "image": "https://www.byravn.dk/cdn/shop/products/tx10-noglering-cognac.jpg",
+    "tags": [
+      "gender:alle",
+      "age:voksen",
+      "age:senior",
+      "price:billig",
+      "occasion:fødselsdag",
+      "occasion:fars_dag",
+      "occasion:mors_dag",
+      "interest:personlig_gave",
+      "interest:håndværk",
+      "interest:læder",
+      "interest:accessories"
+    ],
+    "differentiator_tags": [
+      "brand:byravn",
+      "product_type:nøglering",
+      "material:kernelæder",
+      "personalization:true",
+      "personalization_type:prægning",
+      "max_characters:10"
+    ],
     "status": "active"
   },
   {
-    "id": "p2",
-    "name": "Håndlavet Læder Pung",
-    "description": "Klassisk og stilfuld pung i ægte læder. En tidløs gave til manden der værdsætter kvalitet og godt håndværk.",
-    "price": 499,
-    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/pung",
-    "image": "https://images.unsplash.com/photo-1620905380598-634587371981?q=80&w=2070&auto=format&fit=crop",
-    "tags": ["gender:mand", "age:ung", "age:voksen", "age:senior", "price:mellem", "occasion:fødselsdag", "interest:fashion"],
-    "differentiator_tags": ["color:brown", "material:leather"],
+    "id": "p_byravn_venus_armbaand_gravering",
+    "name": "byRavn Venus Armbånd med Gravering",
+    "description": "Et elegant og feminint armbånd, der kan personliggøres med en unik gravering. En smuk og meningsfuld gave til kæresten, konen eller en god veninde.",
+    "price": 325,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=63765&htmlurl=https://www.byravn.dk/products/venus-armband-med-gravering",
+    "image": "https://www.byravn.dk/cdn/shop/products/venus-armband.jpg",
+    "tags": [
+      "gender:kvinde",
+      "age:ung",
+      "age:voksen",
+      "price:mellem",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "occasion:romantik",
+      "interest:personlig_gave",
+      "interest:smykker",
+      "interest:fashion"
+    ],
+    "differentiator_tags": [
+      "brand:byravn",
+      "product_type:armbånd",
+      "material:forgyldt_stål",
+      "personalization:true",
+      "personalization_type:gravering"
+    ],
     "status": "active"
   },
   {
-    "id": "p3",
-    "name": "Gourmet Chokolade Sæt",
-    "description": "Luksuriøst sæt med håndlavet, økologisk chokolade og delikate smagsnoter. Den perfekte gave til en foodie med en sød tand.",
-    "price": 250,
-    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/chokolade",
-    "image": "https://images.unsplash.com/photo-1570832130343-2410a5a36b43?q=80&w=1964&auto=format&fit=crop",
-    "tags": ["gender:alle", "age:voksen", "age:senior", "price:mellem", "occasion:jul", "occasion:romantik", "interest:foodie", "interest:luksus"],
-    "differentiator_tags": ["type:dark_chocolate", "origin:ecuador"],
-    "status": "active"
-  },
-  {
-    "id": "p4",
-    "name": "High-Fidelity Trådløse Hovedtelefoner",
-    "description": "Høj kvalitets hovedtelefoner med aktiv støjreduktion og overlegen lyd. Til musikelskeren, pendleren eller gameren.",
-    "price": 799,
-    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/headphones",
-    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=2070&auto=format&fit=crop",
-    "tags": ["gender:alle", "age:ung", "age:voksen", "price:dyr", "interest:tech", "interest:musik", "interest:gaming"],
-    "differentiator_tags": ["color:black", "connectivity:bluetooth5"],
-    "status": "active"
-  },
-  {
-    "id": "p5",
-    "name": "Skagen Grenen Dameur",
-    "description": "Et klassisk og minimalistisk dameur fra danske Skagen. Perfekt til den modebevidste kvinde, der elsker skandinavisk design.",
-    "price": 1295,
-    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/skagen_dameur",
-    "image": "https://images.unsplash.com/photo-1594576722539-a71959d243de?q=80&w=1974&auto=format&fit=crop",
-    "tags": ["gender:kvinde", "age:voksen", "age:senior", "price:dyr", "occasion:fødselsdag", "interest:fashion", "interest:dansk_design"],
-    "differentiator_tags": ["dial_color:white", "band_material:mesh", "case_size:36mm"],
-    "status": "active"
-  },
-  {
-    "id": "p6",
-    "name": "Bæredygtig Yoga Måtte",
-    "description": "En miljøvenlig yogamåtte lavet af naturligt kork. Perfekt til den aktive og miljøbevidste person.",
-    "price": 450,
-    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/yogamat",
-    "image": "https://images.unsplash.com/photo-1599447462858-a78b544b8b84?q=80&w=2070&auto=format&fit=crop",
-    "tags": ["gender:alle", "age:ung", "age:voksen", "price:mellem", "interest:sport", "interest:yoga", "interest:bæredygtighed"],
-    "differentiator_tags": ["material:cork", "thickness:4mm"],
-    "status": "active"
-  },
-  {
-    "id": "p7",
-    "name": "Whisky Smage Sæt",
-    "description": "Et eksklusivt sæt med tre forskellige skotske single malt whiskyer. En fantastisk gave til kenderen eller den nysgerrige nybegynder.",
-    "price": 399,
-    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/whisky",
-    "image": "https://images.unsplash.com/photo-1614213936909-545234938a15?q=80&w=2070&auto=format&fit=crop",
-    "tags": ["gender:mand", "age:voksen", "age:senior", "price:mellem", "occasion:jul", "interest:foodie", "interest:luksus", "interest:alkohol"],
-    "differentiator_tags": ["region:islay", "type:single_malt"],
-    "status": "active"
-  },
-  {
-    "id": "p8",
-    "name": "LEGO Technic Bil",
-    "description": "Et avanceret LEGO Technic sæt til voksne og ældre børn, der elsker at bygge og er fascineret af mekanik.",
-    "price": 650,
-    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/lego",
-    "image": "https://images.unsplash.com/photo-1633469923348-3c316f7336e3?q=80&w=2070&auto=format&fit=crop",
-    "tags": ["gender:mand", "gender:alle", "age:teenager", "age:voksen", "price:dyr", "interest:kreativ", "interest:biler", "interest:tech"],
-    "differentiator_tags": ["pieces:905", "brand:lego"],
-    "status": "active"
-  },
-  {
-    "id": "p9",
-    "name": "Smart Garden Krydderurtehave",
-    "description": "En indendørs have, der automatisk vander og giver lys til dine krydderurter. Perfekt til den madglade med eller uden grønne fingre.",
-    "price": 550,
-    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/smartgarden",
-    "image": "https://images.unsplash.com/photo-1611843467160-25afb8df1074?q=80&w=1974&auto=format&fit=crop",
-    "tags": ["gender:alle", "age:voksen", "age:senior", "price:dyr", "interest:hjem", "interest:foodie", "interest:tech", "interest:have"],
-    "differentiator_tags": ["pods:3", "color:white"],
-    "status": "active"
-  },
-  {
-    "id": "p10",
-    "name": "Luksus Uldplaid",
-    "description": "Et utrolig blødt og varmt tæppe i 100% ren, ny uld. Den perfekte gave til en, der elsker hygge og indretning.",
+    "id": "p_byravn_skrivebordsunderlag_laeder",
+    "name": "byRavn Skrivebordsunderlag i Læder",
+    "description": "Et luksuriøst skrivebordsunderlag i vegetabilsk garvet kernelæder, der tilføjer stil og varme til ethvert hjemmekontor. En eksklusiv gave til den kvalitetsbevidste.",
     "price": 899,
-    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[REQUIRES_ME]&htmlurl=https://example.com/plaid",
-    "image": "https://images.unsplash.com/photo-1577714884784-a82d56a394a8?q=80&w=2070&auto=format&fit=crop",
-    "tags": ["gender:alle", "age:voksen", "age:senior", "price:dyr", "occasion:jul", "interest:hjem", "interest:luksus"],
-    "differentiator_tags": ["material:wool", "color:grey"],
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=63765&htmlurl=https://www.byravn.dk/products/skrivebordsunderlag-i-laeder",
+    "image": "https://www.byravn.dk/cdn/shop/products/skrivebordsunderlag-cognac.jpg",
+    "tags": [
+      "gender:alle",
+      "age:voksen",
+      "age:senior",
+      "price:dyr",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "occasion:indflytterfest",
+      "interest:hjemmekontor",
+      "interest:design",
+      "interest:læder",
+      "interest:luksus"
+    ],
+    "differentiator_tags": [
+      "brand:byravn",
+      "product_type:skrivebordsunderlag",
+      "material:vegetabilsk_garvet_kernelæder",
+      "color:cognac",
+      "color:sort",
+      "size:60x40cm"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_byravn_coasters_laeder_etui",
+    "name": "byRavn Coasters i Læder (6 stk med etui)",
+    "description": "Et sæt med seks elegante coasters i kernelæder, leveret i et matchende etui. En stilfuld og praktisk gave, perfekt som værtindegave eller til indflytterfesten.",
+    "price": 399,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=63765&htmlurl=https://www.byravn.dk/products/coasters-i-laeder-med-etui",
+    "image": "https://www.byravn.dk/cdn/shop/products/coasters-etui-sort.jpg",
+    "tags": [
+      "gender:alle",
+      "age:voksen",
+      "age:senior",
+      "price:mellem",
+      "occasion:indflytterfest",
+      "occasion:værtindegave",
+      "occasion:bryllup",
+      "interest:hjem",
+      "interest:design",
+      "interest:læder"
+    ],
+    "differentiator_tags": [
+      "brand:byravn",
+      "product_type:coasters",
+      "quantity:6",
+      "material:kernelæder",
+      "feature:etui_inkluderet"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_byravn_suttesnor_laeder_navn",
+    "name": "byRavn Suttesnor i Læder med Navn",
+    "description": "En unik og personlig suttesnor i blødt kernelæder, hvor barnets navn kan præges. En smuk og praktisk dåbsgave eller barselsgave, der skiller sig ud.",
+    "price": 179,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=63765&htmlurl=https://www.byravn.dk/products/suttesnor-i-laeder-med-navn",
+    "image": "https://www.byravn.dk/cdn/shop/products/suttesnor-natur.jpg",
+    "tags": [
+      "gender:alle",
+      "age:barn",
+      "price:billig",
+      "occasion:dåb",
+      "occasion:barselsgave",
+      "interest:personlig_gave",
+      "interest:babyudstyr",
+      "interest:læder"
+    ],
+    "differentiator_tags": [
+      "brand:byravn",
+      "product_type:suttesnor",
+      "material:kernelæder",
+      "personalization:true",
+      "personalization_type:prægning"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_dyrbergkern_dee_orering",
+    "name": "DYRBERG/KERN DEE Øreringe",
+    "description": "Et par elegante ørestikker fra Dyrberg/Kern med aftagelige hvide perlevedhæng. De alsidige øreringe har et sølvtonet finish med faux perler, hvilket gør dem perfekte til både hverdag og fest.",
+    "price": 399,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=72060&htmlurl=https://www.dyrbergkern.dk/dyrberg/kern-dee-oerestikker.aspx",
+    "image": "https://www.dyrbergkern.dk/images/products/450033-p.jpg",
+    "tags": [
+      "gender:kvinde",
+      "age:ung",
+      "age:voksen",
+      "age:senior",
+      "price:mellem",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "occasion:romantik",
+      "interest:fashion",
+      "interest:smykker"
+    ],
+    "differentiator_tags": [
+      "material:messing",
+      "plating:sølv",
+      "stone_type:faux_perle",
+      "stone_color:hvid",
+      "feature:aftageligt_vedhæng"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_dyrbergkern_louise_halskaede",
+    "name": "DYRBERG/KERN LOUISE Halskæde",
+    "description": "En smuk og klassisk halskæde fra Dyrberg/Kern med en klar Swarovski krystal som midtpunkt. Kæden er 45 cm lang i poleret stål med forlængerkæde.",
+    "price": 449,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=72060&htmlurl=https://www.dyrbergkern.dk/dyrberg/kern-louise-halskaede-10689.aspx",
+    "image": "https://www.dyrbergkern.dk/images/products/440115-p.jpg",
+    "tags": [
+      "gender:kvinde",
+      "age:ung",
+      "age:voksen",
+      "price:mellem",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "occasion:romantik",
+      "interest:fashion",
+      "interest:smykker",
+      "interest:glamour"
+    ],
+    "differentiator_tags": [
+      "material:rustfrit_stål",
+      "stone:swarovski_krystal",
+      "stone_color:klar",
+      "chain_length:45cm"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_dyrbergkern_teresia_armbaand",
+    "name": "DYRBERG/KERN TERESIA Armbånd",
+    "description": "Et iøjnefaldende tennisarmbånd fra Dyrberg/Kern besat med rosafarvede Swarovski-krystaller. Armbåndet har et poleret sølvtonet finish i rustfrit stål og emmer af elegance.",
+    "price": 749,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=72060&htmlurl=https://www.dyrbergkern.dk/dyrberg/kern-teresia-armbaand-370043.aspx",
+    "image": "https://www.dyrbergkern.dk/images/products/430081-p.jpg",
+    "tags": [
+      "gender:kvinde",
+      "age:ung",
+      "age:voksen",
+      "price:dyr",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "occasion:romantik",
+      "interest:fashion",
+      "interest:smykker",
+      "interest:glamour"
+    ],
+    "differentiator_tags": [
+      "material:rustfrit_stål",
+      "finish:poleret_sølv",
+      "stone:swarovski_krystal",
+      "stone_color:rosa",
+      "style:tennis_armbånd"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_juliesandlau_prime_ring_sapphire",
+    "name": "Julie Sandlau Prime Ring Sapphire Blue",
+    "description": "En iøjnefaldende ring med en stor, cabochon-slebet safirblå krystal. Ringen er fremstillet i 22 karat forgyldt 925 sterlingsølv med en mat satinfinish, der giver et eksklusivt look.",
+    "price": 1950,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=90899&htmlurl=https://juliesandlau.dk/products/primering-goldplated-sapphireblue",
+    "image": "https://juliesandlau.dk/cdn/shop/files/hgjgant601hbd81cimfz.png?width=2000",
+    "tags": [
+      "gender:kvinde",
+      "age:voksen",
+      "age:senior",
+      "price:dyr",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "occasion:romantik",
+      "interest:fashion",
+      "interest:smykker",
+      "interest:design",
+      "interest:luksus"
+    ],
+    "differentiator_tags": [
+      "material:925_sterling_sølv",
+      "plating:22k_guld",
+      "finish:satin",
+      "stone_type:krystal",
+      "stone_color:safirblå",
+      "stone_cut:cabochon"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_juliesandlau_treeoflife_pendant",
+    "name": "Julie Sandlau Tree of Life Vedhæng",
+    "description": "Et klassisk vedhæng fra Julie Sandlau formet som det ikoniske livstræ. Vedhænget er udført i 22 karat forgyldt 925 sterlingsølv. Et tidløst symbol på liv og forbindelse – ideelt som en meningsfuld gave.",
+    "price": 850,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=90899&htmlurl=https://juliesandlau.dk/products/treeoflifependant-goldplated",
+    "image": "https://juliesandlau.dk/cdn/shop/products/signature-bracelet-gold.png?width=2000",
+    "tags": [
+      "gender:alle",
+      "age:voksen",
+      "age:senior",
+      "price:dyr",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "occasion:dåb",
+      "interest:smykker",
+      "interest:design",
+      "interest:symbolik",
+      "interest:familie"
+    ],
+    "differentiator_tags": [
+      "material:925_sterling_sølv",
+      "plating:22k_guld",
+      "motif:livets_træ",
+      "dimensions:29x16mm"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_smykkeronline_thors_hammer_pendant",
+    "name": "Vedhæng Thors Hammer Mjølner i Sølv",
+    "description": "Et råt og detaljeret vedhæng i ægte sterlingsølv, formet som Thors hammer, Mjølner. En perfekt gave til den historie- og mytologiinteresserede, der ønsker et smykke med styrke og symbolik.",
+    "price": 199,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=16528&htmlurl=https://www.smykker-online.dk/smykker/vikinge-smykker/vedhaeng-thors-hammer-soelv",
+    "image": "https://www.smykker-online.dk/images/products/viking-thors-hammer.jpg",
+    "tags": [
+      "gender:mand",
+      "gender:alle",
+      "age:ung",
+      "age:voksen",
+      "price:billig",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "interest:historie",
+      "interest:mytologi",
+      "interest:smykker"
+    ],
+    "differentiator_tags": [
+      "material:925_sterling_sølv",
+      "motif:thors_hammer",
+      "theme:viking",
+      "finish:oxideret"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_smykkeronline_flettet_laederarmbaand",
+    "name": "Flettet Læderarmbånd til Mænd med Stållås",
+    "description": "Et maskulint og stilfuldt armbånd i sort, flettet læder med en robust magnetlås i rustfrit stål. Armbåndet er en cool accessory, der passer til både casual og pænere tøj.",
+    "price": 179,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=16528&htmlurl=https://www.smykker-online.dk/smykker/armbaand-til-maend/flettet-laederarmbaand-sort",
+    "image": "https://www.smykker-online.dk/images/products/flettet-laederarmbaand.jpg",
+    "tags": [
+      "gender:mand",
+      "age:ung",
+      "age:voksen",
+      "price:billig",
+      "occasion:fødselsdag",
+      "occasion:fars_dag",
+      "interest:fashion",
+      "interest:accessories"
+    ],
+    "differentiator_tags": [
+      "material:læder",
+      "material:rustfrit_stål",
+      "color:sort",
+      "design:flettet",
+      "clasp_type:magnetisk"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_smykkeronline_chakra_armbaand",
+    "name": "Chakra Armbånd med 7 Ædelsten",
+    "description": "Et smukt og spirituelt armbånd med syv forskellige ædelsten, der repræsenterer kroppens syv chakraer. En gave der fremmer balance og velvære, perfekt til den spirituelt interesserede.",
+    "price": 249,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=16528&htmlurl=https://www.smykker-online.dk/smykker/spirituelle-smykker/chakra-armbaand-7-sten",
+    "image": "https://www.smykker-online.dk/images/products/chakra-armbaand.jpg",
+    "tags": [
+      "gender:alle",
+      "age:voksen",
+      "price:mellem",
+      "occasion:fødselsdag",
+      "interest:spirituel",
+      "interest:yoga",
+      "interest:meditation",
+      "interest:wellness"
+    ],
+    "differentiator_tags": [
+      "theme:chakra",
+      "stone_count:7"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_kreafunk_ago2_speaker",
+    "name": "Kreafunk aGO 2 Transportabel Højttaler",
+    "description": "En ultra-transportabel Bluetooth-højttaler, der er lille nok til at have i lommen, men med stor lyd. Tag den med på farten, på stranden eller på badeværelset takket være det vandafvisende design.",
+    "price": 399.95,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=103790&htmlurl=https://kreafunk.dk/products/ago-2",
+    "image": "https://kreafunk.dk/cdn/shop/files/aGO2BlackEditionPackPerspective.2492_400x.jpg",
+    "tags": [
+      "gender:alle",
+      "age:teenager",
+      "age:ung",
+      "age:voksen",
+      "price:mellem",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "interest:musik",
+      "interest:tech",
+      "interest:rejse",
+      "interest:outdoor"
+    ],
+    "differentiator_tags": [
+      "product_type:transportabel_højttaler",
+      "battery_life:25h",
+      "connectivity:bluetooth_5.1",
+      "feature:stereo_play",
+      "water_resistance:ipx5"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_kreafunk_wicharge_stone",
+    "name": "Kreafunk wiCHARGE Stone Trådløs Oplader",
+    "description": "En elegant og stilfuld trådløs oplader med en overflade, der minder om sten. Den minimalistiske oplader passer perfekt ind i ethvert moderne hjem og er en praktisk gave.",
+    "price": 149.95,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=103790&htmlurl=https://kreafunk.dk/products/wicharge-stone",
+    "image": "https://kreafunk.dk/cdn/shop/products/wiCHARGEStoneDustyRoseperspektive_400x.jpg",
+    "tags": [
+      "gender:alle",
+      "age:ung",
+      "age:voksen",
+      "price:billig",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "interest:tech",
+      "interest:design",
+      "interest:hjem"
+    ],
+    "differentiator_tags": [
+      "product_type:trådløs_oplader",
+      "standard:qi",
+      "power_output:15w",
+      "feature:anti-slip"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_smagfuld_tapas_gavekurv",
+    "name": "Smagfuld Danmark Gavekurv: Tapas & Snacks",
+    "description": "Den perfekte gavekurv til tapas-elskeren, fyldt med lækre krydderier og snacks. En oplagt værtindegave eller en hyggelig overraskelse til en, der sætter pris på god smag.",
+    "price": 425,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=112253&htmlurl=https://smagfulddanmark.dk/produkt/gavekurv-tapas-krydderier-og-snacks/",
+    "image": "https://smagfulddanmark.dk/wp-content/uploads/2025/01/Gavekurv10-4-1.jpg",
+    "tags": [
+      "gender:alle",
+      "age:voksen",
+      "age:senior",
+      "price:mellem",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "occasion:værtindegave",
+      "interest:madlavning",
+      "interest:foodie"
+    ],
+    "differentiator_tags": [
+      "theme:tapas",
+      "contents:krydderier",
+      "contents:snacks",
+      "origin:dansk"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_smagfuld_luksus_oel_bbq_gavekurv",
+    "name": "Smagfuld Danmark Gavekurv: Luksus Øl, Snacks & BBQ",
+    "description": "En luksuriøs gavekurv til manden, der elsker en god øl og en tur ved grillen. Kurven indeholder specialøl, lækre snacks og barbeque-specialiteter.",
+    "price": 455,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=112253&htmlurl=https://smagfulddanmark.dk/produkt/gavekurv-luksus-oel-snacks-barbeque/",
+    "image": "https://smagfulddanmark.dk/wp-content/uploads/2025/01/Gavekurve240125_2-1.jpg",
+    "tags": [
+      "gender:mand",
+      "age:voksen",
+      "age:senior",
+      "price:mellem",
+      "occasion:fødselsdag",
+      "occasion:fars_dag",
+      "occasion:jul",
+      "interest:øl",
+      "interest:barbeque",
+      "interest:foodie"
+    ],
+    "differentiator_tags": [
+      "theme:barbeque",
+      "contents:specialøl",
+      "contents:snacks",
+      "contents:bbq_sauce",
+      "origin:dansk"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_smagfuld_chili_gavekurv",
+    "name": "Smagfuld Danmark: Den lille Chili Gavekurv",
+    "description": "En gavekurv med bid i til den, der elsker stærk mad. Indeholder et udvalg af spændende chili-produkter, der kan sætte fut i ethvert måltid.",
+    "price": 150,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=112253&htmlurl=https://smagfulddanmark.dk/produkt/den-lille-chili-gavekurv/",
+    "image": "https://smagfulddanmark.dk/wp-content/uploads/2025/04/Gavekurv21.jpg",
+    "tags": [
+      "gender:alle",
+      "age:voksen",
+      "price:billig",
+      "occasion:fødselsdag",
+      "occasion:værtindegave",
+      "interest:madlavning",
+      "interest:foodie",
+      "interest:chili"
+    ],
+    "differentiator_tags": [
+      "theme:chili",
+      "contents:chili_sauce",
+      "contents:chili_snacks",
+      "origin:dansk"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_eaudeparfum_armani_si_edp",
+    "name": "Giorgio Armani Sí Eau de Parfum 50ml",
+    "description": "En moderne og elegant duft til den sofistikerede kvinde. Med noter af solbærnektar, fresia og patchouli er Sí en tidløs klassiker, der udstråler styrke og femininitet.",
+    "price": 650,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=106134&htmlurl=https://eaudeparfum.dk/giorgio-armani-si-eau-de-parfum-50ml",
+    "image": "https://eaudeparfum.dk/images/products/armani-si-edp.jpg",
+    "tags": [
+      "gender:kvinde",
+      "age:voksen",
+      "age:senior",
+      "price:dyr",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "occasion:romantik",
+      "interest:parfume",
+      "interest:skønhed",
+      "interest:luksus"
+    ],
+    "differentiator_tags": [
+      "brand:giorgio_armani",
+      "series:si",
+      "type:eau_de_parfum",
+      "size:50ml",
+      "top_notes:solbær",
+      "heart_notes:fresia_rose",
+      "base_notes:patchouli_vanilje"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_eaudeparfum_hugo_boss_bottled_giftset",
+    "name": "Hugo Boss Bottled Gaveæske",
+    "description": "Den perfekte gaveæske til den moderne mand. Indeholder den ikoniske Boss Bottled Eau de Toilette og en matchende deodorant, der efterlader en frisk og maskulin duft.",
+    "price": 525,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=106134&htmlurl=https://eaudeparfum.dk/hugo-boss-bottled-gaveaeske-edt-deo",
+    "image": "https://eaudeparfum.dk/images/products/boss-bottled-giftset.jpg",
+    "tags": [
+      "gender:mand",
+      "age:voksen",
+      "age:senior",
+      "price:dyr",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "occasion:fars_dag",
+      "interest:parfume",
+      "interest:grooming"
+    ],
+    "differentiator_tags": [
+      "brand:hugo_boss",
+      "series:bottled",
+      "type:gaveæske",
+      "contents:eau_de_toilette",
+      "contents:deodorant_stick"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_nicehair_olaplex_no3",
+    "name": "Olaplex No. 3 Hair Perfector 100ml",
+    "description": "En revolutionerende hårkur, der reparerer og styrker skadet hår indefra. Den ultimative gave til alle, der ønsker sundere, stærkere og mere glansfuldt hår.",
+    "price": 239,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=30416&htmlurl=https://nicehair.dk/olaplex-no-3-hair-perfector-100-ml.html",
+    "image": "https://nicehair.dk/images/products/olaplex-no3.jpg",
+    "tags": [
+      "gender:alle",
+      "age:ung",
+      "age:voksen",
+      "price:mellem",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "interest:hårpleje",
+      "interest:skønhed",
+      "interest:wellness"
+    ],
+    "differentiator_tags": [
+      "brand:olaplex",
+      "product_type:hårkur",
+      "hair_concern:skadet_hår",
+      "hair_concern:farvet_hår",
+      "size:100ml"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_nicehair_ghd_gold_styler",
+    "name": "GHD Gold Styler Glattejern",
+    "description": "Det ikoniske Gold Styler glattejern fra GHD, der giver et glattere, blødere og sundere resultat. Udstyret med dual-zone teknologi for optimal stylingtemperatur og professionelle resultater.",
+    "price": 1599,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=30416&htmlurl=https://nicehair.dk/ghd-gold-styler.html",
+    "image": "https://nicehair.dk/images/products/ghd-gold.jpg",
+    "tags": [
+      "gender:kvinde",
+      "age:teenager",
+      "age:ung",
+      "age:voksen",
+      "price:dyr",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "occasion:konfirmation",
+      "interest:hårpleje",
+      "interest:skønhed",
+      "interest:styling"
+    ],
+    "differentiator_tags": [
+      "brand:ghd",
+      "product_type:glattejern",
+      "series:gold",
+      "technology:dual-zone",
+      "max_temp:185c",
+      "feature:auto_sleep_mode"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_nicehair_cosrx_snail_mucin",
+    "name": "COSRX Advanced Snail 96 Mucin Power Essence 100ml",
+    "description": "En kultfavorit inden for K-Beauty. Denne essens med 96% sneglesekret reparerer, fugter og forbedrer hudens elasticitet. En unik og effektiv gave til hudpleje-entusiasten.",
+    "price": 189,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=30416&htmlurl=https://nicehair.dk/cosrx-advanced-snail-96-mucin-power-essence-100ml.html",
+    "image": "https://nicehair.dk/images/products/cosrx-snail.jpg",
+    "tags": [
+      "gender:alle",
+      "age:ung",
+      "age:voksen",
+      "price:billig",
+      "occasion:fødselsdag",
+      "interest:hudpleje",
+      "interest:skønhed"
+    ],
+    "differentiator_tags": [
+      "brand:cosrx",
+      "product_type:essens",
+      "main_ingredient:sneglesekret_96_procent",
+      "skin_concern:fugtfattig_hud",
+      "theme:k-beauty",
+      "size:100ml"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_nicehair_sol_de_janeiro_bum_bum_cream",
+    "name": "Sol de Janeiro Brazilian Bum Bum Cream 240ml",
+    "description": "En hurtigt-absorberende body cream med en uimodståelig duft af pistacie og saltkaramel. Den opstrammer og udglatter huden og er en luksuriøs og velduftende gave.",
+    "price": 355,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=30416&htmlurl=https://nicehair.dk/sol-de-janeiro-brazilian-bum-bum-cream-240ml.html",
+    "image": "https://nicehair.dk/images/products/sol-de-janeiro-bumbum.jpg",
+    "tags": [
+      "gender:kvinde",
+      "age:ung",
+      "age:voksen",
+      "price:mellem",
+      "occasion:fødselsdag",
+      "occasion:jul",
+      "interest:hudpleje",
+      "interest:skønhed",
+      "interest:wellness"
+    ],
+    "differentiator_tags": [
+      "brand:sol_de_janeiro",
+      "product_type:body_cream",
+      "scent:pistacie_saltkaramel",
+      "feature:opstrammende",
+      "size:240ml"
+    ],
+    "status": "active"
+  },
+  {
+    "id": "p_nicehair_jack_black_jack_pack",
+    "name": "Jack Black The Jack Pack Gaveæske",
+    "description": "Et komplet hudplejesæt til mænd, der indeholder alt, hvad han behøver for en ren, fugtet og beskyttet hud. En praktisk og højkvalitets gave til manden, der går op i sit udseende.",
+    "price": 450,
+    "url": "https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=30416&htmlurl=https://nicehair.dk/jack-black-the-jack-pack.html",
+    "image": "https://nicehair.dk/images/products/jack-black-pack.jpg",
+    "tags": [
+      "gender:mand",
+      "age:voksen",
+      "age:senior",
+      "price:mellem",
+      "occasion:fødselsdag",
+      "occasion:fars_dag",
+      "occasion:jul",
+      "interest:hudpleje",
+      "interest:grooming"
+    ],
+    "differentiator_tags": [
+      "brand:jack_black",
+      "product_type:gaveæske",
+      "contents:face_wash",
+      "contents:face_moisturizer",
+      "contents:lip_balm",
+      "skin_type:alle"
+    ],
     "status": "active"
   }
 ]
