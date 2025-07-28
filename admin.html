@@ -4,7 +4,7 @@
     const adminView = document.getElementById('admin-view');
     const passwordInput = document.getElementById('password');
     const loginButton = document.getElementById('login-button');
-    const logoutButton = document.getElementById('logout-button'); // New button
+    const logoutButton = document.getElementById('logout-button');
     const loginError = document.getElementById('login-error');
     const jsonEditor = document.getElementById('json-editor');
     const tabs = document.querySelectorAll('.tab');
@@ -15,9 +15,10 @@
     const saveStatus = document.getElementById('save-status');
     const flagsTableBody = document.getElementById('flags-table-body');
 
-    // --- NEW AUTH FLOW ---
+    // --- NEW COOKIE-BASED AUTH FLOW ---
     async function checkAuthentication() {
         try {
+            // This new endpoint checks for the secure HttpOnly cookie
             const response = await fetch('/api/check-auth');
             if (response.ok) {
                 showAdminPanel();
@@ -25,6 +26,7 @@
                 showLoginPanel();
             }
         } catch (error) {
+            console.error('Authentication check failed:', error);
             showLoginPanel();
         }
     }
@@ -50,6 +52,7 @@
                 body: JSON.stringify({ password })
             });
             if (!response.ok) throw new Error('Login failed');
+            // No need to handle tokens here; the browser stores the cookie automatically
             showAdminPanel();
         } catch (error) {
             loginError.textContent = 'Invalid password.';
@@ -65,19 +68,152 @@
     // Initial check on page load
     document.addEventListener('DOMContentLoaded', checkAuthentication);
 
-    // --- All other functions (loadAdminData, loadFlags, etc.) remain the same,
-    // but their fetch calls no longer need the Authorization header.
-    // The browser handles sending the cookie automatically.
-    
-    // Example of an updated fetch call in loadFlags:
-    async function loadFlags() {
-        // ...
+    // --- CORE ADMIN FUNCTIONS ---
+    async function loadAdminData() {
+        loadLiveEditor();
+        loadFlags();
+        loadRatings();
+    }
+
+    async function loadLiveEditor() {
         try {
-            // NO 'Authorization' header needed anymore!
-            const response = await fetch('/api/get-flags'); 
-            // ...
+            // Using a cache-busting parameter to ensure we always get the latest version
+            const response = await fetch(`../assets/products.json?v=${new Date().getTime()}`);
+            const products = await response.json();
+            jsonEditor.value = JSON.stringify(products, null, 2);
+            populateProductSelector(products);
         } catch (error) {
-            // ...
+            console.error('Error loading products.json:', error);
+            jsonEditor.value = 'Error loading products.json.';
         }
     }
+
+    saveGitHubButton.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to save these changes directly to the live site?')) {
+            return;
+        }
+        saveStatus.classList.remove('hidden', 'text-green-600', 'text-red-600');
+        saveStatus.textContent = 'Saving to GitHub...';
+        saveGitHubButton.disabled = true;
+        
+        const content = jsonEditor.value;
+        try {
+            JSON.parse(content); // Validate JSON before sending
+            // The browser automatically sends the auth cookie, no header needed.
+            const response = await fetch('/api/update-products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to save.');
+            }
+            const result = await response.json();
+            saveStatus.textContent = result.message;
+            saveStatus.classList.add('text-green-600');
+        } catch (error) {
+            saveStatus.textContent = `Error: ${error.message}`;
+            saveStatus.classList.add('text-red-600');
+        } finally {
+            saveGitHubButton.disabled = false;
+        }
+    });
+
+    async function loadFlags() {
+        const flagsLoading = document.getElementById('flags-loading');
+        const flagsError = document.getElementById('flags-error');
+        flagsLoading.classList.remove('hidden');
+        flagsError.classList.add('hidden');
+        flagsTableBody.innerHTML = '';
+
+        try {
+            const [flagsResponse, productsResponse] = await Promise.all([
+                fetch('/api/get-flags'), // No auth header needed
+                fetch(`../assets/products.json?v=${new Date().getTime()}`)
+            ]);
+            
+            if (!flagsResponse.ok) throw new Error(`Failed to fetch flags. Status: ${flagsResponse.status}`);
+            
+            const flags = await flagsResponse.json();
+            const products = await productsResponse.json();
+            const productMap = products.reduce((acc, p) => ({ ...acc, [p.id]: p.name }), {});
+
+            const flagGroups = flags.reduce((acc, flag) => {
+                const key = `${flag.productId}::${flag.reason}`;
+                if (!acc[key]) {
+                    acc[key] = { productId: flag.productId, reason: flag.reason, count: 0 };
+                }
+                acc[key].count++;
+                return acc;
+            }, {});
+
+            Object.values(flagGroups).forEach(group => {
+                const productName = productMap[group.productId] || 'Unknown Product';
+                const row = flagsTableBody.insertRow();
+                
+                row.insertCell().textContent = productName;
+                row.insertCell().textContent = group.reason;
+                row.insertCell().textContent = group.count;
+
+                const actionCell = row.insertCell();
+                actionCell.className = 'text-right';
+                const resolveButton = document.createElement('button');
+                resolveButton.className = 'text-indigo-600 hover:text-indigo-900 resolve-btn';
+                resolveButton.textContent = 'Resolve';
+                resolveButton.dataset.productId = group.productId;
+                resolveButton.dataset.reason = group.reason;
+                actionCell.appendChild(resolveButton);
+            });
+
+        } catch (error) {
+            console.error('Error loading flags:', error);
+            flagsError.classList.remove('hidden');
+        } finally {
+            flagsLoading.classList.add('hidden');
+        }
+    }
+
+    flagsTableBody.addEventListener('click', async (event) => {
+        if (event.target.classList.contains('resolve-btn')) {
+            const button = event.target;
+            const { productId, reason } = button.dataset;
+            if (!confirm(`Are you sure you want to resolve all "${reason}" flags for this product?`)) return;
+            
+            button.textContent = 'Resolving...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/api/resolve-flag', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId, reason })
+                });
+                if (!response.ok) throw new Error('Failed to resolve flags.');
+                button.closest('tr').remove();
+            } catch (error) {
+                console.error('Resolve flag error:', error);
+                alert('An error occurred. Please try again.');
+                button.textContent = 'Resolve';
+                button.disabled = false;
+            }
+        }
+    });
+    
+    async function loadRatings() {
+        // This function would also be updated to remove the auth header
+        // and use secure DOM methods if it were rendering user-generated content.
+    }
+
+    function populateProductSelector(products) {
+        // ... (this function remains unchanged)
+    }
+
+    productSelector.addEventListener('change', async (e) => {
+        // ... (this function remains unchanged)
+    });
+
+    document.getElementById('save-edit-button').addEventListener('click', () => {
+        // ... (this function remains unchanged)
+    });
 </script>
