@@ -3,11 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- SEO: Updated Title -->
     <title>Gavefinder: Find Den Perfekte Gave På Sekunder | Den Rette Gave</title>
-    <!-- SEO: Added Meta Description -->
     <meta name="description" content="Træt af gave-stress? Vores intelligente Gavefinder stiller et par simple spørgsmål og finder personlige gaveidéer til enhver person og anledning. Prøv gratis!">
-    <!-- SEO: Added Canonical URL -->
     <link rel="canonical" href="https://www.denrettegave.dk/" />
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -34,7 +31,6 @@
              <!-- Landing View -->
             <main id="landing-view" class="view active text-center">
                 <div class="py-12 md:py-24">
-                    <!-- SEO: Ensured the main headline is an H1 tag -->
                     <h1 class="text-4xl md:text-6xl font-bold mb-4">Find den perfekte gave. Hver gang.</h1>
                     <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-8">Vores smarte quiz stiller et par simple spørgsmål for at finde personlige gaveidéer til hvem som helst.</p>
                     <button id="start-quiz-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl">Start Guiden</button>
@@ -44,7 +40,6 @@
             <!-- Quiz View -->
             <main id="quiz-view" class="view">
                  <div id="quiz-container" class="relative pt-8">
-                    <!-- Question title and text will be rendered by JS -->
                      <h3 id="question-title" class="text-2xl md:text-3xl font-bold text-center mb-2"></h3>
                      <p id="question-text" class="text-lg text-slate-600 text-center mb-8"></p>
                      <div id="answers-container"></div>
@@ -221,7 +216,7 @@
         const startQuiz = () => {
             initializeQuizState();
             switchView('quiz');
-            const initialQuestion = allQuestions.find(q => q.is_initial && q.id === 'q_gender');
+            const initialQuestion = allQuestions.find(q => q.is_initial && q.id === 'q_initial_gender');
             renderQuestion(initialQuestion || allQuestions[0]);
         };
 
@@ -249,18 +244,25 @@
         // --- CORE LOGIC: SCORING & SELECTION ---
         const updateScores = () => {
             const availableProducts = allProducts.filter(product => {
-                // *** NEW PRICE LOGIC STARTS HERE ***
+                // *** UPDATED PRICE LOGIC STARTS HERE ***
                 if (quizState.answers.price) {
                     const userPrice = quizState.answers.price;
                     const productPriceTag = product.tags.find(t => t.startsWith('price:'));
-                    if (!productPriceTag) return true; // Keep product if it has no price tag
+                    if (!productPriceTag) return true;
 
                     const productPrice = productPriceTag.split(':')[1];
 
+                    // Standard filtering
                     if (userPrice === 'mellem' && productPrice === 'dyr') return false;
                     if (userPrice === 'billig' && (productPrice === 'mellem' || productPrice === 'dyr')) return false;
+
+                    // New preference filter
+                    if (quizState.answers.price_preference === 'high_only') {
+                        if (userPrice === 'mellem' && productPrice === 'billig') return false;
+                        if (userPrice === 'dyr' && (productPrice === 'mellem' || productPrice === 'billig')) return false;
+                    }
                 }
-                // *** NEW PRICE LOGIC ENDS HERE ***
+                // *** UPDATED PRICE LOGIC ENDS HERE ***
                 return product.status === 'active';
             });
 
@@ -270,9 +272,7 @@
                 if(product.differentiator_tags){
                     product.differentiator_tags.forEach(d_tag => {
                         const [key, value] = d_tag.split(':');
-                        if (quizState.answers[key] === value) {
-                            score += DIFFERENTIATOR_BONUS;
-                        }
+                        if (quizState.answers[key] === value) score += DIFFERENTIATOR_BONUS;
                     });
                 }
                 product.tags.forEach(tag => {
@@ -293,8 +293,16 @@
             const sortedProducts = Object.entries(quizState.productScores).sort((a, b) => b[1] - a[1]);
             if (sortedProducts.length === 0) return { type: 'result', product: null };
             const bestProduct = allProducts.find(p => p.id === sortedProducts[0][0]);
+            
             const nextInitial = allQuestions.find(q => q.is_initial && !quizState.askedQuestionIds.has(q.id));
             if (nextInitial) return { type: 'question', question: nextInitial };
+            
+            // Check for triggered questions, like the price preference one
+            const lastAnswerKey = Object.keys(quizState.answers).pop();
+            const lastAnswerValue = quizState.answers[lastAnswerKey];
+            const triggeredQuestion = allQuestions.find(q => q.trigger_tag === `${lastAnswerKey}:${lastAnswerValue}` && !quizState.askedQuestionIds.has(q.id));
+            if(triggeredQuestion) return { type: 'question', question: triggeredQuestion };
+
             const topScore = sortedProducts[0][1];
             const secondScore = sortedProducts.length > 1 ? sortedProducts[1][1] : 0;
             if (Object.keys(quizState.answers).length >= MIN_ANSWERS_FOR_THRESHOLD && topScore > 0 && (topScore / (secondScore + 0.1)) > SCORE_THRESHOLD) {
@@ -379,7 +387,7 @@
         const findDiscoveryQuestion = (topProducts, askedIds) => {
             let bestQuestion = null;
             let maxDifferentiation = -1;
-            const potentialQuestions = allQuestions.filter(q => !q.is_initial && !q.is_differentiator && !askedIds.has(q.id));
+            const potentialQuestions = allQuestions.filter(q => !q.is_initial && !q.is_differentiator && !q.trigger_tag && !askedIds.has(q.id));
             potentialQuestions.forEach(question => {
                 const tagsInQuestion = new Set(question.answers.map(a => a.tag.split(':')[1]));
                 let differentiation = 0;
