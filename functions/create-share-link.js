@@ -1,66 +1,45 @@
-const fs = require('fs').promises;
-const path = require('path');
+const { connectToDatabase } = require('./utils/mongodb-client');
 
-// Helper function to generate a short random ID
-const generateId = () => Math.random().toString(36).substring(2, 8);
-
-// Path now points to the secure 'data' folder, not the public 'assets' folder.
-const DATA_DIR = path.join(__dirname, '..', 'data');
-const filePath = path.join(DATA_DIR, 'shares.json');
-
-exports.handler = async (event, context) => {
-    // Only allow POST requests
+exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
     try {
-        const payload = JSON.parse(event.body);
+        const data = JSON.parse(event.body);
 
-        // Basic validation
-        if (!payload.product_id || !payload.quiz_answers) {
-            return { statusCode: 400, body: 'Bad Request: Missing required fields.' };
-        }
-
-        // GDPR Compliance: Anonymize data by removing the name field before saving
-        if (payload.quiz_answers && payload.quiz_answers.name) {
-            delete payload.quiz_answers.name;
+        if (!data.product_id || !data.quiz_answers) {
+            return { statusCode: 400, body: 'Bad Request: Missing product_id or quiz_answers.' };
         }
         
-        // Ensure the data directory exists before trying to write to it
-        await fs.mkdir(DATA_DIR, { recursive: true });
-
-        let shares = [];
-        try {
-            const data = await fs.readFile(filePath, 'utf8');
-            shares = JSON.parse(data);
-        } catch (error) {
-            // If the file doesn't exist, we start with an empty array.
-            if (error.code !== 'ENOENT') throw error;
+        const safeQuizAnswers = { ...data.quiz_answers };
+        if (safeQuizAnswers && safeQuizAnswers.name) {
+            delete safeQuizAnswers.name;
         }
 
-        const newShare = {
-            id: generateId(),
-            data: payload,
-            timestamp: new Date().toISOString()
+        const db = await connectToDatabase();
+        const sharesCollection = db.collection('shares');
+
+        const shareData = {
+            productId: data.product_id,
+            quizAnswers: safeQuizAnswers,
+            createdAt: new Date(),
         };
 
-        shares.push(newShare);
+        const result = await sharesCollection.insertOne(shareData);
+        const shareId = result.insertedId;
 
-        // Write the updated array back to the private file
-        await fs.writeFile(filePath, JSON.stringify(shares, null, 2));
-
-        // Return only the unique ID to the frontend
         return {
             statusCode: 200,
-            body: JSON.stringify({ shareId: newShare.id })
+            body: JSON.stringify({ shareId: shareId.toString() }),
+            headers: { 'Content-Type': 'application/json' },
         };
 
     } catch (error) {
         console.error('Error creating share link:', error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: 'Internal Server Error' })
+            body: JSON.stringify({ message: 'Could not create share link.' }),
         };
     }
 };
