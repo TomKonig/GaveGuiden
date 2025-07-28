@@ -11,6 +11,7 @@
     </style>
 </head>
 <body class="h-full">
+    <!-- Login View -->
     <div id="login-view" class="flex min-h-full items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div class="w-full max-w-md space-y-8">
             <div>
@@ -31,6 +32,7 @@
         </div>
     </div>
 
+    <!-- Admin View -->
     <div id="admin-view" class="hidden">
         <div class="min-h-full">
             <div class="bg-gray-800 pb-32">
@@ -45,6 +47,7 @@
             <main class="-mt-32">
                 <div class="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
                     <div class="rounded-lg bg-white px-5 py-6 shadow sm:px-6">
+                        <!-- TABS -->
                         <div class="border-b border-gray-200">
                             <nav class="-mb-px flex space-x-8" aria-label="Tabs">
                                 <button data-tab="live-editor" class="tab border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">Live Editor</button>
@@ -54,7 +57,9 @@
                                 <button data-tab="settings" class="tab border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">Settings</button>
                             </nav>
                         </div>
+                        <!-- TAB CONTENT -->
                         <div class="py-6">
+                            <!-- Live Editor Content -->
                             <div id="live-editor-content" class="tab-content">
                                 <h3 class="text-lg font-medium leading-6 text-gray-900">Edit `products.json` directly</h3>
                                 <div class="mt-4">
@@ -66,6 +71,7 @@
                                 </div>
                             </div>
 
+                            <!-- Edit Product Content -->
                             <div id="edit-product-content" class="tab-content hidden">
                                 <select id="product-selector" class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"></select>
                                 <form id="edit-form" class="hidden mt-4 space-y-4">
@@ -85,6 +91,7 @@
                                 </form>
                             </div>
 
+                            <!-- Flagged Items Content -->
                             <div id="flagged-items-content" class="tab-content hidden">
                                 <div id="flags-loading">Loading flagged items...</div>
                                 <div id="flags-error" class="text-red-500 hidden">Error loading flags. Please try again.</div>
@@ -98,16 +105,19 @@
                                         </tr>
                                     </thead>
                                     <tbody id="flags-table-body" class="divide-y divide-gray-200 bg-white">
-                                        </tbody>
+                                        <!-- Rows will be inserted here by JS -->
+                                    </tbody>
                                 </table>
                             </div>
 
+                            <!-- Ratings Content -->
                             <div id="ratings-content" class="tab-content hidden">
                                 <div id="ratings-content-body" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     Loading ratings...
                                 </div>
                             </div>
                             
+                            <!-- Settings Content -->
                             <div id="settings-content" class="tab-content hidden">
                                 <h3 class="text-lg font-medium leading-6 text-gray-900">Settings</h3>
                                 <p class="mt-2 text-sm text-gray-600">To change the admin password, you must update the `ADMIN_PASSWORD` environment variable in the Netlify project settings. The site will need to be redeployed for the change to take effect.</p>
@@ -206,4 +216,218 @@
     }
 
     saveGitHubButton.addEventListener('click', async () => {
-        if (!confirm('
+        if (!confirm('Are you sure you want to save these changes directly to the live site?')) {
+            return;
+        }
+        saveStatus.classList.remove('hidden', 'text-green-600', 'text-red-600');
+        saveStatus.textContent = 'Saving to GitHub...';
+        saveGitHubButton.disabled = true;
+        
+        const content = jsonEditor.value;
+        try {
+            JSON.parse(content);
+            const response = await fetch('/api/update-products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to save.');
+            }
+            const result = await response.json();
+            saveStatus.textContent = result.message;
+            saveStatus.classList.add('text-green-600');
+        } catch (error) {
+            saveStatus.textContent = `Error: ${error.message}`;
+            saveStatus.classList.add('text-red-600');
+        } finally {
+            saveGitHubButton.disabled = false;
+        }
+    });
+
+    async function loadFlags() {
+        const flagsLoading = document.getElementById('flags-loading');
+        const flagsError = document.getElementById('flags-error');
+        flagsLoading.classList.remove('hidden');
+        flagsError.classList.add('hidden');
+        flagsTableBody.innerHTML = '';
+
+        try {
+            const [flagsResponse, productsResponse] = await Promise.all([
+                fetch('/api/get-flags'),
+                fetch(`../assets/products.json?v=${new Date().getTime()}`)
+            ]);
+            
+            if (!flagsResponse.ok) throw new Error(`Failed to fetch flags. Status: ${flagsResponse.status}`);
+            
+            const flags = await flagsResponse.json();
+            const products = await productsResponse.json();
+            const productMap = products.reduce((acc, p) => ({ ...acc, [p.id]: p.name }), {});
+
+            const flagGroups = flags.reduce((acc, flag) => {
+                const key = `${flag.productId}::${flag.reason}`;
+                if (!acc[key]) {
+                    acc[key] = { productId: flag.productId, reason: flag.reason, count: 0 };
+                }
+                acc[key].count++;
+                return acc;
+            }, {});
+
+            Object.values(flagGroups).forEach(group => {
+                const productName = productMap[group.productId] || 'Unknown Product';
+                const row = flagsTableBody.insertRow();
+                
+                row.insertCell().textContent = productName;
+                row.insertCell().textContent = group.reason;
+                row.insertCell().textContent = group.count;
+
+                const actionCell = row.insertCell();
+                actionCell.className = 'text-right pr-6';
+                const resolveButton = document.createElement('button');
+                resolveButton.className = 'text-indigo-600 hover:text-indigo-900 resolve-btn';
+                resolveButton.textContent = 'Resolve';
+                resolveButton.dataset.productId = group.productId;
+                resolveButton.dataset.reason = group.reason;
+                actionCell.appendChild(resolveButton);
+            });
+
+        } catch (error) {
+            console.error('Error loading flags:', error);
+            flagsError.classList.remove('hidden');
+        } finally {
+            flagsLoading.classList.add('hidden');
+        }
+    }
+
+    flagsTableBody.addEventListener('click', async (event) => {
+        if (event.target.classList.contains('resolve-btn')) {
+            const button = event.target;
+            const { productId, reason } = button.dataset;
+            if (!confirm(`Are you sure you want to resolve all "${reason}" flags for this product?`)) return;
+            
+            button.textContent = 'Resolving...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/api/resolve-flag', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId, reason })
+                });
+                if (!response.ok) throw new Error('Failed to resolve flags.');
+                button.closest('tr').remove();
+            } catch (error) {
+                console.error('Resolve flag error:', error);
+                alert('An error occurred. Please try again.');
+                button.textContent = 'Resolve';
+                button.disabled = false;
+            }
+        }
+    });
+    
+    // Helper function to prevent XSS
+    function escapeHTML(str) {
+        const p = document.createElement('p');
+        p.textContent = str;
+        return p.innerHTML;
+    }
+
+    async function loadRatings() {
+        const ratingsContent = document.getElementById('ratings-content-body');
+        ratingsContent.textContent = 'Loading ratings...';
+        try {
+            const response = await fetch('/api/get-ratings');
+            if (!response.ok) throw new Error('Failed to fetch ratings');
+            const ratings = await response.json();
+            const productsResponse = await fetch(`../assets/products.json?v=${new Date().getTime()}`);
+            const products = await productsResponse.json();
+            const productMap = products.reduce((acc, p) => ({ ...acc, [p.id]: p.name }), {});
+
+            const averageRatings = ratings.reduce((acc, rating) => {
+                if (!acc[rating.productId]) {
+                    acc[rating.productId] = { total: 0, count: 0 };
+                }
+                acc[rating.productId].total += rating.rating;
+                acc[rating.productId].count += 1;
+                return acc;
+            }, {});
+            
+            ratingsContent.innerHTML = '';
+            if (Object.keys(averageRatings).length === 0) {
+                ratingsContent.textContent = 'No ratings submitted yet.';
+            } else {
+                for (const productId in averageRatings) {
+                    const avg = (averageRatings[productId].total / averageRatings[productId].count).toFixed(2);
+                    const productName = productMap[productId] || 'Unknown Product';
+                    const div = document.createElement('div');
+                    div.className = 'p-4 border rounded-lg';
+                    // Use innerHTML here but with escaped data
+                    div.innerHTML = `<h4 class="font-semibold">${escapeHTML(productName)}</h4><p>Average Rating: ${avg} / 5</p><p>Based on ${averageRatings[productId].count} ratings.</p>`;
+                    ratingsContent.appendChild(div);
+                }
+            }
+        } catch(e) {
+            ratingsContent.textContent = `Error loading ratings. ${e.message}`;
+        }
+    }
+
+    function populateProductSelector(products) {
+        productSelector.innerHTML = '<option value="">Select a product to edit...</option>';
+        products.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.id;
+            option.textContent = product.name;
+            productSelector.appendChild(option);
+        });
+    }
+
+    productSelector.addEventListener('change', async (e) => {
+        const productId = e.target.value;
+        if (!productId) {
+            editForm.classList.add('hidden');
+            return;
+        }
+        const response = await fetch(`../assets/products.json?v=${new Date().getTime()}`);
+        const products = await response.json();
+        const product = products.find(p => p.id === productId);
+
+        if (product) {
+            document.getElementById('edit-id').value = product.id;
+            document.getElementById('edit-name').value = product.name;
+            document.getElementById('edit-description').value = product.description;
+            document.getElementById('edit-price').value = product.price;
+            document.getElementById('edit-url').value = product.url;
+            document.getElementById('edit-image').value = product.image;
+            document.getElementById('edit-tags').value = product.tags.join(', ');
+            document.getElementById('edit-differentiator_tags').value = product.differentiator_tags ? product.differentiator_tags.join(', ') : '';
+            document.getElementById('edit-status').value = product.status;
+            editForm.classList.remove('hidden');
+        }
+    });
+
+    document.getElementById('save-edit-button').addEventListener('click', () => {
+        const productId = document.getElementById('edit-id').value;
+        const products = JSON.parse(jsonEditor.value);
+        const productIndex = products.findIndex(p => p.id === productId);
+
+        if (productIndex > -1) {
+            products[productIndex] = {
+                id: document.getElementById('edit-id').value,
+                name: document.getElementById('edit-name').value,
+                description: document.getElementById('edit-description').value,
+                price: parseFloat(document.getElementById('edit-price').value),
+                url: document.getElementById('edit-url').value,
+                image: document.getElementById('edit-image').value,
+                tags: document.getElementById('edit-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+                differentiator_tags: document.getElementById('edit-differentiator_tags').value.split(',').map(t => t.trim()).filter(Boolean),
+                status: document.getElementById('edit-status').value,
+            };
+            jsonEditor.value = JSON.stringify(products, null, 2);
+            document.querySelector('.tab[data-tab="live-editor"]').click();
+            alert('Changes applied to the Live Editor. Review them and click "Save to GitHub" to make them live.');
+        }
+    });
+</script>
+</body>
+</html>
