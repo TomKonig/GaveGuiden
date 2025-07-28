@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const cookie = require('cookie');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -8,18 +9,30 @@ exports.handler = async (event) => {
   try {
     const { password } = JSON.parse(event.body);
     const adminPassword = process.env.ADMIN_PASSWORD;
+    const jwtSecret = process.env.JWT_SECRET;
 
-    if (!adminPassword) {
-        console.error('ADMIN_PASSWORD environment variable not set.');
+    if (!adminPassword || !jwtSecret) {
+        console.error('ADMIN_PASSWORD or JWT_SECRET environment variable not set.');
         return { statusCode: 500, body: 'Server configuration error.' };
     }
 
     if (password === adminPassword) {
-      const token = jwt.sign({ role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '8h' });
+      const token = jwt.sign({ role: 'admin' }, jwtSecret, { expiresIn: '8h' });
+      
+      const sessionCookie = cookie.serialize('auth_token', token, {
+          httpOnly: true, // The cookie is not accessible via JavaScript
+          secure: process.env.NODE_ENV === 'production', // Only send over HTTPS
+          path: '/',
+          maxAge: 60 * 60 * 8 // 8 hours
+      });
+
       return {
         statusCode: 200,
-        body: JSON.stringify({ token }),
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Set-Cookie': sessionCookie,
+            'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ message: 'Login successful' }),
       };
     } else {
       return { statusCode: 401, body: 'Invalid password' };
