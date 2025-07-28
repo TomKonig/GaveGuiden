@@ -18,7 +18,7 @@ const TOP_N_PRODUCTS_FOR_DISCOVERY = 5;
 const TAG_WEIGHTS = {
     gender: 3.0, age: 2.5, price: 5.0, occasion: 1.5,
     interest: 4.0, "interest_low": 2.0, theme: 2.0,
-    // Add other keys as needed
+    relation: 3.5 // New weight for the relation tag
 };
 
 // --- STATE ---
@@ -68,8 +68,9 @@ const handleModal = (modalElement, openTriggers, closeTriggers) => {
 const startQuiz = () => {
     initializeQuizState();
     switchView('quiz');
-    const initialQuestion = allQuestions.find(q => q.is_initial && q.id === 'q_initial_gender');
-    renderQuestion(initialQuestion || allQuestions[0]);
+    // *** CHANGE: Start with the 'relation' question ***
+    const initialQuestion = allQuestions.find(q => q.is_initial && q.id === 'q_initial_relation');
+    renderQuestion(initialQuestion || allQuestions.find(q => q.is_initial));
 };
 
 const handleAnswerSelection = (tag, questionId) => {
