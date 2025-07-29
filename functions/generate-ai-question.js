@@ -70,7 +70,7 @@ exports.handler = async (event) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
             body: JSON.stringify({
-                model: 'gpt-4o-mini',
+                model: 'gpt-o4-mini',
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.7,
                 response_format: { type: "json_object" },
