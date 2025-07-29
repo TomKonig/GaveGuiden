@@ -12,18 +12,12 @@
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
     <meta name="description" content="Find den perfekte gave med vores intelligente gaveguide. Svar på et par spørgsmål og få personlige gaveanbefalinger på under 30 sekunder.">
-    <script>
-        // Custom Tailwind configuration to set Inter as the default font
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                },
-            },
-        };
-    </script>
+    <style>
+        /* Applying the Inter font as the default sans-serif font */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 font-sans">
 
@@ -32,7 +26,6 @@
         <nav class="container mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
                 <a href="/" class="flex items-center space-x-3">
-                    <!-- Corrected logo styling -->
                     <img src="assets/logo.jpeg" alt="Den Rette Gave Logo" class="h-8 w-8 rounded-md">
                     <span class="text-2xl font-bold text-gray-800">Den Rette Gave</span>
                 </a>
