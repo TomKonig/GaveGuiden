@@ -153,7 +153,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function selectNextQuestion() {
-        hideLoadingState();
+        hideLoadingState(); // Hide loader from any previous step
+
+        // --- Logic for static, non-AI questions ---
         const unaskedInitial = allQuestions.filter(q => q.is_initial && !questionHistory.some(h => h.id === q.id));
         const currentTags = new Set(userAnswers.flatMap(a => a.tags));
         
@@ -165,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (nextInitialQuestion) {
             if (nextInitialQuestion.type === 'interest_hub' || nextInitialQuestion.id === 'q_interest_placeholder') {
                 questionHistory.push(nextInitialQuestion);
-                selectNextQuestion();
+                selectNextQuestion(); // Move to the next question
                 return;
             }
             displayQuestion(nextInitialQuestion);
@@ -178,9 +180,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // --- Logic for AI questions and quiz progression ---
         earlyExitButton.classList.remove('hidden');
         const scores = getProductScores();
 
+        // Check if we should end the quiz based on scores
         if (scores.length > 1) {
             const threshold = questionHistory.length > 7 ? AGGRESSIVE_SCORE_THRESHOLD : INITIAL_SCORE_THRESHOLD;
             if (scores[0].score >= scores[1].score * threshold || remainingProducts.length <= 5) {
@@ -189,25 +193,35 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
+        // --- THIS IS THE NEW JIT -> BATCH LOGIC ---
+
+        // First, check if we have a pre-fetched question ready to go
         if (aiQuestionQueue.length > 0) {
-            const nextQ = aiQuestionQueue.shift();
+            const nextQ = aiQuestionQueue.shift(); // Take the next question from the queue
             if (isQuestionStillRelevant(nextQ, scores.slice(0, 5).map(s => allProducts.find(p => p.id === s.id)))) {
+                console.log("Displaying a pre-fetched AI question.");
                 displayQuestion(nextQ);
-                triggerPredictiveBatch(scores); // New batch call after using a prefetched question
-                return;
+                // Trigger a *new* batch call to keep the queue full
+                triggerPredictiveBatch(scores);
+                return; // We're done for this turn
             } else {
-                aiQuestionQueue = [];
+                // If the cached question is no longer relevant, clear the queue and fetch a new one
+                console.log("Cached question no longer relevant. Clearing queue.");
+                aiQuestionQueue = []; 
             }
         }
 
-        // Fallback to just-in-time single question generation
+        // If the queue is empty, we must fetch a JIT question
         try {
-            showLoadingState();
+            console.log("Queue is empty. Fetching JIT question.");
+            showLoadingState(); // Show the loading animation
+
             const candidateProducts = scores.slice(0, 15).map(s => {
                 const p = allProducts.find(prod => prod.id === s.id);
                 return p ? { id: p.id, tags: p.tags, score: s.score } : null;
             }).filter(x => x);
 
+            // The actual API call for a single question
             const response = await fetch('/.netlify/functions/generate-ai-question', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -215,19 +229,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     candidateProducts
                 })
             });
+
             if (!response.ok) throw new Error('AI question generation failed');
             
-            const result = await response.json();
-            hideLoadingState();
+            const jitQuestion = await response.json();
+            hideLoadingState(); // Hide the loading animation
 
-            // LOGIC CHANGE: The batch call is now triggered AFTER the JIT call succeeds.
-            if (result && result.question && result.question.id) {
-                displayQuestion(result.question);
-                // Trigger predictive batch *after* successfully receiving the JIT question
-                if (result.cacheKey) { // Check if the backend sent a cache key
-                    triggerPredictiveBatch(scores, result.cacheKey);
-                }
+            if (jitQuestion && jitQuestion.id) {
+                displayQuestion(jitQuestion);
+                
+                // **CRITICAL STEP:** Immediately trigger the background batch call
+                console.log("JIT question received. Triggering background batch call...");
+                triggerPredictiveBatch(scores); 
+
             } else {
+                // If the JIT call fails, show the results as a fallback
                 displayResults(scores);
             }
         } catch (error) {
