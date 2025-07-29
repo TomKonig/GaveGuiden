@@ -2,6 +2,10 @@
   functions = "functions"
   publish = "."
 
+[functions."generate-question-batch"]
+  background = true
+  timeout = 60
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
