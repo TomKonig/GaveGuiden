@@ -51,7 +51,7 @@ exports.handler = async (event) => {
                 'Authorization': `Bearer ${OPENAI_API_KEY}`,
             },
             body: JSON.stringify({
-                model: 'gpt-o4-mini',
+                model: 'gpt-4o-mini',
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.5,
                 response_format: { type: "json_object" },
