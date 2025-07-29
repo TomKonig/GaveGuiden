@@ -36,14 +36,12 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  // NOTE: This assumes OPENAI_API_KEY is set in your Netlify environment variables
   const { OPENAI_API_KEY } = process.env;
 
   try {
     const { userAnswers, candidateProducts } = JSON.parse(event.body);
     const safeCandidates = (candidateProducts || []).filter(p => p && p.id && Array.isArray(p.tags));
 
-    // Create context fingerprint (sorted user tags + product IDs) for caching
     const sortedAnswers = [...userAnswers].sort().join(',');
     const sortedProductIds = safeCandidates.map(p => p.id).sort().join(',');
     const contextString = `${sortedAnswers}|${sortedProductIds}`;
@@ -52,55 +50,41 @@ exports.handler = async (event) => {
     const db = await connectToDatabase();
     const cacheCollection = db.collection('question_cache');
 
-    // Check cache for single question
     const cached = await cacheCollection.findOne({ _id: contextFingerprint });
     if (cached && cached.question) {
       return { statusCode: 200, body: JSON.stringify(cached.question) };
     }
-
-    // Check cache for any pre-fetched batch of questions
+    
     const batchFingerprint = crypto.createHash('sha256').update(`batch|${contextString}`).digest('hex');
     const cachedBatch = await cacheCollection.findOne({ _id: batchFingerprint });
     if (cachedBatch && Array.isArray(cachedBatch.questions) && cachedBatch.questions.length > 0) {
-      // If a batch exists, use the first question and re-cache the rest
-      const firstQuestion = cachedBatch.questions.shift(); // take the first question
-      // Asynchronously update the cache with the remaining questions
+      const firstQuestion = cachedBatch.questions.shift();
       if (cachedBatch.questions.length > 0) {
           cacheCollection.updateOne({ _id: batchFingerprint }, { $set: { questions: cachedBatch.questions } }).catch(console.error);
       } else {
-          // If no questions are left, remove the entry
           cacheCollection.deleteOne({ _id: batchFingerprint }).catch(console.error);
       }
       return { statusCode: 200, body: JSON.stringify(firstQuestion) };
     }
 
-    // --- LOGIC UPDATED BELOW ---
-
-    // Prepare score-weighted themes for prompt
-    const themeScores = {};
-    safeCandidates.forEach(p => {
-      const pScore = p.score || 1;
-      (p.tags || []).filter(t => t.startsWith('interest:') || t.startsWith('category:'))
-        .forEach(t => {
-          const themeKey = t.split(':')[1];
-          themeScores[themeKey] = (themeScores[themeKey] || 0) + pScore;
-        });
+    // --- OPTIMIZED THEME CALCULATION ---
+    const themeScores = new Map();
+    safeCandidates.flatMap(p => 
+        (p.tags || [])
+          .filter(t => t.startsWith('interest:') || t.startsWith('category:'))
+          .map(t => ({ themeKey: t.split(':')[1], score: p.score || 1 }))
+    ).forEach(({ themeKey, score }) => {
+        themeScores.set(themeKey, (themeScores.get(themeKey) || 0) + score);
     });
-    
-    // Convert to array and sort
-    const allSortedThemes = Object.entries(themeScores).sort((a, b) => b[1] - a[1]);
 
-    // 1. Always take the top 10 themes
+    const allSortedThemes = Array.from(themeScores.entries()).sort((a, b) => b[1] - a[1]);
+    // --- End of Optimization ---
+
     const topThemes = allSortedThemes.slice(0, 10);
-
-    // 2. Define the pool for random sampling (the next 25)
     const samplingPool = allSortedThemes.slice(10, 35);
-    
-    // 3. Shuffle the pool and take 5 random themes
     const shuffledPool = samplingPool.sort(() => 0.5 - Math.random());
     const randomNicheThemes = shuffledPool.slice(0, 5);
     
-    // 4. Combine and format for the prompt
     const finalThemesForPrompt = [...topThemes, ...randomNicheThemes]
       .map(([tag, score]) => ({ tag: tag.replace(/_/g, ' '), score: score.toFixed(1) }));
 
@@ -110,14 +94,12 @@ exports.handler = async (event) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
       body: JSON.stringify({
-        model: 'gpt-4.1-nano', // Using the faster model as discussed
+        model: 'gpt-4.1-nano',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7
       })
     });
-
-    // --- ALL LOGIC BELOW THIS LINE IS YOURS AND HAS BEEN PRESERVED ---
-
+    
     if (!response.ok) {
       const errText = await response.text();
       console.error('OpenAI API error:', errText);
@@ -139,13 +121,12 @@ exports.handler = async (event) => {
       return { statusCode: 500, body: JSON.stringify({ error: 'AI response JSON parse error.' }) };
     }
 
-    const questionObj = aiResponse.question || aiResponse; // in case the AI returns {question: {...}}
+    const questionObj = aiResponse.question || aiResponse;
     if (!questionObj || !questionObj.id || !Array.isArray(questionObj.answers)) {
       console.error('AI response has invalid structure:', aiResponse);
       return { statusCode: 500, body: JSON.stringify({ error: 'AI response structure invalid.' }) };
     }
 
-    // Cache the single question result
     await cacheCollection.insertOne({ _id: contextFingerprint, question: questionObj, createdAt: new Date() });
     return { statusCode: 200, body: JSON.stringify(questionObj) };
 
