@@ -89,12 +89,12 @@ exports.handler = async (event) => {
       .map(([tag, score]) => ({ tag: tag.replace(/_/g, ' '), score: score.toFixed(1) }));
 
     const prompt = getAiPrompt(userAnswers, finalThemesForPrompt);
-console.log("--> Attempting to call OpenAI with model:", 'gpt-4.1-nano');
+console.log("--> Attempting to call OpenAI with model:", 'gpt-4o-mini');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
       body: JSON.stringify({
-        model: 'gpt-4.1-nano',
+        model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7
       })
