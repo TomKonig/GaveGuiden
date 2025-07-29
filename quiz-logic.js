@@ -11,17 +11,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let questionHistory = [];
     let aiQuestionQueue = [];
     let selectedMultiAnswers = new Set();
+    let isQuizInitialized = false; // Prevent multiple initializations
 
     // --- DOM ELEMENT VARIABLES ---
-    // Declare variables here; they will be assigned once the DOM is ready.
-    let quizContainer, questionEl, answersEl, backButton, earlyExitButton, resultsContainer, primaryResultEl, secondaryResultsEl, restartButton, shareButton;
+    let quizSection, quizContainer, questionEl, answersEl, backButton, earlyExitButton, resultsContainer, primaryResultEl, secondaryResultsEl, restartButton, shareButton;
 
     const TAG_WEIGHTS = { 'relation': 3, 'age': 3, 'price': 5, 'category': 4, 'interest': 4, 'occasion': 2, 'is_differentiator': 2 };
     const INITIAL_SCORE_THRESHOLD = 1.5;
     const AGGRESSIVE_SCORE_THRESHOLD = 1.2;
 
-    // --- NEW: Function to find elements and attach listeners safely ---
-    function setupDOMElementsAndListeners() {
+    function setupDOMElements() {
+        quizSection = document.getElementById('quiz-section');
         quizContainer = document.getElementById('quiz-container');
         questionEl = document.getElementById('question');
         answersEl = document.getElementById('answers');
@@ -32,21 +32,24 @@ document.addEventListener('DOMContentLoaded', () => {
         secondaryResultsEl = document.getElementById('secondary-results');
         restartButton = document.getElementById('restart-button');
         shareButton = document.getElementById('share-button');
-
-        // Attach event listeners now that we are sure the elements exist
-        backButton.addEventListener('click', goBack);
-        restartButton.addEventListener('click', startQuiz);
-        earlyExitButton.addEventListener('click', () => displayResults(getProductScores()));
     }
 
     async function initializeQuiz() {
-        // Run the setup function first to safely find elements and attach listeners
-        setupDOMElementsAndListeners();
-
+        if (isQuizInitialized) {
+            startQuiz(); // If already loaded, just restart
+            return;
+        }
+        
+        // Elements are found here, once, after the DOM is ready.
+        setupDOMElements();
+        // Listeners are attached here, once, after the elements are found.
+        attachControlListeners(); 
+        
         try {
             const [productsRes, questionsRes] = await Promise.all([ fetch('assets/products.json'), fetch('assets/questions.json') ]);
             allProducts = await productsRes.json();
             allQuestions = await questionsRes.json();
+            isQuizInitialized = true;
             startQuiz();
         } catch (error) {
             console.error("Failed to load quiz assets:", error);
@@ -54,6 +57,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 questionEl.textContent = "Der opstod en fejl. Prøv venligst igen senere.";
             }
         }
+    }
+    
+    function attachStartListeners() {
+        const startButtons = document.querySelectorAll('.start-quiz-btn');
+        startButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('quiz-section').classList.remove('hidden');
+                document.getElementById('quiz-section').scrollIntoView({ behavior: 'smooth' });
+                if (!isQuizInitialized) {
+                    initializeQuiz();
+                } else {
+                    startQuiz();
+                }
+            });
+        });
+    }
+
+    function attachControlListeners() {
+        backButton.addEventListener('click', goBack);
+        restartButton.addEventListener('click', startQuiz);
+        earlyExitButton.addEventListener('click', () => displayResults(getProductScores()));
     }
 
     function startQuiz() {
@@ -326,6 +351,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- START THE APP ---
-    // This is the only code that runs outside of a function, ensuring the DOM is ready first.
-    initializeQuiz();
+    // This setup runs once the DOM is ready, but the quiz only starts on user interaction.
+    setupDOMElements();
+    attachStartListeners();
+    attachControlListeners();
 });
