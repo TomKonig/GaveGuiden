@@ -14,13 +14,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let isQuizInitialized = false;
 
     // --- DOM ELEMENT VARIABLES ---
-    let quizSection, quizContainer, questionEl, answersEl, backButton, earlyExitButton, resultsContainer, primaryResultEl, secondaryResultsEl, restartButton, shareButton, howItWorksBtn, closeModalBtn, modal;
+    let heroSection, quizSection, quizContainer, questionEl, answersEl, backButton, earlyExitButton, resultsContainer, primaryResultEl, secondaryResultsEl, restartButton, shareButton, howItWorksBtn, closeModalBtn, modal;
 
     const TAG_WEIGHTS = { 'relation': 3, 'age': 3, 'price': 5, 'category': 4, 'interest': 4, 'occasion': 2, 'is_differentiator': 2 };
     const INITIAL_SCORE_THRESHOLD = 1.5;
     const AGGRESSIVE_SCORE_THRESHOLD = 1.2;
 
     function setupDOMElements() {
+        heroSection = document.getElementById('hero-section');
         quizSection = document.getElementById('quiz-section');
         quizContainer = document.getElementById('quiz-container');
         questionEl = document.getElementById('question');
@@ -63,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         startButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 e.preventDefault();
+                heroSection.classList.add('hidden'); // <-- FIX: Hide the hero section
                 quizSection.classList.remove('hidden');
                 quizSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 if (!isQuizInitialized) {
@@ -285,7 +287,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function goBack() {
-        if (questionHistory.length === 0) return;
+        if (questionHistory.length === 0) {
+            quizSection.classList.add('hidden');
+            heroSection.classList.remove('hidden');
+            return;
+        }
         const lastQuestion = questionHistory.pop();
         userAnswers.pop();
         askedQuestions.delete(lastQuestion.id);
@@ -293,13 +299,18 @@ document.addEventListener('DOMContentLoaded', () => {
         displayQuestion(lastQuestion);
     }
 
+    // --- FIX: Rewritten for correctness and robustness ---
     function getProductScores() {
-        const scores = {};
-        allProducts.forEach(p => scores[p.id] = { id: p.id, score: 0 });
         const allAnswerTags = userAnswers.flatMap(a => a.tags);
-        for (const product of remainingProducts) {
+        
+        const scores = remainingProducts.map(product => {
             let score = 0;
-            const productTags = new Set([...product.tags, ...product.differentiator_tags]);
+            // Ensure tags and differentiator_tags are arrays before spreading
+            const productTags = new Set([
+                ...(product.tags || []), 
+                ...(product.differentiator_tags || [])
+            ]);
+
             for (const answerTag of allAnswerTags) {
                 if (productTags.has(answerTag)) {
                     const key = answerTag.split(':')[0];
@@ -307,9 +318,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     score += weight;
                 }
             }
-            scores[product.id].score = score;
-        }
-        return Object.values(scores).sort((a, b) => b.score - a.score);
+            return { id: product.id, score: score };
+        });
+
+        return scores.sort((a, b) => b.score - a.score);
     }
 
     function displayResults(scores) {
