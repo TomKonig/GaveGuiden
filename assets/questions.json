@@ -85,15 +85,15 @@
   },
   {
     "id": "q_discovery_interest_main",
-    "question_text": "Hvad er de interesseret i? (Vælg det tætteste match)",
+    "question_text": "Hvad er de interesseret i? (Vælg gerne flere)",
+    "type": "multi-select",
     "answers": [
       { "text": "God mad og drikke", "tag": "interest:foodie" },
       { "text": "Teknologi & gadgets", "tag": "interest:tech" },
       { "text": "Wellness & selvforkælelse", "tag": "interest:wellness" },
       { "text": "Mode & accessories", "tag": "interest:fashion" },
       { "text": "Boligindretning & design", "tag": "interest:design" },
-      { "text": "Sport & aktiv fritid", "tag": "interest:sport" },
-      { "text": "Noget andet", "tag": "interest:none" }
+      { "text": "Sport & aktiv fritid", "tag": "interest:sport" }
     ]
   },
   {
