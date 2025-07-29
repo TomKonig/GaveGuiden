@@ -187,41 +187,64 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     async function selectNextQuestion() {
-        const scores = calculateScores();
-        const topProductIds = scores.slice(0, 10).map(s => s.id);
+    // Ensure the main container is visible
+    if (questionContainer.classList.contains('hidden')) {
+        questionContainer.classList.remove('hidden');
+    }
+    // Ensure the results section is hidden
+    if (!resultsSection.classList.contains('hidden')) {
+        resultsSection.classList.add('hidden');
+    }
 
-        let usedDifferentiators = new Set(questionHistory.map(q => q.differentiator).filter(d => d));
+    const scores = calculateScores();
+    log("Top 10 scores:", scores.slice(0, 10));
 
-        // Find the best static question that hasn't been used
-        let nextQuestion = findBestDifferentiatingQuestion(topProductIds, usedDifferentiators);
+    const topProductIds = scores.slice(0, 10).map(s => s.id);
+    let usedDifferentiators = new Set(questionHistory.map(q => q.differentiator).filter(d => d));
+    log("Used differentiators:", usedDifferentiators);
 
-        if (nextQuestion) {
-            displayQuestion(nextQuestion);
-            // Fire background batch call when a static question is found
+    // First, check if there's a pre-fetched AI question that is now optimal
+    const bestPrefetched = findBestPrefetchedQuestion(scores);
+    if (bestPrefetched) {
+        log("Displaying a pre-fetched AI question:", bestPrefetched);
+        // Move from prefetch to main questions array
+        prefetchedAIQuestions = prefetchedAIQuestions.filter(q => q.id !== bestPrefetched.id);
+        allQuestions.push(bestPrefetched);
+        displayQuestion(bestPrefetched);
+        // Trigger a new batch to keep the cache warm
+        triggerPredictiveBatch(scores);
+        return;
+    }
+
+    // If not, find the best static question
+    let nextQuestion = findBestDifferentiatingQuestion(topProductIds, usedDifferentiators);
+    log("Best static question found:", nextQuestion);
+
+    if (nextQuestion) {
+        displayQuestion(nextQuestion);
+        // Fire-and-forget a batch call to pre-warm the AI cache
+        triggerPredictiveBatch(scores);
+    } else {
+        // If no suitable static question, fetch a just-in-time AI question
+        log("No suitable static questions. Fetching a JIT AI question.");
+        displayLoading(true);
+        const aiQuestion = await fetchAIQuestion(scores);
+        displayLoading(false);
+
+        if (aiQuestion) {
+            log("AI question received:", aiQuestion);
+            allQuestions.push(aiQuestion);
+            displayQuestion(aiQuestion);
+            // **THIS IS THE ONLY ADDITION**
+            // After the JIT question is displayed, trigger the background batch
             triggerPredictiveBatch(scores);
         } else {
-            // No suitable static question, call the AI for a JIT question
-            console.log("No suitable static question, calling AI for a single question...");
-            displayLoading(true);
-
-            const aiQuestion = await fetchAIQuestion(scores); // JIT call happens here
-            displayLoading(false);
-
-            if (aiQuestion) {
-                // AI returned a valid question
-                allQuestions.push(aiQuestion);
-                displayQuestion(aiQuestion);
-
-                // NOW, fire the background batch call after the JIT call is complete
-                console.log("JIT question received. Triggering background batch call...");
-                triggerPredictiveBatch(scores);
-            } else {
-                // AI failed, fallback to showing results
-                console.log("AI failed to generate a question. Showing results instead.");
-                displayResults();
-            }
+            // Fallback: If AI fails, show results
+            log("AI fetch failed. Showing results.");
+            displayResults();
         }
     }
+}
     
     function displayQuestion(question) {
         currentQuestion = question;
