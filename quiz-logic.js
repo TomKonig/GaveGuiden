@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let questionHistory = [];
     let aiQuestionQueue = [];
     let selectedMultiAnswers = new Set();
-    let isQuizInitialized = false; // Prevent multiple initializations
+    let isQuizInitialized = false;
 
     // --- DOM ELEMENT VARIABLES ---
-    let quizSection, quizContainer, questionEl, answersEl, backButton, earlyExitButton, resultsContainer, primaryResultEl, secondaryResultsEl, restartButton, shareButton;
+    let quizSection, quizContainer, questionEl, answersEl, backButton, earlyExitButton, resultsContainer, primaryResultEl, secondaryResultsEl, restartButton, shareButton, howItWorksBtn, closeModalBtn, modal;
 
     const TAG_WEIGHTS = { 'relation': 3, 'age': 3, 'price': 5, 'category': 4, 'interest': 4, 'occasion': 2, 'is_differentiator': 2 };
     const INITIAL_SCORE_THRESHOLD = 1.5;
@@ -32,20 +32,19 @@ document.addEventListener('DOMContentLoaded', () => {
         secondaryResultsEl = document.getElementById('secondary-results');
         restartButton = document.getElementById('restart-button');
         shareButton = document.getElementById('share-button');
+        howItWorksBtn = document.getElementById('how-it-works-btn');
+        closeModalBtn = document.getElementById('close-modal-btn');
+        modal = document.getElementById('how-it-works-modal');
     }
 
     async function initializeQuiz() {
         if (isQuizInitialized) {
-            startQuiz(); // If already loaded, just restart
+            startQuiz();
             return;
         }
         
-        // Elements are found here, once, after the DOM is ready.
-        setupDOMElements();
-        // Listeners are attached here, once, after the elements are found.
-        attachControlListeners(); 
-        
         try {
+            questionEl.textContent = 'Indlæser guiden...';
             const [productsRes, questionsRes] = await Promise.all([ fetch('assets/products.json'), fetch('assets/questions.json') ]);
             allProducts = await productsRes.json();
             allQuestions = await questionsRes.json();
@@ -64,8 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
         startButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 e.preventDefault();
-                document.getElementById('quiz-section').classList.remove('hidden');
-                document.getElementById('quiz-section').scrollIntoView({ behavior: 'smooth' });
+                quizSection.classList.remove('hidden');
+                quizSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 if (!isQuizInitialized) {
                     initializeQuiz();
                 } else {
@@ -79,6 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
         backButton.addEventListener('click', goBack);
         restartButton.addEventListener('click', startQuiz);
         earlyExitButton.addEventListener('click', () => displayResults(getProductScores()));
+        howItWorksBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+        closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
     }
 
     function startQuiz() {
@@ -351,7 +357,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- START THE APP ---
-    // This setup runs once the DOM is ready, but the quiz only starts on user interaction.
     setupDOMElements();
     attachStartListeners();
     attachControlListeners();
