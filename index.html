@@ -12,31 +12,31 @@
 <body class="bg-gray-50 font-sans">
 
     <!-- Header -->
-    <header class="bg-white shadow-sm">
+    <header class="bg-white shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
-                <a href="/" class="text-2xl font-bold text-gray-800">Den Rette Gave</a>
-                <a href="#quiz-section" class="start-quiz-btn px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">Start Guiden</a>
+                <a href="/" class="flex items-center space-x-2">
+                    <img src="assets/logo.jpeg" alt="Den Rette Gave Logo" class="h-8 w-8 rounded-full">
+                    <span class="text-2xl font-bold text-gray-800">Den Rette Gave</span>
+                </a>
+                <button id="how-it-works-btn" class="text-gray-600 hover:text-blue-600 font-medium">Sådan fungerer det</button>
             </div>
         </nav>
     </header>
 
     <main class="container mx-auto px-6 py-12">
         <!-- Hero Section -->
-        <section id="hero-section" class="text-center mb-16">
+        <section id="hero-section" class="text-center py-16">
             <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">Gaven, der altid rammer plet.</h1>
             <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-8">Stop med at gætte. Vores intelligente guide finder den perfekte gave baseret på personlighed og interesser. Hurtigt, nemt og præcist.</p>
             <a href="#quiz-section" class="start-quiz-btn cta-btn inline-block px-8 py-4 text-lg text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-transform transform hover:scale-105">Tag quizzen nu!</a>
         </section>
 
-        <!-- Quiz Section -->
+        <!-- Quiz Section (Initially Hidden) -->
         <section id="quiz-section" class="bg-white p-8 rounded-lg shadow-lg max-w-2xl mx-auto hidden">
             <div id="quiz-container">
                 <h2 id="question" class="text-2xl font-bold text-center text-gray-800 mb-8">Indlæser guiden...</h2>
-                <div id="answers" class="space-y-4">
-                    <!-- Answers will be dynamically inserted here -->
-                </div>
-                <!-- Controls for Back and Early Exit -->
+                <div id="answers" class="space-y-4"></div>
                 <div id="quiz-controls" class="flex justify-between items-center mt-8">
                     <button id="back-button" class="text-gray-600 hover:text-gray-900 transition-colors">&larr; Tilbage</button>
                     <button id="early-exit-button" class="px-4 py-2 text-sm text-blue-600 bg-blue-100 rounded-md hover:bg-blue-200">Se resultat nu &rarr;</button>
@@ -47,16 +47,9 @@
             <div id="results-container" class="hidden">
                 <h2 class="text-3xl font-bold text-center text-gray-900 mb-2">Her er den perfekte gave!</h2>
                 <p class="text-center text-gray-600 mb-8">Baseret på dine svar, tror vi, at dette er det bedste match.</p>
-                
-                <div id="primary-result" class="mb-12">
-                    <!-- Primary result will be inserted here -->
-                </div>
-
+                <div id="primary-result" class="mb-12"></div>
                 <h3 class="text-2xl font-bold text-center text-gray-800 mb-6">Andre gode forslag...</h3>
-                <div id="secondary-results" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Secondary results will be inserted here -->
-                </div>
-
+                <div id="secondary-results" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
                 <div class="text-center mt-12">
                     <button id="restart-button" class="px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700">Start forfra</button>
                     <button id="share-button" class="ml-4 px-6 py-3 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Del Resultat</button>
@@ -64,6 +57,19 @@
             </div>
         </section>
     </main>
+
+    <!-- How it Works Modal (Initially Hidden) -->
+    <div id="how-it-works-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-8 relative">
+            <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Sådan fungerer det</h2>
+            <div class="space-y-4 text-gray-700">
+                <p><strong>1. Svar på et par simple spørgsmål:</strong> Fortæl os lidt om, hvem gaven er til, og hvad anledningen er. Det tager kun et øjeblik.</p>
+                <p><strong>2. Vores AI tager over:</strong> Baseret på dine svar, bruger vores intelligente assistent sin viden til at stille dig et par uddybende spørgsmål for at indsnævre mulighederne.</p>
+                <p><strong>3. Få den perfekte anbefaling:</strong> På under 30 sekunder præsenterer vi dig for den gave, vi tror, rammer plet – plus et par gode alternativer.</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="bg-white mt-12">
