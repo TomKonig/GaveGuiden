@@ -1,65 +1,65 @@
 [
     {
         "id": "q_relation",
-        "question_text": "Hvem er gaven til?",
+        "question_text": "Hvem skal forkæles?",
         "is_initial": true,
         "answers": [
-            { "answer_text": "Partner", "tags": ["relation:partner"] },
-            { "answer_text": "Forælder", "tags": ["relation:forælder"] },
-            { "answer_text": "Søskende", "tags": ["relation:søskende"] },
-            { "answer_text": "Ven/Veninde", "tags": ["relation:ven"] },
-            { "answer_text": "Kollega", "tags": ["relation:kollega"] },
-            { "answer_text": "Andet", "tags": ["relation:andet"] }
+            { "answer_text": "Min partner", "tags": ["relation:partner"] },
+            { "answer_text": "En forælder", "tags": ["relation:forælder"] },
+            { "answer_text": "En søskende", "tags": ["relation:søskende"] },
+            { "answer_text": "En ven eller veninde", "tags": ["relation:ven"] },
+            { "answer_text": "En kollega", "tags": ["relation:kollega"] },
+            { "answer_text": "En helt anden", "tags": ["relation:andet"] }
         ]
     },
     {
         "id": "q_gender",
-        "question_text": "Hvilket køn er personen?",
+        "question_text": "Super! Og er det en han, en hun, eller spiller det ingen rolle?",
         "is_initial": true,
         "answers": [
-            { "answer_text": "Mand", "tags": ["gender:mand"] },
-            { "answer_text": "Kvinde", "tags": ["gender:kvinde"] },
-            { "answer_text": "Andet/Vil ikke specificere", "tags": ["gender:alle"] }
+            { "answer_text": "Han", "tags": ["gender:mand"] },
+            { "answer_text": "Hun", "tags": ["gender:kvinde"] },
+            { "answer_text": "Spiller ingen rolle", "tags": ["gender:alle"] }
         ]
     },
     {
         "id": "q_age",
-        "question_text": "Hvor gammel er personen?",
+        "question_text": "Fedt! Hvilken aldersgruppe lander vi i?",
         "is_initial": true,
         "answers": [
-            { "answer_text": "Barn (0-12)", "tags": ["age:barn"] },
-            { "answer_text": "Teenager (13-19)", "tags": ["age:teenager"] },
-            { "answer_text": "Ung (20-29)", "tags": ["age:ung"] },
-            { "answer_text": "Voksen (30-59)", "tags": ["age:voksen"] },
-            { "answer_text": "Senior (60+)", "tags": ["age:senior"] }
+            { "answer_text": "Stadig barn (0-12 år)", "tags": ["age:barn"] },
+            { "answer_text": "Besværlig teenager (13-19 år)", "tags": ["age:teenager"] },
+            { "answer_text": "Ung og lovende (20-29 år)", "tags": ["age:ung"] },
+            { "answer_text": "Rigtig voksen (30-59 år)", "tags": ["age:voksen"] },
+            { "answer_text": "Fuld af visdom (60+ år)", "tags": ["age:senior"] }
         ]
     },
     {
         "id": "q_occasion",
-        "question_text": "Hvad er anledningen?",
+        "question_text": "Perfekt. Hvad fejrer I?",
         "is_initial": true,
         "answers": [
             { "answer_text": "Fødselsdag", "tags": ["occasion:fødselsdag"] },
             { "answer_text": "Jul", "tags": ["occasion:jul"] },
-            { "answer_text": "Romantisk", "tags": ["occasion:romantik"] },
+            { "answer_text": "Bare fordi (eller noget romantisk...)", "tags": ["occasion:romantik"] },
             { "answer_text": "Bryllup", "tags": ["occasion:bryllup"] },
-            { "answer_text": "Andet", "tags": ["occasion:andet"] }
+            { "answer_text": "Noget helt andet", "tags": ["occasion:andet"] }
         ]
     },
     {
         "id": "q_price",
-        "question_text": "Hvad er dit budget?",
+        "question_text": "Næsten i mål! Hvad må gaven koste?",
         "is_initial": true,
         "answers": [
-            { "answer_text": "Billigt (Under 200 kr)", "tags": ["price:billig"] },
-            { "answer_text": "Mellem (200-500 kr)", "tags": ["price:mellem"] },
-            { "answer_text": "Dyrere (Over 500 kr)", "tags": ["price:dyr"] },
-            { "answer_text": "Pris er ikke afgørende", "tags": ["price:alle"] }
+            { "answer_text": "Et lille fund (under 200 kr.)", "tags": ["price:billig"] },
+            { "answer_text": "Noget lækkert (200-500 kr.)", "tags": ["price:mellem"] },
+            { "answer_text": "Den helt store tur (over 500 kr.)", "tags": ["price:dyr"] },
+            { "answer_text": "Budgettet er fleksibelt!", "tags": ["price:alle"] }
         ]
     },
     {
         "id": "q_categories",
-        "question_text": "Hvilke af disse kategorier lyder mest som noget for modtageren? (Vælg gerne flere)",
+        "question_text": "Sidste ting: Hvilke verdener bevæger personen sig i? (Vælg gerne et par stykker, der passer)",
         "is_initial": true,
         "is_multiselect": true,
         "answers": [
