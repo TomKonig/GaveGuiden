@@ -3,32 +3,40 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 // The connection string is stored in an environment variable for security
 const uri = process.env.MONGODB_URI;
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
+// We will cache the client connection promise for reuse
+let cachedClientPromise = null;
 
-let cachedDb = null;
-
-// Function to connect to the database, reusing connections for "warm" functions
 async function connectToDatabase() {
-  if (cachedDb) {
-    return cachedDb;
+  // If a promise is already cached, reuse it to avoid reconnecting
+  if (cachedClientPromise) {
+    return cachedClientPromise;
   }
-  
-  try {
-    await client.connect();
-    const db = client.db("GaveGuiden"); // The database name we chose
-    cachedDb = db;
-    return db;
-  } catch (error) {
-    console.error("Failed to connect to MongoDB", error);
-    throw error;
-  }
+
+  // Create a new MongoClient with the recommended options
+  const client = new MongoClient(uri, {
+    serverApi: {
+      version: ServerApiVersion.v1,
+      strict: true,
+      deprecationErrors: true,
+    }
+  });
+
+  // Store the promise of the connection in the cache
+  // This handles concurrent requests gracefully.
+  cachedClientPromise = client.connect()
+    .then(connectedClient => {
+      console.log("=> New MongoDB connection established.");
+      // Return the specific database from the connected client
+      return connectedClient.db("GaveGuiden"); 
+    })
+    .catch(err => {
+      // If connection fails, clear the cache so the next request can try again
+      cachedClientPromise = null; 
+      console.error("Failed to connect to MongoDB", err);
+      throw err;
+    });
+
+  return cachedClientPromise;
 }
 
 module.exports = { connectToDatabase };
