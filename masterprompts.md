@@ -50,14 +50,14 @@ Your generated JSON objects **MUST** strictly adhere to the following schema:
 "price": PRODUCT_PRICE,  
 "url": "AFFILIATE_URL",  
 "image": "IMAGE_URL",  
-"tags": \[  
+"tags": [  
 "key:value",  
 "key:value"  
-\],  
-"differentiator_tags": \[  
+],  
+"differentiator_tags": [  
 "key:value",  
 "key:value"  
-\],  
+],  
 "status": "active"  
 }  
 
@@ -67,7 +67,7 @@ Your generated JSON objects **MUST** strictly adhere to the following schema:
 - **name (String):** The official, concise name of the product.
 - **description (String):** A compelling, user-friendly description (2-3 sentences) that highlights the product's main benefit.
 - **price (Number):** The product's price as an integer or float, with no currency symbols.
-- **url (String):** The **affiliate link**. You must construct this using the formula: <https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=\[BANNERID\]&htmlurl=\[PRODUCT_URL\>]. Replace \[PRODUCT_URL\] with the direct URL of the product you are analyzing. The \[BANNERID\] corresponds to the banner IDs you gathered earlier. Each webshop has its own unique banner ID, which remains consistent for all products on the site. Therefore, you should replace \[BANNERID\] with the string of numbers relevant to the specific webshop you are on. For example, if you are looking at products on [ByRavn.dk](http://byravn.dk), you should replace \[BANNERID\] with 63765, as that is the BANNERID corresponding to that webshop.
+- **url (String):** The **affiliate link**. You must construct this using the formula: <https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[BANNERID]&htmlurl=[PRODUCT_URL>]. Replace [PRODUCT_URL] with the direct URL of the product you are analyzing. The [BANNERID] corresponds to the banner IDs you gathered earlier. Each webshop has its own unique banner ID, which remains consistent for all products on the site. Therefore, you should replace [BANNERID] with the string of numbers relevant to the specific webshop you are on. For example, if you are looking at products on [ByRavn.dk](http://byravn.dk), you should replace [BANNERID] with 63765, as that is the BANNERID corresponding to that webshop.
 - **image (String):** A direct, high-quality URL to the main product image.
 - **tags (Array of Strings):** The core attributes for our quiz engine. See Section 5.0 for the detailed tagging philosophy.
 - **differentiator_tags (Array of Strings):** The specific, granular attributes that distinguish this product from similar items. See Section 5.0 for the detailed tagging philosophy.
@@ -105,7 +105,7 @@ This comprehensive data collection will allow us to build a much more intelligen
 
 **Input:**
 
-- **Webshop URLs:** \[ "<https://www.imerco.dk/>", "<https://www.ditur.dk/>" \]
+- **Webshop URLs:** [ "<https://www.imerco.dk/>", "<https://www.ditur.dk/>" ]
 
 **Your Thought Process (Internal Monologue):**
 
@@ -131,15 +131,15 @@ This comprehensive data collection will allow us to build a much more intelligen
 
 **Your Final Output (a single JSON array):**
 
-\[  
+[  
 {  
 "id": "p_kay_bojesen_abe",  
 "name": "Kay Bojesen Abe Lille",  
 "description": "En dansk designklassiker, der bringer smil og personlighed til ethvert hjem. Den lille abe er håndlavet i teak- og limbatræ og er en perfekt gave til dåb, bryllup eller jubilæum.",  
 "price": 1200,  
-"url": "<https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=\[BANNERID_FOR_IMERCO\]&htmlurl=\[PRODUCT_URL_FROM_IMERCO\>]",  
-"image": "\[IMAGE_URL_FROM_IMERCO\]",  
-"tags": \[  
+"url": "<https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[BANNERID_FOR_IMERCO]&htmlurl=[PRODUCT_URL_FROM_IMERCO>]",  
+"image": "[IMAGE_URL_FROM_IMERCO]",  
+"tags": [  
 "gender:alle",  
 "age:voksen",  
 "age:senior",  
@@ -149,13 +149,13 @@ This comprehensive data collection will allow us to build a much more intelligen
 "interest:hjem",  
 "interest:design",  
 "interest:dansk_design"  
-\],  
-"differentiator_tags": \[  
+],  
+"differentiator_tags": [  
 "material:teak",  
 "material:limba",  
 "size:lille",  
 "designer:kay_bojesen"  
-\],  
+],  
 "status": "active"  
 },  
 {  
@@ -163,9 +163,9 @@ This comprehensive data collection will allow us to build a much more intelligen
 "name": "Skagen Grenen Lille Solar Powered SKW3085",  
 "description": "Et elegant og minimalistisk dameur fra Skagen. Uret er drevet af solenergi og har en smuk, blå urskive, der passer perfekt til både hverdag og fest.",  
 "price": 1495,  
-"url": "<https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=\[BANNERID_FOR_DITUR\]&htmlurl=https://www.ditur.dk/skagen-grenen-lille-sol-skw3085>",  
+"url": "<https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[BANNERID_FOR_DITUR]&htmlurl=https://www.ditur.dk/skagen-grenen-lille-sol-skw3085>",  
 "image": "<https://www.ditur.dk/media/catalog/product/s/k/skw3085.jpg>",  
-"tags": \[  
+"tags": [  
 "gender:kvinde",  
 "age:ung",  
 "age:voksen",  
@@ -175,17 +175,17 @@ This comprehensive data collection will allow us to build a much more intelligen
 "occasion:jul",  
 "occasion:romantik",  
 "interest:fashion"  
-\],  
-"differentiator_tags": \[  
+],  
+"differentiator_tags": [  
 "dial_color:blue",  
 "band_material:steel",  
 "case_size:26mm",  
 "movement:solar",  
 "water_resistance:3atm"  
-\],  
+],  
 "status": "active"  
 }  
-\]  
+]  
 
 # Appendix: Master Prompt for Single URL Analysis
 
@@ -217,14 +217,14 @@ Your generated JSON object **MUST** strictly adhere to the following schema:
 "price": PRODUCT_PRICE,  
 "url": "AFFILIATE_URL",  
 "image": "IMAGE_URL",  
-"tags": \[  
+"tags": [  
 "key:value",  
 "key:value"  
-\],  
-"differentiator_tags": \[  
+],  
+"differentiator_tags": [  
 "key:value",  
 "key:value"  
-\],  
+],  
 "status": "active"  
 }  
 
@@ -234,7 +234,7 @@ Your generated JSON object **MUST** strictly adhere to the following schema:
 - **name (String):** The official, concise name of the product.
 - **description (String):** A compelling, user-friendly description (2-3 sentences) that highlights the product's main benefit.
 - **price (Number):** The product's price as an integer or float, with no currency symbols.
-- **url (String):** The **affiliate link**. You must construct this using the formula: <https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=\[BANNERID\]&htmlurl=\[PRODUCT_URL\>]. Replace \[PRODUCT_URL\] with the direct URL of the product you are analyzing. The \[BANNERID\] corresponds to the banner IDs you gathered earlier. Each webshop has its own unique banner ID, which remains consistent for all products on the site. Therefore, you should replace \[BANNERID\] with the string of numbers relevant to the specific webshop you are on. For example, if you are looking at products on [ByRavn.dk](http://byravn.dk), you should replace \[BANNERID\] with 63765, as that is the BANNERID corresponding to that webshop.
+- **url (String):** The **affiliate link**. You must construct this using the formula: <https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[BANNERID]&htmlurl=[PRODUCT_URL>]. Replace [PRODUCT_URL] with the direct URL of the product you are analyzing. The [BANNERID] corresponds to the banner IDs you gathered earlier. Each webshop has its own unique banner ID, which remains consistent for all products on the site. Therefore, you should replace [BANNERID] with the string of numbers relevant to the specific webshop you are on. For example, if you are looking at products on [ByRavn.dk](http://byravn.dk), you should replace [BANNERID] with 63765, as that is the BANNERID corresponding to that webshop.
 - **image (String):** A direct, high-quality URL to the main product image.
 - **tags (Array of Strings):** The core attributes for our quiz engine. See Section 4.0 for the detailed tagging philosophy.
 - **differentiator_tags (Array of Strings):** The specific, granular attributes that distinguish this product from similar items. See Section 4.0 for the detailed tagging philosophy.
@@ -291,9 +291,9 @@ This comprehensive data collection will allow us to build a much more intelligen
 "name": "Skagen Grenen Lille Solar Powered SKW3085",  
 "description": "Et elegant og minimalistisk dameur fra Skagen. Uret er drevet af solenergi og har en smuk, blå urskive, der passer perfekt til både hverdag og fest.",  
 "price": 1495,  
-"url": "<https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=\[BANNERID_FOR_DITUR.DK\]&htmlurl=https://www.ditur.dk/skagen-grenen-lille-sol-skw3085>",  
+"url": "<https://www.partner-ads.com/dk/klikbanner.php?partnerid=54894&bannerid=[BANNERID_FOR_DITUR.DK]&htmlurl=https://www.ditur.dk/skagen-grenen-lille-sol-skw3085>",  
 "image": "<https://www.ditur.dk/media/catalog/product/s/k/skw3085.jpg>",  
-"tags": \[  
+"tags": [  
 "gender:kvinde",  
 "age:ung",  
 "age:voksen",  
@@ -305,13 +305,13 @@ This comprehensive data collection will allow us to build a much more intelligen
 "interest:fashion",  
 "interest:smykker",  
 "interest:dansk_design"  
-\],  
-"differentiator_tags": \[  
+],  
+"differentiator_tags": [  
 "dial_color:blue",  
 "band_material:steel",  
 "case_size:26mm",  
 "movement:solar",  
 "water_resistance:3atm"  
-\],  
+],  
 "status": "active"  
 }
