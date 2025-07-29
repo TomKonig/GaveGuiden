@@ -68,34 +68,46 @@ const handleModal = (modalElement, openTriggers, closeTriggers) => {
 const startQuiz = () => {
     initializeQuizState();
     switchView('quiz');
-    // *** CHANGE: Start with the 'relation' question ***
     const initialQuestion = allQuestions.find(q => q.is_initial && q.id === 'q_initial_relation');
     renderQuestion(initialQuestion || allQuestions.find(q => q.is_initial));
 };
 
-const handleAnswerSelection = (tag, questionId) => {
+const proceedToNextStep = (questionId) => {
     const currentWrapper = quizContainer.querySelector('.question-wrapper');
     if (currentWrapper) currentWrapper.classList.add('exiting');
 
     setTimeout(() => {
-        const question = allQuestions.find(q => q.id === questionId);
-        if (question && !question.is_initial && !question.is_differentiator) {
-            quizState.discoveryQuestionsAsked++;
-        }
-        
         quizState.askedQuestionIds.add(questionId);
-        const [key, value] = tag.split(':');
-        quizState.answers[key] = value;
-        
         updateScores();
         const nextStep = selectNextQuestion();
-
         if (nextStep.type === 'question') {
             renderQuestion(nextStep.question);
         } else if (nextStep.type === 'result') {
             showResults(nextStep.product);
         }
     }, 500);
+};
+
+const handleAnswerSelection = (tag, questionId) => {
+    const [key, value] = tag.split(':');
+    quizState.answers[key] = value;
+    proceedToNextStep(questionId);
+};
+
+const handleMultiSelectAnswer = (questionId) => {
+    const checkedBoxes = quizContainer.querySelectorAll('input[type="checkbox"]:checked');
+    if (checkedBoxes.length === 0) {
+        // Store that no specific interest was chosen
+        quizState.answers['interest'] = 'none';
+    } else {
+        const selectedInterests = [];
+        checkedBoxes.forEach(box => {
+            const [key, value] = box.dataset.tag.split(':');
+            selectedInterests.push(value);
+        });
+        quizState.answers['interest'] = selectedInterests.join(',');
+    }
+    proceedToNextStep(questionId);
 };
 
 // --- CORE LOGIC (REBUILT FOR BALANCE) ---
@@ -120,10 +132,21 @@ const updateScores = () => {
     availableProducts.forEach(product => {
         let score = 0;
         const allProductTags = [...product.tags, ...(product.differentiator_tags || [])];
+        
+        // Handle multi-select interests
+        if (quizState.answers.interest && quizState.answers.interest !== 'none') {
+            const selectedInterests = quizState.answers.interest.split(',');
+            selectedInterests.forEach(interest => {
+                if(product.tags.includes(`interest:${interest}`)) {
+                    score += TAG_WEIGHTS.interest || 4.0;
+                }
+            });
+        }
+
         allProductTags.forEach(tag => {
             const [key, value] = tag.split(':');
             const answerValue = quizState.answers[key];
-            if (answerValue) {
+            if (answerValue && key !== 'interest') { // Avoid double-counting interests
                 if (answerValue === value) score += TAG_WEIGHTS[key] || 1.0;
                 else if (key === 'gender' && value === 'alle') score += (TAG_WEIGHTS.gender || 1.0) / 2;
             }
@@ -232,17 +255,40 @@ const renderQuestion = (question) => {
     if (question.answers) {
         const optionsGrid = document.createElement('div');
         optionsGrid.className = 'grid grid-cols-2 md:grid-cols-3 gap-4';
-        question.answers.forEach(o => {
-            const card = document.createElement('div');
-            card.className = 'quiz-card bg-white p-4 rounded-lg shadow cursor-pointer';
-            card.dataset.tag = o.tag;
-            card.dataset.questionId = question.id;
-            const text = document.createElement('span');
-            text.className = 'font-semibold pointer-events-none';
-            text.textContent = o.text;
-            card.appendChild(text);
-            optionsGrid.appendChild(card);
-        });
+        
+        if (question.type === 'multi-select') {
+            question.answers.forEach(o => {
+                const label = document.createElement('label');
+                label.className = 'quiz-card-multi bg-white p-4 rounded-lg shadow cursor-pointer flex items-center gap-3';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.dataset.tag = o.tag;
+                checkbox.className = 'h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500';
+                const text = document.createElement('span');
+                text.className = 'font-semibold';
+                text.textContent = o.text;
+                label.appendChild(checkbox);
+                label.appendChild(text);
+                optionsGrid.appendChild(label);
+            });
+            const continueButton = document.createElement('button');
+            continueButton.textContent = 'Fortsæt';
+            continueButton.className = 'col-span-full mt-4 bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-700 transition-colors shadow-lg';
+            continueButton.onclick = () => handleMultiSelectAnswer(question.id);
+            optionsGrid.appendChild(continueButton);
+        } else {
+            question.answers.forEach(o => {
+                const card = document.createElement('div');
+                card.className = 'quiz-card bg-white p-4 rounded-lg shadow cursor-pointer';
+                card.dataset.tag = o.tag;
+                card.dataset.questionId = question.id;
+                const text = document.createElement('span');
+                text.className = 'font-semibold pointer-events-none';
+                text.textContent = o.text;
+                card.appendChild(text);
+                optionsGrid.appendChild(card);
+            });
+        }
         wrapper.appendChild(optionsGrid);
     }
     quizContainer.innerHTML = '';
@@ -255,8 +301,30 @@ const showResults = (product, sharedAnswers) => {
     const resultsTitle = document.getElementById('results-title');
     resultsTitle.textContent = 'Her er vores forslag!';
     resultsContainer.innerHTML = '';
+    
     if (product) {
         resultsContainer.appendChild(createProductCard(product));
+
+        // Add "Next 5" suggestions
+        const sortedProducts = Object.entries(quizState.productScores).sort((a, b) => b[1] - a[1]);
+        const top5 = sortedProducts.slice(1, 6).map(p => allProducts.find(prod => prod.id === p[0]));
+
+        if(top5.length > 0) {
+            const nextSuggestionsContainer = document.createElement('div');
+            nextSuggestionsContainer.className = 'mt-12';
+            const nextTitle = document.createElement('h3');
+            nextTitle.className = 'text-xl font-bold text-center mb-4';
+            nextTitle.textContent = 'Ikke lige deres stil? Måske et af de her produkter er et bedre match:';
+            nextSuggestionsContainer.appendChild(nextTitle);
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4';
+            top5.forEach(p => {
+                if(p) grid.appendChild(createSmallProductCard(p));
+            });
+            nextSuggestionsContainer.appendChild(grid);
+            resultsContainer.appendChild(nextSuggestionsContainer);
+        }
+
     } else {
         const message = document.createElement('p');
         message.className = 'text-center';
@@ -275,6 +343,7 @@ const createProductCard = (product) => {
     img.className = 'w-full h-64 object-cover';
     img.onerror = () => { img.src = 'https://placehold.co/600x400/e2e8f0/475569?text=Billede+mangler'; };
     card.appendChild(img);
+
     card.innerHTML += `
         <div class="p-6">
             <h3 class="text-2xl font-bold mb-2">${escapeHTML(product.name)}</h3>
@@ -283,6 +352,7 @@ const createProductCard = (product) => {
                 <span class="text-3xl font-bold text-slate-800">${product.price} kr.</span>
                 <a href="${product.url}" target="_blank" class="affiliate-link bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700" data-product-id="${product.id}">Se produkt</a>
             </div>
+            <p class="text-xs text-slate-400 mt-2 text-center">Reklamelink</p>
         </div>
         <div class="bg-slate-50 p-4 border-t">
             <div class="mb-4"><p class="text-sm font-semibold text-center mb-2">Hvor godt ramte vi plet?</p><div class="star-rating flex justify-center text-3xl" data-product-id="${product.id}">${[1,2,3,4,5].map(i => `<button data-value="${i}">★</button>`).join('')}</div></div>
@@ -291,6 +361,32 @@ const createProductCard = (product) => {
         </div>`;
     return card;
 };
+
+const createSmallProductCard = (product) => {
+    const card = document.createElement('a');
+    card.href = product.url;
+    card.target = '_blank';
+    card.className = 'bg-white rounded-lg shadow-md overflow-hidden block hover:shadow-lg transition-shadow';
+    const img = document.createElement('img');
+    img.src = product.image;
+    img.alt = product.name;
+    img.className = 'w-full h-32 object-cover';
+    img.onerror = () => { img.src = 'https://placehold.co/300x200/e2e8f0/475569?text=Billede'; };
+    card.appendChild(img);
+    const content = document.createElement('div');
+    content.className = 'p-2';
+    const name = document.createElement('h4');
+    name.className = 'text-sm font-semibold truncate';
+    name.textContent = product.name;
+    content.appendChild(name);
+    const price = document.createElement('p');
+    price.className = 'text-xs text-slate-500';
+    price.textContent = `${product.price} kr.`;
+    content.appendChild(price);
+    card.appendChild(content);
+    return card;
+};
+
 
 function escapeHTML(str) {
     const p = document.createElement('p');
@@ -313,7 +409,7 @@ const setupEventListeners = () => {
     restartQuizBtn.addEventListener('click', () => { window.location.href = window.location.pathname; });
     earlyExitBtn.addEventListener('click', () => showResults(Object.values(quizState.productScores).length > 0 ? allProducts.find(p => p.id === Object.entries(quizState.productScores).sort((a,b) => b[1] - a[1])[0][0]) : null));
     quizContainer.addEventListener('click', e => {
-        const target = e.target.closest('[data-tag]');
+        const target = e.target.closest('.quiz-card');
         if (target) handleAnswerSelection(target.dataset.tag, target.dataset.questionId);
     });
     resultsContainer.addEventListener('click', async e => {
