@@ -193,8 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // --- THIS IS THE NEW JIT -> BATCH LOGIC ---
-
         // First, check if we have a pre-fetched question ready to go
         if (aiQuestionQueue.length > 0) {
             const nextQ = aiQuestionQueue.shift(); // Take the next question from the queue
@@ -235,7 +233,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const jitQuestion = await response.json();
             hideLoadingState(); // Hide the loading animation
 
-            if (jitQuestion && jitQuestion.id) {
+            // --- THIS IS THE FIX ---
+            // Check the properties of the question object directly.
+            if (jitQuestion && jitQuestion.id && Array.isArray(jitQuestion.answers)) {
                 displayQuestion(jitQuestion);
                 
                 // **CRITICAL STEP:** Immediately trigger the background batch call
@@ -243,7 +243,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 triggerPredictiveBatch(scores); 
 
             } else {
-                // If the JIT call fails, show the results as a fallback
+                // If the JIT call fails or returns invalid data, show results
+                console.log("JIT call returned invalid data, showing results.");
                 displayResults(scores);
             }
         } catch (error) {
@@ -405,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function showLoadingState(message = 'Et øjeblik, jeg tænker lige...') {
-        questionContainer.innerHTML = '';
+        questionContainer.innerHTML = ''; // Clear previous content
         const loaderTemplate = document.getElementById('loading-template').content.cloneNode(true);
         loaderTemplate.querySelector('h2').textContent = message;
         questionContainer.appendChild(loaderTemplate);
@@ -414,6 +415,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function hideLoadingState() {
+        // Find the loading indicator within questionContainer and remove it
+        const loader = questionContainer.querySelector('#loading-indicator-wrapper'); // Assuming the template has a wrapper with this ID
+        if (loader) {
+            loader.remove();
+        }
+        
+        // Unhide early exit if applicable
         if (questionHistory.length > 2) {
             earlyExitButton.classList.remove('hidden');
         }
