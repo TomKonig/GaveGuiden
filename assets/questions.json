@@ -66,28 +66,5 @@
             { "answer_text": "Ja tak, vis mig alt!", "tags": ["price_filter:flexible"] },
             { "answer_text": "Nej, hold dig til budgettet.", "tags": ["price_filter:strict"] }
         ]
-    },
-    {
-        "id": "q_categories",
-        "question_text": "Sidste ting: Hvilke verdener bevæger personen sig i? (Vælg gerne et par stykker, der passer)",
-        "is_initial": true,
-        "is_multiselect": true,
-        "answers": [
-            { "answer_text": "Bolig, Have & Interiør", "tags": ["category:bolig_have_interiør"] },
-            { "answer_text": "Gør-det-selv & Hobby", "tags": ["category:gør_det_selv_hobby"] },
-            { "answer_text": "Køretøjer & Transport", "tags": ["category:køretøjer_transport"] },
-            { "answer_text": "Sport & Fitness", "tags": ["category:sport_fitness"] },
-            { "answer_text": "Tøj & Accessories", "tags": ["category:tøj_accessories"] },
-            { "answer_text": "Legetøj", "tags": ["category:legetøj"] },
-            { "answer_text": "Elektronik & Gadgets", "tags": ["category:elektronik_gadgets"] },
-            { "answer_text": "Musik & Film", "tags": ["category:musik_film"] },
-            { "answer_text": "Mad, Drikke & Fest", "tags": ["category:mad_drikke_fest"] },
-            { "answer_text": "Sundhed & Personlig Pleje", "tags": ["category:sundhed_pleje"] },
-            { "answer_text": "Outdoor & Natur", "tags": ["category:outdoor_natur"] },
-            { "answer_text": "Spil", "tags": ["category:spil"] },
-            { "answer_text": "Oplevelser", "tags": ["category:oplevelser"] },
-            { "answer_text": "Bøger & Kunst", "tags": ["category:bøger_kunst"] },
-            { "answer_text": "Erotik & Sex", "tags": ["category:erotik_sex"] }
-        ]
     }
 ]
