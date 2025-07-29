@@ -89,7 +89,7 @@ exports.handler = async (event) => {
       .map(([tag, score]) => ({ tag: tag.replace(/_/g, ' '), score: score.toFixed(1) }));
 
     const prompt = getAiPrompt(userAnswers, finalThemesForPrompt);
-
+console.log("--> Attempting to call OpenAI with model:", 'gpt-4.1-nano');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
@@ -99,7 +99,7 @@ exports.handler = async (event) => {
         temperature: 0.7
       })
     });
-    
+ console.log("<-- OpenAI responded with status:", response.status);
     if (!response.ok) {
       const errText = await response.text();
       console.error('OpenAI API error:', errText);
