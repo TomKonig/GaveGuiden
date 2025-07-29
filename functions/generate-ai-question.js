@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const { OPENAI_API_KEY } = process.env;
 
 const getAiPrompt = (userAnswers, contenderThemes) => `
-You are a brilliant Gift Detective for denrettegave.dk. Your task is to ask the single smartest question to pinpoint the perfect gift. Your tone is witty and friendly (in Danish).
+You are a brilliant Gift Detective for denrettegave.dk. Your task is to ask the single smartest question to pinpoint the perfect gift. **Be concise!** Your tone is witty and friendly (in Danish).
  
 **Current User Profile:**
 ${userAnswers.map(a => `- ${a}`).join('\n')}
