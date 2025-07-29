@@ -1,97 +1,128 @@
 <!DOCTYPE html>
 <html lang="da">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Den Rette Gave - Din Personlige Gaveguide</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
-    <meta name="description" content="Find den perfekte gave med vores intelligente gaveguide. Svar på et par spørgsmål og få personlige gaveanbefalinger på under 30 sekunder.">
-    <style>
-        /* Applying the Inter font as the default sans-serif font */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Den Rette Gave - Din Personlige Gaveguide</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
+  <meta name="description" content="Find den perfekte gave med vores intelligente gaveguide. Svar på et par spørgsmål og få personlige gaveanbefalinger på under 30 sekunder.">
+  <style> body { font-family: 'Inter', sans-serif; } </style>
 </head>
 <body class="bg-gray-50 font-sans">
+  <!-- Header -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <nav class="container mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <a href="/" class="flex items-center space-x-3">
+          <img src="assets/logo.jpeg" alt="Den Rette Gave Logo" class="h-8 w-8 rounded-md">
+          <span class="text-2xl font-bold text-gray-800">Den Rette Gave</span>
+        </a>
+        <button id="how-it-works-btn" class="text-gray-600 hover:text-blue-600 font-medium">Sådan fungerer det</button>
+      </div>
+    </nav>
+  </header>
 
-    <!-- Header -->
-    <header class="bg-white shadow-sm sticky top-0 z-50">
-        <nav class="container mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
-                <a href="/" class="flex items-center space-x-3">
-                    <img src="assets/logo.jpeg" alt="Den Rette Gave Logo" class="h-8 w-8 rounded-md">
-                    <span class="text-2xl font-bold text-gray-800">Den Rette Gave</span>
-                </a>
-                <button id="how-it-works-btn" class="text-gray-600 hover:text-blue-600 font-medium">Sådan fungerer det</button>
-            </div>
-        </nav>
-    </header>
+  <main class="container mx-auto px-6 py-12">
+    <!-- Hero Section -->
+    <section id="hero-section" class="text-center py-16">
+      <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">Gaven, der altid rammer plet.</h1>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-8">Stop med at gætte. Vores intelligente guide finder den perfekte gave baseret på personlighed og interesser. Hurtigt, nemt og præcist.</p>
+      <a href="#quiz-section" class="start-quiz-btn cta-btn inline-block px-8 py-4 text-lg text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-transform transform hover:scale-105">Tag quizzen nu!</a>
+    </section>
 
-    <main class="container mx-auto px-6 py-12">
-        <!-- Hero Section -->
-        <section id="hero-section" class="text-center py-16">
-            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">Gaven, der altid rammer plet.</h1>
-            <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-8">Stop med at gætte. Vores intelligente guide finder den perfekte gave baseret på personlighed og interesser. Hurtigt, nemt og præcist.</p>
-            <a href="#quiz-section" class="start-quiz-btn cta-btn inline-block px-8 py-4 text-lg text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-transform transform hover:scale-105">Tag quizzen nu!</a>
-        </section>
-
-        <!-- Quiz Section (Initially Hidden) -->
-        <section id="quiz-section" class="bg-white p-8 rounded-lg shadow-lg max-w-2xl mx-auto hidden">
-            <div id="quiz-container">
-                <h2 id="question" class="text-2xl font-bold text-center text-gray-800 mb-8">Indlæser guiden...</h2>
-                <div id="answers" class="space-y-4"></div>
-                <div id="quiz-controls" class="flex justify-between items-center mt-8">
-                    <button id="back-button" class="text-gray-600 hover:text-gray-900 transition-colors">&larr; Tilbage</button>
-                    <button id="early-exit-button" class="px-4 py-2 text-sm text-blue-600 bg-blue-100 rounded-md hover:bg-blue-200">Se resultat nu &rarr;</button>
-                </div>
-            </div>
-
-            <!-- Results Section -->
-            <div id="results-container" class="hidden">
-                <h2 class="text-3xl font-bold text-center text-gray-900 mb-2">Her er den perfekte gave!</h2>
-                <p class="text-center text-gray-600 mb-8">Baseret på dine svar, tror vi, at dette er det bedste match.</p>
-                <div id="primary-result" class="mb-12"></div>
-                <h3 class="text-2xl font-bold text-center text-gray-800 mb-6">Andre gode forslag...</h3>
-                <div id="secondary-results" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-                <div class="text-center mt-12">
-                    <button id="restart-button" class="px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700">Start forfra</button>
-                    <button id="share-button" class="ml-4 px-6 py-3 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Del Resultat</button>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- How it Works Modal (Initially Hidden) -->
-    <div id="how-it-works-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-8 relative">
-            <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Sådan fungerer det</h2>
-            <div class="space-y-4 text-gray-700">
-                <p><strong>1. Svar på et par simple spørgsmål:</strong> Fortæl os lidt om, hvem gaven er til, og hvad anledningen er. Det tager kun et øjeblik.</p>
-                <p><strong>2. Vores AI tager over:</strong> Baseret på dine svar, bruger vores intelligente assistent sin viden til at stille dig et par uddybende spørgsmål for at indsnævre mulighederne.</p>
-                <p><strong>3. Få den perfekte anbefaling:</strong> På under 30 sekunder præsenterer vi dig for den gave, vi tror, rammer plet – plus et par gode alternativer.</p>
-            </div>
+    <!-- Quiz Section -->
+    <section id="quiz-section" class="bg-white p-8 rounded-lg shadow-lg max-w-2xl mx-auto hidden">
+      <!-- Dynamic Question Container -->
+      <div id="question-container"></div>
+      <!-- Results Section (hidden by default) -->
+      <div id="results-section" class="hidden">
+        <h2 class="text-3xl font-bold text-center text-gray-900 mb-2">Her er den perfekte gave!</h2>
+        <p class="text-center text-gray-600 mb-8">Baseret på dine svar, tror vi, at dette er det bedste match.</p>
+        <div id="primary-result" class="mb-12"></div>
+        <h3 class="text-2xl font-bold text-center text-gray-800 mb-6">Andre gode forslag...</h3>
+        <div id="secondary-results" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        <div class="text-center mt-12">
+          <button id="restart-button" class="px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700">Start forfra</button>
+          <button id="share-button" class="ml-4 px-6 py-3 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Del Resultat</button>
         </div>
+        <!-- Feedback / Rating Section -->
+        <div id="feedback-container" class="mt-10 hidden">
+          <p class="text-gray-700 font-medium mb-2">Hvad synes du om vores forslag?</p>
+          <div id="star-rating" class="star-rating flex justify-center">
+            <button data-value="1">&#9733;</button>
+            <button data-value="2">&#9733;</button>
+            <button data-value="3">&#9733;</button>
+            <button data-value="4">&#9733;</button>
+            <button data-value="5">&#9733;</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- How it Works Modal -->
+  <div id="how-it-works-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-8 relative">
+      <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+      <h2 class="text-2xl font-bold text-gray-900 mb-4">Sådan fungerer det</h2>
+      <div class="space-y-4 text-gray-700">
+        <p><strong>1. Svar på et par simple spørgsmål:</strong> Fortæl os lidt om, hvem gaven er til, og hvad anledningen er. Det tager kun et øjeblik.</p>
+        <p><strong>2. Udforsk deres interesser:</strong> Vælg et par overordnede kategorier eller søg efter specifikke hobbies for at give os de bedste ledetråde.</p>
+        <p><strong>3. Vores AI stiller skarpt:</strong> Baseret på dine svar, stiller vores intelligente assistent et par uddybende spørgsmål for at indsnævre mulighederne perfekt.</p>
+        <p><strong>4. Få den perfekte anbefaling:</strong> På under et minut præsenterer vi dig for den gave, vi tror, rammer plet – plus et par gode alternativer.</p>
+      </div>
     </div>
+  </div>
 
-    <!-- Footer -->
-    <footer class="bg-white mt-12">
-        <div class="container mx-auto px-6 py-4 text-center text-gray-600">
-            <p>&copy; 2025 Den Rette Gave. Alle rettigheder forbeholdes.</p>
-            <div class="mt-2">
-                <a href="/privacy-policy.html" class="text-blue-600 hover:underline mx-2">Privatlivspolitik</a>
-                <a href="/terms-of-service.html" class="text-blue-600 hover:underline mx-2">Servicevilkår</a>
-            </div>
-        </div>
-    </footer>
+  <!-- Share Modal -->
+  <div id="share-modal" class="modal-overlay">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-8 relative">
+      <button id="close-share-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+      <h2 class="text-2xl font-bold text-gray-900 mb-4">Del dette gaveforslag</h2>
+      <p class="text-gray-600 mb-4">Kopier linket nedenfor for at dele denne specifikke anbefaling.</p>
+      <div class="flex items-center border border-gray-300 rounded-md p-2">
+        <input id="share-link-input" type="text" readonly class="flex-grow bg-transparent outline-none">
+        <button id="copy-share-link-btn" class="ml-2 px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700">Kopiér</button>
+      </div>
+      <div id="copy-feedback" class="text-green-700 text-sm mt-2 h-4"></div>
+    </div>
+  </div>
 
-    <script src="quiz-logic.js"></script>
+  <!-- Question Templates (hidden) -->
+  <template id="single-choice-template">
+    <div class="question-wrapper">
+      <h2 class="question-text text-2xl font-bold text-center text-gray-800 mb-8"></h2>
+      <div class="answers-container space-y-4"></div>
+    </div>
+  </template>
+  <template id="interest-hub-template">
+    <div class="question-wrapper">
+      <h2 class="question-text text-2xl font-bold text-center text-gray-800 mb-2"></h2>
+      <p class="text-center text-gray-500 mb-6">Vælg et par stykker, eller brug søgefeltet til at finde mere specifikke interesser.</p>
+      <div id="interest-suggestions" class="flex flex-wrap justify-center gap-3 mb-6"><!-- adaptive pills --></div>
+      <div class="relative mb-4">
+        <input type="text" id="interest-search" class="w-full p-3 pl-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Søg efter flere interesser (fx 'Whisky', 'Yoga'...)">
+        <div id="autocomplete-results" class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-b-md shadow-lg z-10 max-h-60 overflow-y-auto hidden"></div>
+      </div>
+      <div id="selected-interests" class="flex flex-wrap gap-2 min-h-[40px] bg-gray-100 p-3 rounded-md"><!-- selected interest pills --></div>
+      <button id="interest-submit-btn" class="cta-btn w-full mt-6 px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-400">Videre</button>
+    </div>
+  </template>
+  <template id="loading-template">
+    <div class="question-wrapper">
+      <h2 class="text-2xl font-bold text-center text-gray-800 mb-8">Et øjeblik, jeg tænker lige.</h2>
+      <div class="flex justify-center items-center">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div>
+      </div>
+    </div>
+  </template>
+
+  <script src="quiz-logic.js"></script>
 </body>
 </html>
