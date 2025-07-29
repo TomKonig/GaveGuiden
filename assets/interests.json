@@ -1,0 +1,66 @@
+[
+  {
+    "name": "Sport & Fitness",
+    "key": "category:sport_fitness",
+    "subInterests": [
+      { "name": "Fodbold", "key": "interest:fodbold" },
+      { "name": "Løb", "key": "interest:løb" },
+      { "name": "Padel", "key": "interest:padel" },
+      { "name": "Styrketræning", "key": "interest:styrketræning" },
+      { "name": "Yoga", "key": "interest:yoga" },
+      { "name": "Cykling", "key": "interest:cykling" }
+    ]
+  },
+  {
+    "name": "Mad & Drikke",
+    "key": "category:mad_drikke_fest",
+    "subInterests": [
+      { "name": "Specialøl", "key": "interest:øl" },
+      { "name": "Gourmet Mad", "key": "interest:gourmet" },
+      { "name": "Cocktails", "key": "interest:cocktails" },
+      { "name": "Grill & BBQ", "key": "interest:barbeque" },
+      { "name": "Vin", "key": "interest:vin" },
+      { "name": "Bagning", "key": "interest:bagning" }
+    ]
+  },
+  {
+    "name": "Bolig & Design",
+    "key": "category:bolig_have_interiør",
+    "subInterests": [
+      { "name": "Skandinavisk Design", "key": "interest:skandinavisk_design" },
+      { "name": "Planter", "key": "interest:planter" },
+      { "name": "Hygge", "key": "interest:hygge" },
+      { "name": "Køkkenudstyr", "key": "interest:køkkenudstyr" }
+    ]
+  },
+  {
+    "name": "Tech & Gadgets",
+    "key": "category:elektronik_gadgets",
+    "subInterests": [
+      { "name": "Smart Home", "key": "interest:smart_home" },
+      { "name": "Gaming", "key": "interest:gaming" },
+      { "name": "Fotografi", "key": "interest:fotografi" },
+      { "name": "Musik & Hifi", "key": "interest:hifi" }
+    ]
+  },
+  {
+    "name": "Kreativ & Hobby",
+    "key": "category:gør_det_selv_hobby",
+    "subInterests": [
+      { "name": "Strikning", "key": "interest:strikning" },
+      { "name": "Maleri & Tegning", "key": "interest:maling" },
+      { "name": "Brætspil", "key": "interest:brætspil" },
+      { "name": "Gør-det-selv", "key": "interest:gør_det_selv" }
+    ]
+  },
+  {
+    "name": "Oplevelser & Ophold",
+    "key": "category:oplevelser",
+    "subInterests": [
+      { "name": "Weekendophold", "key": "interest:weekendophold" },
+      { "name": "Gourmet Middag", "key": "interest:gourmetophold" },
+      { "name": "Spa & Wellness", "key": "interest:spa" },
+      { "name": "Action & Adrenalin", "key": "interest:adrenalin" }
+    ]
+  }
+]
