@@ -3,11 +3,8 @@
 const { MongoClient } = require('mongodb');
 const crypto = require('crypto');
 
-// Securely access environment variables
 const { MONGODB_URI, OPENAI_API_KEY } = process.env;
 
-// --- PROMPT TEMPLATE FOR THE "DETECTIVE" AI ---
-// This prompt now instructs the AI to always include a free-text option.
 const getAiPrompt = (userAnswers, topProductsSummary) => `
 You are a brilliant and friendly Gift Detective for denrettegave.dk. Your personality is youthful, helpful, and a little tongue-in-cheek. Your goal is to generate a short, logical sequence of clarifying questions to help narrow down the perfect gift.
 
@@ -27,7 +24,7 @@ ${topProductsSummary}
       "questions": [
         {
           "id": "q_ai_generated_UNIQUE_ID_1",
-          "question_text": "YOUR_QUESTION_IN_DANISH",
+          "question_text": "YOUR_FIRST_QUESTION_IN_DANISH",
           "answers": [
             {"answer_text": "ANSWER_1_IN_DANISH", "tags": ["key:value"]},
             {"answer_text": "ANSWER_2_IN_DANISH", "tags": ["key:value"]},
@@ -41,13 +38,16 @@ ${topProductsSummary}
 7.  Your entire response must be ONLY the raw JSON object, with no other text or explanations.
 `;
 
-// --- MAIN HANDLER FUNCTION (remains the same) ---
 exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
     try {
         const { userAnswers, candidateProducts } = JSON.parse(event.body);
+        
+        // --- FIX: Harden against malformed candidateProducts ---
+        const safeCandidates = (candidateProducts || []).filter(p => p && p.id && Array.isArray(p.tags));
+
         const sortedAnswers = [...userAnswers].sort().join(',');
-        const sortedProductIds = [...candidateProducts].slice(0, 20).sort().join(',');
+        const sortedProductIds = safeCandidates.slice(0, 20).map(p => p.id).sort().join(',');
         const contextString = `${sortedAnswers}|${sortedProductIds}`;
         const contextFingerprint = crypto.createHash('sha256').update(contextString).digest('hex');
 
@@ -62,7 +62,9 @@ exports.handler = async (event) => {
             return { statusCode: 200, body: JSON.stringify(cachedResult.questions) };
         }
 
-        const topProductsSummary = `Top themes: ${[...new Set(candidateProducts.flatMap(p => p.tags.filter(t => t.startsWith('interest:') || t.startsWith('category:')).map(t => t.split(':')[1])))].slice(0, 5).join(', ')}.`;
+        const themes = safeCandidates.flatMap(p => p.tags.filter(t => t.startsWith('interest:') || t.startsWith('category:')).map(t => t.split(':')[1]));
+        const topProductsSummary = `Top themes: ${[...new Set(themes)].slice(0, 5).join(', ')}.`;
+        
         const prompt = getAiPrompt(userAnswers, topProductsSummary);
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -76,7 +78,11 @@ exports.handler = async (event) => {
             }),
         });
 
-        if (!response.ok) throw new Error(`OpenAI API error: ${response.statusText}`);
+        if (!response.ok) {
+            const errorBody = await response.text();
+            console.error('OpenAI API Error:', errorBody);
+            throw new Error(`OpenAI API error: ${response.statusText}`);
+        }
         const data = await response.json();
         const newQuestionData = JSON.parse(data.choices[0].message.content);
 
