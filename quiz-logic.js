@@ -23,12 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const restartButton = document.getElementById('restart-button');
     const shareButton = document.getElementById('share-button');
 
-    // --- CONSTANTS AND WEIGHTS ---
     const TAG_WEIGHTS = { 'relation': 3, 'age': 3, 'price': 5, 'category': 4, 'interest': 4, 'occasion': 2, 'is_differentiator': 2 };
     const INITIAL_SCORE_THRESHOLD = 1.5;
     const AGGRESSIVE_SCORE_THRESHOLD = 1.2;
 
-    // --- INITIALIZATION ---
     async function initializeQuiz() {
         try {
             const [productsRes, questionsRes] = await Promise.all([ fetch('assets/products.json'), fetch('assets/questions.json') ]);
@@ -55,18 +53,47 @@ document.addEventListener('DOMContentLoaded', () => {
         selectNextQuestion();
     }
 
-    // --- CORE QUIZ LOGIC ---
+    // --- NEW: Centralized function to apply all filters based on userAnswers ---
+    function recalculateRemainingProducts() {
+        let products = [...allProducts];
+        const userAnswerTags = new Set(userAnswers.flatMap(a => a.tags));
+
+        // Handle price filtering logic
+        if (userAnswerTags.has('price:billig')) {
+            products = products.filter(p => p.price < 200);
+        } else if (userAnswerTags.has('price_filter:strict')) {
+            if (userAnswerTags.has('price:mellem')) {
+                products = products.filter(p => p.price >= 200 && p.price <= 500);
+            } else if (userAnswerTags.has('price:dyr')) {
+                products = products.filter(p => p.price > 500);
+            }
+        }
+        remainingProducts = products;
+    }
+
     async function selectNextQuestion() {
-        const initialQuestion = allQuestions.find(q => q.is_initial && !askedQuestions.has(q.id));
-        if (initialQuestion) {
-            displayQuestion(initialQuestion);
+        // --- UPDATED: Smarter initial question selection ---
+        const unaskedInitialQuestions = allQuestions.filter(q => q.is_initial && !askedQuestions.has(q.id));
+        const currentUserTags = new Set(userAnswers.flatMap(a => a.tags));
+        
+        let nextInitialQuestion = unaskedInitialQuestions.find(q => 
+            q.trigger_tags && q.trigger_tags.some(tag => currentUserTags.has(tag))
+        );
+
+        if (!nextInitialQuestion) {
+            nextInitialQuestion = unaskedInitialQuestions.find(q => !q.trigger_tags);
+        }
+
+        if (nextInitialQuestion) {
+            displayQuestion(nextInitialQuestion);
             return;
         }
+        
         earlyExitButton.classList.remove('hidden');
 
         const scores = getProductScores();
         if (scores.length > 1) {
-            const threshold = askedQuestions.size > 5 ? AGGRESSIVE_SCORE_THRESHOLD : INITIAL_SCORE_THRESHOLD;
+            const threshold = askedQuestions.size > 7 ? AGGRESSIVE_SCORE_THRESHOLD : INITIAL_SCORE_THRESHOLD;
             if (scores[0].score >= scores[1].score * threshold) {
                 displayResults(scores);
                 return;
@@ -105,9 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userAnswers.push(answer);
         questionHistory.push(currentQuestion);
         askedQuestions.add(currentQuestion.id);
-        if (answer.tags.some(t => t.includes("price:billig"))) {
-            remainingProducts = remainingProducts.filter(p => p.price < 500);
-        }
+        recalculateRemainingProducts(); // Use the new centralized filter function
         selectNextQuestion();
     }
     
@@ -149,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- UI RENDERING ---
     function displayQuestion(question) {
         currentQuestion = question;
         quizContainer.classList.remove('fade-out');
@@ -220,12 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const lastQuestion = questionHistory.pop();
         userAnswers.pop();
         askedQuestions.delete(lastQuestion.id);
-        remainingProducts = [...allProducts];
-        userAnswers.forEach(answer => {
-            if (answer.tags.some(t => t.includes("price:billig"))) {
-                remainingProducts = remainingProducts.filter(p => p.price < 500);
-            }
-        });
+        recalculateRemainingProducts(); // Recalculate after removing an answer
         displayQuestion(lastQuestion);
     }
 
@@ -233,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const scores = {};
         allProducts.forEach(p => scores[p.id] = { id: p.id, score: 0 });
         const allAnswerTags = userAnswers.flatMap(a => a.tags);
-        for (const product of remainingProducts) {
+        for (const product of remainingProducts) { // Score only based on remaining products
             let score = 0;
             const productTags = new Set([...product.tags, ...product.differentiator_tags]);
             for (const answerTag of allAnswerTags) {
