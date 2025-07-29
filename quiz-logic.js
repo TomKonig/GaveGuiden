@@ -591,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function triggerPredictiveBatch(scores, cacheKey = null) {
         console.log("Triggering predictive batch call...");
-        const candidateProducts = scores.slice(0, 20).map(s => {
+        const candidateProducts = scores.slice(0, 15).map(s => {
             const p = allProducts.find(prod => prod.id === s.id);
             return p ? { id: p.id, tags: p.tags, score: s.score } : null;
         }).filter(x => x);
