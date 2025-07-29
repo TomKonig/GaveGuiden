@@ -3,134 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gavefinder: Find Den Perfekte Gave På Sekunder | Den Rette Gave</title>
-    <meta name="description" content="Træt af gave-stress? Vores intelligente Gavefinder stiller et par simple spørgsmål og finder personlige gaveidéer til enhver person og anledning. Prøv gratis!">
-    <link rel="canonical" href="https://www.denrettegave.dk/" />
-    
+    <title>Den Rette Gave - Din Personlige Gaveguide</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
+    <meta name="description" content="Find den perfekte gave med vores intelligente gaveguide. Svar på et par spørgsmål og få personlige gaveanbefalinger på under 30 sekunder.">
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="bg-gray-50 font-sans">
 
-    <div id="app" class="max-w-4xl mx-auto p-4 md:p-8 flex flex-col min-h-screen">
-        <header class="flex justify-between items-center mb-8">
-            <a href="/" class="flex items-center gap-3 text-2xl md:text-3xl font-bold text-slate-700 hover:text-slate-900 transition-colors">
-                <img src="./assets/logo.jpeg" alt="Den Rette Gave Logo" class="h-10 w-10 rounded-md">
-                <span>Den Rette Gave</span>
-            </a>
-            <nav>
-                <button id="how-it-works-btn" class="text-slate-600 hover:text-slate-900 font-semibold">Sådan fungerer det</button>
-            </nav>
-        </header>
-
-        <div class="flex-grow">
-             <!-- Landing View -->
-            <main id="landing-view" class="view active text-center">
-                <div class="py-12 md:py-24">
-                    <h1 class="text-4xl md:text-6xl font-bold mb-4">Find den perfekte gave. Hver gang.</h1>
-                    <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-8">Vores smarte quiz stiller et par simple spørgsmål for at finde personlige gaveidéer til hvem som helst.</p>
-                    <button id="start-quiz-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl">Start Guiden</button>
-                </div>
-            </main>
-    
-            <!-- Quiz View -->
-            <main id="quiz-view" class="view">
-                 <div id="quiz-container" class="relative pt-8">
-                     <h3 id="question-title" class="text-2xl md:text-3xl font-bold text-center mb-2"></h3>
-                     <p id="question-text" class="text-lg text-slate-600 text-center mb-8"></p>
-                     <div id="answers-container"></div>
-                </div>
-                 <div class="mt-8 text-center">
-                    <button id="early-exit-btn" class="mt-4 text-slate-500 hover:text-slate-800 text-sm hidden">Er du i tvivl? Vis mig de bedste forslag nu</button>
-                </div>
-            </main>
-    
-            <!-- Result View -->
-            <main id="results-view" class="view">
-                 <div class="py-12">
-                    <h2 id="results-title" class="text-3xl md:text-4xl font-bold mb-4 text-center">Vi fandt den perfekte gave!</h2>
-                    <div id="results-container" class="space-y-8"></div>
-                     <div class="text-center">
-                        <button id="restart-quiz-btn" class="mt-8 bg-slate-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-slate-700 transition-colors">Start forfra</button>
-                     </div>
-                </div>
-            </main>
-        </div>
-
-        <footer class="text-center text-slate-500 mt-16 py-4 border-t border-slate-200">
-            <div class="flex flex-col md:flex-row md:flex-nowrap justify-center items-center gap-2 md:gap-4">
-                <span class="whitespace-nowrap">&copy; 2025 Den Rette Gave (CVR: [Dit CVR-nummer])</span>
-                <span class="hidden md:inline">|</span>
-                <a href="./privacy-policy.html" target="_blank" class="hover:underline whitespace-nowrap">Privatlivspolitik</a>
-                <span class="hidden md:inline">|</span>
-                <a href="./terms-of-service.html" target="_blank" class="hover:underline whitespace-nowrap">Brugsbetingelser</a>
-                <span class="hidden md:inline">|</span>
-                <button id="contact-btn" class="hover:underline whitespace-nowrap">Kontakt os</button>
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <nav class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <a href="/" class="text-2xl font-bold text-gray-800">Den Rette Gave</a>
+                <a href="#quiz-section" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">Start Guiden</a>
             </div>
-        </footer>
-    </div>
+        </nav>
+    </header>
 
-    <!-- Modals -->
-    <div id="how-it-works-modal" class="modal-overlay">
-        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-lg m-4">
-            <h2 class="text-2xl font-bold mb-4">Sådan fungerer Den Rette Gave</h2>
-            <div class="text-slate-600 space-y-4">
-                <p>Vores intelligente quiz bestemmer spørgsmål for spørgsmål præcis hvilke produkter der skal overvejes, og hvilke der skal sorteres fra, indtil vi har indsnævret søgningen til den perfekte gave til anledningen.</p>
-                <p><strong>Feedback & Deling:</strong> Når du får et forslag, kan du give det stjerner for at hjælpe os med at forbedre vores logik. Du kan også dele resultatet med en ven via et sikkert, anonymt link.</p>
-                <p><strong>Affiliate Links (Sådan tjener vi penge):</strong> Når vi foreslår en gave, er linket et "affiliate link". Hvis du køber produktet, modtager vi en lille kommission. **Dette koster dig intet ekstra!** Det er sådan, vi kan holde Den Rette Gave kørende og gratis at bruge.</p>
+    <main class="container mx-auto px-6 py-12">
+        <!-- Hero Section -->
+        <section class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">Gaven, der altid rammer plet.</h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">Stop med at gætte. Vores intelligente guide finder den perfekte gave baseret på personlighed og interesser. Hurtigt, nemt og præcist.</p>
+        </section>
+
+        <!-- Quiz Section -->
+        <section id="quiz-section" class="bg-white p-8 rounded-lg shadow-lg max-w-2xl mx-auto">
+            <div id="quiz-container">
+                <h2 id="question" class="text-2xl font-bold text-center text-gray-800 mb-8">Indlæser guiden...</h2>
+                <div id="answers" class="space-y-4">
+                    <!-- Answers will be dynamically inserted here -->
+                </div>
+                <!-- Controls for Back and Early Exit -->
+                <div id="quiz-controls" class="flex justify-between items-center mt-8">
+                    <button id="back-button" class="text-gray-600 hover:text-gray-900 transition-colors">&larr; Tilbage</button>
+                    <button id="early-exit-button" class="px-4 py-2 text-sm text-blue-600 bg-blue-100 rounded-md hover:bg-blue-200">Se resultat nu &rarr;</button>
+                </div>
             </div>
-            <button class="close-modal-btn mt-6 bg-blue-600 text-white font-bold py-2 px-5 rounded-lg w-full hover:bg-blue-700">Forstået!</button>
-        </div>
-    </div>
 
-    <div id="contact-modal" class="modal-overlay">
-        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md m-4 text-center">
-            <h2 class="text-2xl font-bold mb-4">Kontakt Os</h2>
-            <p class="text-slate-600">Har du spørgsmål, feedback eller forslag? Vi vil meget gerne høre fra dig!</p>
-            <p class="mt-4">Send os en e-mail på:</p>
-            <a href="mailto:support@denrettegave.dk" class="text-blue-600 font-bold text-lg hover:underline">support@denrettegave.dk</a>
-            <button class="close-modal-btn mt-6 bg-slate-200 text-slate-800 font-bold py-2 px-5 rounded-lg w-full hover:bg-slate-300">Luk</button>
-        </div>
-    </div>
+            <!-- Results Section -->
+            <div id="results-container" class="hidden">
+                <h2 class="text-3xl font-bold text-center text-gray-900 mb-2">Her er den perfekte gave!</h2>
+                <p class="text-center text-gray-600 mb-8">Baseret på dine svar, tror vi, at dette er det bedste match.</p>
+                
+                <div id="primary-result" class="mb-12">
+                    <!-- Primary result will be inserted here -->
+                </div>
 
-    <div id="report-problem-modal" class="modal-overlay">
-        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-lg m-4">
-            <h2 class="text-2xl font-bold mb-4">Rapportér et problem</h2>
-            <div id="report-options" class="space-y-3">
-                <button class="w-full text-left p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-report-type="Billedet mangler">Billedet mangler</button>
-                <button class="w-full text-left p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-report-type="Linket virker ikke">Linket virker ikke</button>
-                <button class="w-full text-left p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-report-type="Prisen er forkert">Prisen er forkert</button>
-                <button class="w-full text-left p-3 bg-slate-100 hover:bg-slate-200 rounded-lg" data-report-type="Andet">Andet</button>
+                <h3 class="text-2xl font-bold text-center text-gray-800 mb-6">Andre gode forslag...</h3>
+                <div id="secondary-results" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Secondary results will be inserted here -->
+                </div>
+
+                <div class="text-center mt-12">
+                    <button id="restart-button" class="px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700">Start forfra</button>
+                    <button id="share-button" class="ml-4 px-6 py-3 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Del Resultat</button>
+                </div>
             </div>
-            <div id="report-feedback" class="hidden text-center p-4 bg-green-100 text-green-800 rounded-lg mt-4">Tak for din feedback!</div>
-            <button class="close-modal-btn mt-6 text-slate-500 font-semibold w-full">Annuller</button>
-        </div>
-    </div>
+        </section>
+    </main>
 
-    <div id="share-modal" class="modal-overlay">
-         <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md m-4">
-            <h2 class="text-2xl font-bold mb-4">Del denne gaveidé</h2>
-            <div class="space-y-3">
-                <input type="text" id="share-link-input" readonly class="w-full bg-gray-100 rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
-                <button id="copy-share-link-button" class="w-full text-center p-3 bg-slate-200 text-slate-800 rounded-lg font-bold hover:bg-slate-300">Kopiér Link</button>
+    <!-- Footer -->
+    <footer class="bg-white mt-12">
+        <div class="container mx-auto px-6 py-4 text-center text-gray-600">
+            <p>&copy; 2025 Den Rette Gave. Alle rettigheder forbeholdes.</p>
+            <div class="mt-2">
+                <a href="/privacy-policy.html" class="text-blue-600 hover:underline mx-2">Privatlivspolitik</a>
+                <a href="/terms-of-service.html" class="text-blue-600 hover:underline mx-2">Servicevilkår</a>
             </div>
-            <p id="share-copy-feedback" class="text-sm text-green-600 mt-2 text-center hidden">Link kopieret!</p>
-            <button class="close-modal-btn mt-6 text-slate-500 font-semibold w-full">Luk</button>
         </div>
-    </div>
-    
-    <div id="cookie-banner" class="hidden fixed bottom-0 left-0 right-0 bg-white p-4 shadow-2xl border-t z-50 transform translate-y-full transition-transform duration-500 ease-in-out">
-        <div class="max-w-4xl mx-auto md:flex items-center justify-between">
-            <p class="text-slate-700 text-sm mb-4 md:mb-0">Denne side bruger cookies for at sikre den bedste oplevelse. Ved at bruge siden accepterer du vores brug af cookies. Læs mere i vores <a href="./privacy-policy.html" target="_blank" class="font-semibold text-blue-600 hover:underline">privatlivspolitik</a>.</p>
-            <button id="accept-cookies-btn" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg w-full md:w-auto">Accepter</button>
-        </div>
-    </div>
+    </footer>
 
-    <!-- The inline script is now gone, replaced by the line below -->
-    <script src="quiz-logic.js" defer></script>
+    <script src="quiz-logic.js"></script>
 </body>
 </html>
