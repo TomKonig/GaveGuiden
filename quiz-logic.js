@@ -92,6 +92,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         // Report problem events will be delegated (added when results are rendered)
     }
+
+    function goBack() {
+        if (questionHistory.length === 0) return;
+
+        // Remove the last answer and question from history
+        userAnswers.pop();
+        const lastQuestion = questionHistory.pop();
+
+        // If going back from the results view, hide it and show the quiz
+        if (!resultsSection.classList.contains('hidden')) {
+            resultsSection.classList.add('hidden');
+            questionContainer.classList.remove('hidden');
+        }
+
+        // If we are back to the first question, hide the back button
+        if (questionHistory.length === 0) {
+            backButton.classList.add('hidden');
+        }
+
+        // Re-display the previous question
+        displayQuestion(lastQuestion);
+    }
+
+    function triggerPredictiveBatch(scores) {
+        // This is a "fire-and-forget" call to warm up the AI cache
+        const candidateProducts = scores.slice(0, 20).map(s => {
+            const p = allProducts.find(prod => prod.id === s.id);
+            return p ? { id: p.id, tags: p.tags, score: s.score } : null;
+        }).filter(x => x);
+
+        if (candidateProducts.length > 0) {
+            fetch('/.netlify/functions/generate-question-batch', {
+                method: 'POST',
+                body: JSON.stringify({
+                    userAnswers: userAnswers.flatMap(a => a.tags),
+                    candidateProducts
+                })
+            }).catch(error => {
+                // We don't block the user on this, but we log the error
+                console.warn('Predictive batch call failed:', error);
+            });
+        }
+    }
     
     async function startQuiz() {
         // If starting from scratch or restarting, reset state
@@ -144,89 +187,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     async function selectNextQuestion() {
-        // Determine the next question to display
-        const unaskedInitial = allQuestions.filter(q => q.is_initial && !questionHistory.some(h => h.id === q.id));
-        const currentTags = new Set(userAnswers.flatMap(a => a.tags));
-        let nextInitialQuestion = unaskedInitial.find(q => q.trigger_tags && q.trigger_tags.some(tag => currentTags.has(tag)));
-        if (!nextInitialQuestion) {
-            nextInitialQuestion = unaskedInitial.find(q => !q.trigger_tags);
-        }
-        if (nextInitialQuestion) {
-            // If the next initial question is an interest hub placeholder, handle separately
-            if (nextInitialQuestion.type === 'interest_hub' || nextInitialQuestion.id === 'q_interest_placeholder') {
-                // Skip placeholder; we'll invoke interest hub after static questions
-                questionHistory.push(nextInitialQuestion);
-                selectNextQuestion();
-                return;
-            }
-            // Display normal static question
-            displayQuestion(nextInitialQuestion);
-            return;
-        }
-        // No more initial questions – ensure interest hub has been shown
-        if (!questionHistory.some(q => q.id === 'q_interest_hub')) {
-            // Show the adaptive Interest Hub question
-            const interestQuestion = { id: 'q_interest_hub', question_text: 'Hvad interesserer personen sig for?' };
-            displayInterestHub(interestQuestion);
-            return;
-        }
-        // All initial (incl. interests) done – enable early exit and proceed with AI questions
-        earlyExitButton.classList.remove('hidden');
-        const scores = getProductScores();
-        // Stopping condition: if clear winner or no meaningful question remains
-        if (scores.length > 1) {
-            const threshold = questionHistory.length > 7 ? AGGRESSIVE_SCORE_THRESHOLD : INITIAL_SCORE_THRESHOLD;
-            if (scores[0].score >= scores[1].score * threshold) {
-                displayResults(scores);
-                return;
-            }
-        }
-        // If we have any pre-fetched AI questions queued, use them
-        if (aiQuestionQueue.length > 0) {
-            const nextQ = aiQuestionQueue.shift();
-            // Guard: ensure the question is still relevant to current top products
-            if (isQuestionStillRelevant(nextQ, scores.slice(0, 5).map(s => allProducts.find(p => p.id === s.id)))) {
-                displayQuestion(nextQ);
-                return;
+        const scores = calculateScores();
+        const topProductIds = scores.slice(0, 10).map(s => s.id);
+
+        let usedDifferentiators = new Set(questionHistory.map(q => q.differentiator).filter(d => d));
+
+        // Find the best static question that hasn't been used
+        let nextQuestion = findBestDifferentiatingQuestion(topProductIds, usedDifferentiators);
+
+        if (nextQuestion) {
+            displayQuestion(nextQuestion);
+            // Fire background batch call when a static question is found
+            triggerPredictiveBatch(scores);
+        } else {
+            // No suitable static question, call the AI for a JIT question
+            console.log("No suitable static question, calling AI for a single question...");
+            displayLoading(true);
+
+            const aiQuestion = await fetchAIQuestion(scores); // JIT call happens here
+            displayLoading(false);
+
+            if (aiQuestion) {
+                // AI returned a valid question
+                allQuestions.push(aiQuestion);
+                displayQuestion(aiQuestion);
+
+                // NOW, fire the background batch call after the JIT call is complete
+                console.log("JIT question received. Triggering background batch call...");
+                triggerPredictiveBatch(scores);
             } else {
-                // Drop irrelevant pre-fetched question(s)
-                aiQuestionQueue = [];
+                // AI failed, fallback to showing results
+                console.log("AI failed to generate a question. Showing results instead.");
+                displayResults();
             }
-        }
-        // Trigger background prefetch for upcoming questions (fire-and-forget)
-        triggerPredictiveBatch(scores);
-        // Fallback to just-in-time single question generation
-        try {
-            showLoadingState();
-            const candidateProducts = scores.slice(0, 20).map(s => {
-                const p = allProducts.find(prod => prod.id === s.id);
-                return p ? { id: p.id, tags: p.tags, score: s.score } : null;
-            }).filter(x => x);
-            const response = await fetch('/.netlify/functions/generate-ai-question', {
-                method: 'POST',
-                body: JSON.stringify({
-                    userAnswers: userAnswers.flatMap(a => a.tags),
-                    candidateProducts
-                })
-            });
-            if (!response.ok) throw new Error('AI question generation failed');
-            const result = await response.json();
-            hideLoadingState();
-            if (Array.isArray(result) && result.length > 0) {
-                // Received a batch of questions
-                aiQuestionQueue = result;
-                displayQuestion(aiQuestionQueue.shift());
-            } else if (result && result.id) {
-                // Received a single question
-                displayQuestion(result);
-            } else {
-                // No question returned – end quiz
-                displayResults(scores);
-            }
-        } catch (error) {
-            console.error("AI question generation failed, showing results instead:", error);
-            hideLoadingState();
-            displayResults(scores);
         }
     }
     
