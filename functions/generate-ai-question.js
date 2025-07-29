@@ -1,9 +1,9 @@
 // /functions/generate-ai-question.js
 
-const { MongoClient } = require('mongodb');
+const { connectToDatabase } = require('./utils/mongodb-client');
 const crypto = require('crypto');
 
-const { MONGODB_URI, OPENAI_API_KEY } = process.env;
+const { OPENAI_API_KEY } = process.env;
 
 const getAiPrompt = (userAnswers, topProductsSummary) => `
 You are a brilliant and friendly Gift Detective for denrettegave.dk. Your personality is youthful, helpful, and a little tongue-in-cheek. Your goal is to generate a short, logical sequence of clarifying questions to help narrow down the perfect gift.
@@ -39,11 +39,13 @@ ${topProductsSummary}
 `;
 
 exports.handler = async (event) => {
-    if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
+    if (event.httpMethod !== 'POST') {
+        return { statusCode: 405, body: 'Method Not Allowed' };
+    }
+
     try {
         const { userAnswers, candidateProducts } = JSON.parse(event.body);
         
-        // --- FIX: Harden against malformed candidateProducts ---
         const safeCandidates = (candidateProducts || []).filter(p => p && p.id && Array.isArray(p.tags));
 
         const sortedAnswers = [...userAnswers].sort().join(',');
@@ -51,14 +53,11 @@ exports.handler = async (event) => {
         const contextString = `${sortedAnswers}|${sortedProductIds}`;
         const contextFingerprint = crypto.createHash('sha256').update(contextString).digest('hex');
 
-        const client = new MongoClient(MONGODB_URI);
-        await client.connect();
-        const db = client.db('gaveguiden');
+        const db = await connectToDatabase();
         const cacheCollection = db.collection('question_cache');
         const cachedResult = await cacheCollection.findOne({ _id: contextFingerprint });
 
-        if (cachedResult) {
-            await client.close();
+        if (cachedResult && cachedResult.questions) {
             return { statusCode: 200, body: JSON.stringify(cachedResult.questions) };
         }
 
@@ -81,13 +80,33 @@ exports.handler = async (event) => {
         if (!response.ok) {
             const errorBody = await response.text();
             console.error('OpenAI API Error:', errorBody);
-            throw new Error(`OpenAI API error: ${response.statusText}`);
+            return { statusCode: 502, body: JSON.stringify({ error: `OpenAI API failed: ${response.statusText}` }) };
         }
+        
         const data = await response.json();
-        const newQuestionData = JSON.parse(data.choices[0].message.content);
+        const rawContent = data.choices[0]?.message?.content;
+
+        if (!rawContent) {
+             console.error('OpenAI response missing content.');
+             return { statusCode: 500, body: JSON.stringify({ error: 'AI returned empty content.' }) };
+        }
+
+        let newQuestionData;
+        try {
+            newQuestionData = JSON.parse(rawContent);
+        } catch (parseError) {
+            console.error('Failed to parse JSON from OpenAI response.', parseError);
+            console.error('Raw content from OpenAI:', rawContent);
+            return { statusCode: 500, body: JSON.stringify({ error: 'Failed to parse AI response.' }) };
+        }
+        
+        if (!newQuestionData || !Array.isArray(newQuestionData.questions)) {
+            console.error('Parsed AI response has incorrect structure.', newQuestionData);
+            return { statusCode: 500, body: JSON.stringify({ error: 'AI response has invalid structure.' }) };
+        }
 
         await cacheCollection.insertOne({ _id: contextFingerprint, questions: newQuestionData.questions, createdAt: new Date() });
-        await client.close();
+        
         return { statusCode: 200, body: JSON.stringify(newQuestionData.questions) };
     } catch (error) {
         console.error('Error in generate-ai-question function:', error);
