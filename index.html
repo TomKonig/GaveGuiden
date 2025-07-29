@@ -5,9 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Den Rette Gave - Din Personlige Gaveguide</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
     <meta name="description" content="Find den perfekte gave med vores intelligente gaveguide. Svar på et par spørgsmål og få personlige gaveanbefalinger på under 30 sekunder.">
+    <script>
+        // Custom Tailwind configuration to set Inter as the default font
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
 </head>
 <body class="bg-gray-50 font-sans">
 
@@ -15,8 +31,9 @@
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
-                <a href="/" class="flex items-center space-x-2">
-                    <img src="assets/logo.jpeg" alt="Den Rette Gave Logo" class="h-8 w-8 rounded-full">
+                <a href="/" class="flex items-center space-x-3">
+                    <!-- Corrected logo styling -->
+                    <img src="assets/logo.jpeg" alt="Den Rette Gave Logo" class="h-8 w-8 rounded-md">
                     <span class="text-2xl font-bold text-gray-800">Den Rette Gave</span>
                 </a>
                 <button id="how-it-works-btn" class="text-gray-600 hover:text-blue-600 font-medium">Sådan fungerer det</button>
