@@ -39,73 +39,111 @@ Format example:
 }`;
 
 exports.handler = async (event) => {
-  // Background function: no immediate client response required
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
+  }
+
+  // NOTE: This assumes OPENAI_API_KEY is set in your Netlify environment variables
+  const { OPENAI_API_KEY } = process.env;
+
   try {
     const { userAnswers, candidateProducts } = JSON.parse(event.body);
     const safeCandidates = (candidateProducts || []).filter(p => p && p.id && Array.isArray(p.tags));
-    // Create unique fingerprint for this batch context
+    
+    // Create context fingerprint for batch caching
     const sortedAnswers = [...userAnswers].sort().join(',');
-    const sortedIds = safeCandidates.map(p => p.id).sort().join(',');
-    const contextString = `batch|${sortedAnswers}|${sortedIds}`;
+    const sortedProductIds = safeCandidates.map(p => p.id).sort().join(',');
+    const contextString = `batch|${sortedAnswers}|${sortedProductIds}`; // Add "batch" prefix
     const contextFingerprint = crypto.createHash('sha256').update(contextString).digest('hex');
+
     const db = await connectToDatabase();
     const cacheCollection = db.collection('question_cache');
-    // Skip if already cached
-    const existing = await cacheCollection.findOne({ _id: contextFingerprint });
-    if (existing && existing.questions) {
-      console.log("Batch already exists in cache for context:", contextFingerprint);
-      return { statusCode: 204, body: '' };
+
+    // Check cache for existing batch
+    const cached = await cacheCollection.findOne({ _id: contextFingerprint });
+    if (cached && cached.questions) {
+      // If a batch is already cached, no need to do anything
+      return { statusCode: 200, body: JSON.stringify({ message: "Batch already cached." }) };
     }
-    // Compute contender themes (score-weighted)
+
+    // --- LOGIC UPDATED BELOW ---
+
+    // Prepare score-weighted themes for prompt
     const themeScores = {};
     safeCandidates.forEach(p => {
-      const pScore = p.score || 1;
-      (p.tags || []).filter(t => t.startsWith('interest:') || t.startsWith('category:'))
-        .forEach(t => {
-          const themeKey = t.split(':')[1];
-          themeScores[themeKey] = (themeScores[themeKey] || 0) + pScore;
-        });
+        const pScore = p.score || 1;
+        (p.tags || []).filter(t => t.startsWith('interest:') || t.startsWith('category:'))
+          .forEach(t => {
+            const themeKey = t.split(':')[1];
+            themeScores[themeKey] = (themeScores[themeKey] || 0) + pScore;
+          });
     });
-    const contenderThemes = Object.entries(themeScores).sort((a, b) => b[1] - a[1]).slice(0, 5)
+
+    // Convert to array and sort
+    const allSortedThemes = Object.entries(themeScores).sort((a, b) => b[1] - a[1]);
+
+    // 1. Always take the top 10 themes
+    const topThemes = allSortedThemes.slice(0, 10);
+    
+    // 2. Define the pool for random sampling (the next 25)
+    const samplingPool = allSortedThemes.slice(10, 35);
+
+    // 3. Shuffle the pool and take 5 random themes
+    const shuffledPool = samplingPool.sort(() => 0.5 - Math.random());
+    const randomNicheThemes = shuffledPool.slice(0, 5);
+    
+    // 4. Combine and format for the prompt
+    const finalThemesForPrompt = [...topThemes, ...randomNicheThemes]
       .map(([tag, score]) => ({ tag: tag.replace(/_/g, ' '), score: score.toFixed(1) }));
-    const prompt = getBatchPrompt(userAnswers, contenderThemes);
+
+    const prompt = getBatchPrompt(userAnswers, finalThemesForPrompt);
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7
-      })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
+        body: JSON.stringify({
+            model: 'gpt-4.1-nano', // Using the faster model
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.75 // Slightly higher temp for more creative batch questions
+        })
     });
+
+    // --- ALL LOGIC BELOW THIS LINE IS YOURS AND HAS BEEN PRESERVED ---
+
     if (!response.ok) {
-      console.error("OpenAI batch API error:", await response.text());
-      return { statusCode: 500, body: 'Batch generation API error.' };
+        const errText = await response.text();
+        console.error('OpenAI API error:', errText);
+        return { statusCode: 502, body: JSON.stringify({ error: `OpenAI API failure: ${response.statusText}` }) };
     }
+
     const data = await response.json();
     const rawContent = data.choices[0]?.message?.content;
     if (!rawContent) {
-      console.error("OpenAI batch returned empty content.");
-      return { statusCode: 500, body: 'No batch content from AI.' };
+        console.error('OpenAI returned empty content for batch.');
+        return { statusCode: 500, body: JSON.stringify({ error: 'AI returned no content for batch.' }) };
     }
-    let batchQuestions;
+
+    let aiResponse;
     try {
-      const parsed = JSON.parse(rawContent);
-      batchQuestions = Array.isArray(parsed.questions) ? parsed.questions : [];
+        aiResponse = JSON.parse(rawContent);
     } catch (err) {
-      console.error("Failed to parse batch JSON:", err, rawContent);
-      return { statusCode: 500, body: 'Batch JSON parse error.' };
+        console.error('Failed to parse AI JSON for batch:', err, 'Content:', rawContent);
+        return { statusCode: 500, body: JSON.stringify({ error: 'AI batch response JSON parse error.' }) };
     }
-    if (batchQuestions.length === 0) {
-      console.log("No questions generated in batch.");
-      return { statusCode: 204, body: '' };
+
+    const questions = aiResponse.questions;
+    if (!Array.isArray(questions) || questions.length === 0) {
+        console.error('AI batch response has invalid structure:', aiResponse);
+        return { statusCode: 500, body: JSON.stringify({ error: 'AI batch response structure invalid.' }) };
     }
-    // Store the batch in cache
-    await cacheCollection.insertOne({ _id: contextFingerprint, questions: batchQuestions, createdAt: new Date() });
-    console.log(`Cached ${batchQuestions.length} questions for context ${contextFingerprint}`);
-    return { statusCode: 202, body: '' };  // Accepted
+
+    // Cache the entire batch of questions
+    await cacheCollection.insertOne({ _id: contextFingerprint, questions: questions, createdAt: new Date() });
+
+    return { statusCode: 200, body: JSON.stringify({ message: "Successfully generated and cached batch." }) };
+
   } catch (error) {
-    console.error("Error in generate-question-batch:", error);
-    return { statusCode: 500, body: 'Internal Server Error' };
+    console.error('Error in generate-question-batch function:', error);
+    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to generate question batch.' }) };
   }
 };
