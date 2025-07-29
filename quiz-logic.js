@@ -12,22 +12,37 @@ document.addEventListener('DOMContentLoaded', () => {
     let aiQuestionQueue = [];
     let selectedMultiAnswers = new Set();
 
-    const quizContainer = document.getElementById('quiz-container');
-    const questionEl = document.getElementById('question');
-    const answersEl = document.getElementById('answers');
-    const backButton = document.getElementById('back-button');
-    const earlyExitButton = document.getElementById('early-exit-button');
-    const resultsContainer = document.getElementById('results-container');
-    const primaryResultEl = document.getElementById('primary-result');
-    const secondaryResultsEl = document.getElementById('secondary-results');
-    const restartButton = document.getElementById('restart-button');
-    const shareButton = document.getElementById('share-button');
+    // --- DOM ELEMENT VARIABLES ---
+    // Declare variables here; they will be assigned once the DOM is ready.
+    let quizContainer, questionEl, answersEl, backButton, earlyExitButton, resultsContainer, primaryResultEl, secondaryResultsEl, restartButton, shareButton;
 
     const TAG_WEIGHTS = { 'relation': 3, 'age': 3, 'price': 5, 'category': 4, 'interest': 4, 'occasion': 2, 'is_differentiator': 2 };
     const INITIAL_SCORE_THRESHOLD = 1.5;
     const AGGRESSIVE_SCORE_THRESHOLD = 1.2;
 
+    // --- NEW: Function to find elements and attach listeners safely ---
+    function setupDOMElementsAndListeners() {
+        quizContainer = document.getElementById('quiz-container');
+        questionEl = document.getElementById('question');
+        answersEl = document.getElementById('answers');
+        backButton = document.getElementById('back-button');
+        earlyExitButton = document.getElementById('early-exit-button');
+        resultsContainer = document.getElementById('results-container');
+        primaryResultEl = document.getElementById('primary-result');
+        secondaryResultsEl = document.getElementById('secondary-results');
+        restartButton = document.getElementById('restart-button');
+        shareButton = document.getElementById('share-button');
+
+        // Attach event listeners now that we are sure the elements exist
+        backButton.addEventListener('click', goBack);
+        restartButton.addEventListener('click', startQuiz);
+        earlyExitButton.addEventListener('click', () => displayResults(getProductScores()));
+    }
+
     async function initializeQuiz() {
+        // Run the setup function first to safely find elements and attach listeners
+        setupDOMElementsAndListeners();
+
         try {
             const [productsRes, questionsRes] = await Promise.all([ fetch('assets/products.json'), fetch('assets/questions.json') ]);
             allProducts = await productsRes.json();
@@ -35,7 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
             startQuiz();
         } catch (error) {
             console.error("Failed to load quiz assets:", error);
-            questionEl.textContent = "Der opstod en fejl. Prøv venligst igen senere.";
+            if (questionEl) {
+                questionEl.textContent = "Der opstod en fejl. Prøv venligst igen senere.";
+            }
         }
     }
 
@@ -53,12 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
         selectNextQuestion();
     }
 
-    // --- NEW: Centralized function to apply all filters based on userAnswers ---
     function recalculateRemainingProducts() {
         let products = [...allProducts];
         const userAnswerTags = new Set(userAnswers.flatMap(a => a.tags));
 
-        // Handle price filtering logic
         if (userAnswerTags.has('price:billig')) {
             products = products.filter(p => p.price < 200);
         } else if (userAnswerTags.has('price_filter:strict')) {
@@ -72,7 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function selectNextQuestion() {
-        // --- UPDATED: Smarter initial question selection ---
         const unaskedInitialQuestions = allQuestions.filter(q => q.is_initial && !askedQuestions.has(q.id));
         const currentUserTags = new Set(userAnswers.flatMap(a => a.tags));
         
@@ -132,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userAnswers.push(answer);
         questionHistory.push(currentQuestion);
         askedQuestions.add(currentQuestion.id);
-        recalculateRemainingProducts(); // Use the new centralized filter function
+        recalculateRemainingProducts();
         selectNextQuestion();
     }
     
@@ -244,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const lastQuestion = questionHistory.pop();
         userAnswers.pop();
         askedQuestions.delete(lastQuestion.id);
-        recalculateRemainingProducts(); // Recalculate after removing an answer
+        recalculateRemainingProducts();
         displayQuestion(lastQuestion);
     }
 
@@ -252,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const scores = {};
         allProducts.forEach(p => scores[p.id] = { id: p.id, score: 0 });
         const allAnswerTags = userAnswers.flatMap(a => a.tags);
-        for (const product of remainingProducts) { // Score only based on remaining products
+        for (const product of remainingProducts) {
             let score = 0;
             const productTags = new Set([...product.tags, ...product.differentiator_tags]);
             for (const answerTag of allAnswerTags) {
@@ -311,9 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
         earlyExitButton.classList.remove('hidden');
     }
 
-    backButton.addEventListener('click', goBack);
-    restartButton.addEventListener('click', startQuiz);
-    earlyExitButton.addEventListener('click', () => displayResults(getProductScores()));
-
+    // --- START THE APP ---
+    // This is the only code that runs outside of a function, ensuring the DOM is ready first.
     initializeQuiz();
 });
