@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Fallback to just-in-time single question generation
         try {
             showLoadingState();
-            const candidateProducts = scores.slice(0, 20).map(s => {
+            const candidateProducts = scores.slice(0, 15).map(s => {
                 const p = allProducts.find(prod => prod.id === s.id);
                 return p ? { id: p.id, tags: p.tags, score: s.score } : null;
             }).filter(x => x);
