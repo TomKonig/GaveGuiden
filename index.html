@@ -38,40 +38,43 @@
 
     <!-- Quiz Section -->
     <section id="quiz-section" class="bg-white p-8 rounded-lg shadow-lg max-w-2xl mx-auto hidden">
-      <!-- Navigation Buttons -->
-      <div class="flex justify-between mb-4">
-        <button id="back-button" class="hidden px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Tilbage</button>
-        <button id="early-exit-button" class="hidden px-4 py-2 text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100">Vis mig resultater nu</button>
-      </div>
-      <!-- Dynamic Question Container -->
-      <div id="loading-indicator" class="hidden w-full text-center p-8">
-  <p class="text-lg font-semibold text-gray-700">Et øjeblik, jeg tænker lige...</p>
-  </div>
-            <div id="question-container"></div>
-      <!-- Results Section (hidden by default) -->
-      <div id="results-section" class="hidden">
-        <h2 class="text-3xl font-bold text-center text-gray-900 mb-2">Her er den perfekte gave!</h2>
-        <p class="text-center text-gray-600 mb-8">Baseret på dine svar, tror vi, at dette er det bedste match.</p>
-        <div id="primary-result" class="mb-12"></div>
-        <h3 class="text-2xl font-bold text-center text-gray-800 mb-6">Andre gode forslag...</h3>
-        <div id="secondary-results" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-        <div class="text-center mt-12">
-          <button id="restart-button" class="px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700">Start forfra</button>
-          <button id="share-button" class="ml-4 px-6 py-3 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Del Resultat</button>
-        </div>
-        <!-- Feedback / Rating Section -->
-        <div id="feedback-container" class="mt-10 hidden">
-          <p class="text-gray-700 font-medium mb-2">Hvad synes du om vores forslag?</p>
-          <div id="star-rating" class="star-rating flex justify-center">
-            <button data-value="1">&#9733;</button>
-            <button data-value="2">&#9733;</button>
-            <button data-value="3">&#9733;</button>
-            <button data-value="4">&#9733;</button>
-            <button data-value="5">&#9733;</button>
-          </div>
-        </div>
-      </div>
-    </section>
+		<div class="flex justify-between mb-4">
+			<button id="back-button" class="hidden px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Tilbage</button>
+			<button id="early-exit-button" class="hidden px-4 py-2 text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100">Vis mig resultater nu</button>
+		</div>
+
+		<div id="loading-indicator" class="hidden w-full text-center p-8">
+			<h2 class="text-2xl font-bold text-center text-gray-800 mb-8">Et øjeblik, jeg tænker lige...</h2>
+			<div class="flex justify-center items-center">
+				<div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div>
+			</div>
+		</div>
+
+		<div id="question-container">
+			</div>
+		
+		<div id="results-section" class="hidden">
+			<h2 class="text-3xl font-bold text-center text-gray-900 mb-2">Her er den perfekte gave!</h2>
+			<p class="text-center text-gray-600 mb-8">Baseret på dine svar, tror vi, at dette er det bedste match.</p>
+			<div id="primary-result" class="mb-12"></div>
+			<h3 class="text-2xl font-bold text-center text-gray-800 mb-6">Andre gode forslag...</h3>
+			<div id="secondary-results" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+			<div class="text-center mt-12">
+				<button id="restart-button" class="px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700">Start forfra</button>
+				<button id="share-button" class="ml-4 px-6 py-3 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Del Resultat</button>
+			</div>
+			<div id="feedback-container" class="mt-10 hidden">
+				<p class="text-gray-700 font-medium mb-2">Hvad synes du om vores forslag?</p>
+				<div id="star-rating" class="star-rating flex justify-center">
+					<button data-value="1">&#9733;</button>
+					<button data-value="2">&#9733;</button>
+					<button data-value="3">&#9733;</button>
+					<button data-value="4">&#9733;</button>
+					<button data-value="5">&#9733;</button>
+				</div>
+			</div>
+		</div>
+	</section>
   </main>
 
   <!-- How it Works Modal -->
