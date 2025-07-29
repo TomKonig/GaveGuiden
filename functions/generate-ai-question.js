@@ -35,61 +35,65 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
-
+  // This line is for local testing if you don't have Netlify env vars set
+  // require('dotenv').config(); 
   const { OPENAI_API_KEY } = process.env;
+  const crypto = require('crypto');
+  const { connectToDatabase } = require('./utils/mongodb-client');
 
   try {
     const { userAnswers, candidateProducts } = JSON.parse(event.body);
     const safeCandidates = (candidateProducts || []).filter(p => p && p.id && Array.isArray(p.tags));
-
     const sortedAnswers = [...userAnswers].sort().join(',');
     const sortedProductIds = safeCandidates.map(p => p.id).sort().join(',');
     const contextString = `${sortedAnswers}|${sortedProductIds}`;
     const contextFingerprint = crypto.createHash('sha256').update(contextString).digest('hex');
-
+    
     const db = await connectToDatabase();
     const cacheCollection = db.collection('question_cache');
-
+    
     const cached = await cacheCollection.findOne({ _id: contextFingerprint });
     if (cached && cached.question) {
+      console.log("Returning single question from cache.");
       return { statusCode: 200, body: JSON.stringify(cached.question) };
     }
     
     const batchFingerprint = crypto.createHash('sha256').update(`batch|${contextString}`).digest('hex');
     const cachedBatch = await cacheCollection.findOne({ _id: batchFingerprint });
     if (cachedBatch && Array.isArray(cachedBatch.questions) && cachedBatch.questions.length > 0) {
+      console.log("Found cached batch, returning first question.");
       const firstQuestion = cachedBatch.questions.shift();
       if (cachedBatch.questions.length > 0) {
-          cacheCollection.updateOne({ _id: batchFingerprint }, { $set: { questions: cachedBatch.questions } }).catch(console.error);
+        await cacheCollection.updateOne({ _id: batchFingerprint }, { $set: { questions: cachedBatch.questions } });
       } else {
-          cacheCollection.deleteOne({ _id: batchFingerprint }).catch(console.error);
+        await cacheCollection.deleteOne({ _id: batchFingerprint });
       }
       return { statusCode: 200, body: JSON.stringify(firstQuestion) };
     }
 
-    // --- OPTIMIZED THEME CALCULATION ---
-    const themeScores = new Map();
-    safeCandidates.flatMap(p => 
-        (p.tags || [])
-          .filter(t => t.startsWith('interest:') || t.startsWith('category:'))
-          .map(t => ({ themeKey: t.split(':')[1], score: p.score || 1 }))
-    ).forEach(({ themeKey, score }) => {
-        themeScores.set(themeKey, (themeScores.get(themeKey) || 0) + score);
+    // --- UPDATED LOGIC IS HERE ---
+    
+    // Calculate theme scores
+    const themeScores = {};
+    safeCandidates.forEach(p => {
+      const pScore = p.score || 1;
+      (p.tags || []).filter(t => t.startsWith('interest:') || t.startsWith('category:')).forEach(t => {
+        const themeKey = t.split(':')[1];
+        themeScores[themeKey] = (themeScores[themeKey] || 0) + pScore;
+      });
     });
-
-    const allSortedThemes = Array.from(themeScores.entries()).sort((a, b) => b[1] - a[1]);
-    // --- End of Optimization ---
-
+    
+    const allSortedThemes = Object.entries(themeScores).sort((a, b) => b[1] - a[1]);
     const topThemes = allSortedThemes.slice(0, 10);
     const samplingPool = allSortedThemes.slice(10, 35);
     const shuffledPool = samplingPool.sort(() => 0.5 - Math.random());
     const randomNicheThemes = shuffledPool.slice(0, 5);
-    
     const finalThemesForPrompt = [...topThemes, ...randomNicheThemes]
       .map(([tag, score]) => ({ tag: tag.replace(/_/g, ' '), score: score.toFixed(1) }));
 
     const prompt = getAiPrompt(userAnswers, finalThemesForPrompt);
-console.log("--> Attempting to call OpenAI with model:", 'gpt-4o-mini');
+    
+    console.log("--> Attempting to call OpenAI with model:", 'gpt-4o-mini');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
@@ -99,7 +103,8 @@ console.log("--> Attempting to call OpenAI with model:", 'gpt-4o-mini');
         temperature: 0.7
       })
     });
- console.log("<-- OpenAI responded with status:", response.status);
+    console.log("<-- OpenAI responded with status:", response.status);
+
     if (!response.ok) {
       const errText = await response.text();
       console.error('OpenAI API error:', errText);
@@ -108,26 +113,25 @@ console.log("--> Attempting to call OpenAI with model:", 'gpt-4o-mini');
 
     const data = await response.json();
     const rawContent = data.choices[0]?.message?.content;
+    
     if (!rawContent) {
       console.error('OpenAI returned empty content.');
       return { statusCode: 500, body: JSON.stringify({ error: 'AI returned no content.' }) };
     }
+    
+    // --- THIS IS THE FIX ---
+    // We must parse the AI's string response into a JSON object before sending it back.
+    const aiResponseObject = JSON.parse(rawContent); 
 
-    let aiResponse;
-    try {
-      aiResponse = JSON.parse(rawContent);
-    } catch (err) {
-      console.error('Failed to parse AI JSON:', err, 'Content:', rawContent);
-      return { statusCode: 500, body: JSON.stringify({ error: 'AI response JSON parse error.' }) };
-    }
-
-    const questionObj = aiResponse.question || aiResponse;
+    const questionObj = aiResponseObject.question || aiResponseObject;
     if (!questionObj || !questionObj.id || !Array.isArray(questionObj.answers)) {
-      console.error('AI response has invalid structure:', aiResponse);
+      console.error('AI response has invalid structure:', aiResponseObject);
       return { statusCode: 500, body: JSON.stringify({ error: 'AI response structure invalid.' }) };
     }
 
     await cacheCollection.insertOne({ _id: contextFingerprint, question: questionObj, createdAt: new Date() });
+    
+    // Return the PARSED object, not the raw string.
     return { statusCode: 200, body: JSON.stringify(questionObj) };
 
   } catch (error) {
