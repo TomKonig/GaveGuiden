@@ -10,8 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentQuestion = null;
     let questionHistory = [];
     let aiQuestionQueue = [];
-
-    // --- NEW: State for multi-select ---
     let selectedMultiAnswers = new Set();
 
     const quizContainer = document.getElementById('quiz-container');
@@ -26,31 +24,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const shareButton = document.getElementById('share-button');
 
     // --- CONSTANTS AND WEIGHTS ---
-    const TAG_WEIGHTS = {
-        'relation': 3,
-        'age': 3,
-        'price': 5,
-        'category': 4, // Added weight for the new category question
-        'interest': 4,
-        'occasion': 2,
-        'is_differentiator': 2
-    };
+    const TAG_WEIGHTS = { 'relation': 3, 'age': 3, 'price': 5, 'category': 4, 'interest': 4, 'occasion': 2, 'is_differentiator': 2 };
     const INITIAL_SCORE_THRESHOLD = 1.5;
     const AGGRESSIVE_SCORE_THRESHOLD = 1.2;
 
     // --- INITIALIZATION ---
     async function initializeQuiz() {
         try {
-            const [productsRes, questionsRes] = await Promise.all([
-                fetch('assets/products.json'),
-                fetch('assets/questions.json')
-            ]);
+            const [productsRes, questionsRes] = await Promise.all([ fetch('assets/products.json'), fetch('assets/questions.json') ]);
             allProducts = await productsRes.json();
             allQuestions = await questionsRes.json();
             startQuiz();
         } catch (error) {
             console.error("Failed to load quiz assets:", error);
-            questionEl.textContent = "Der opstod en fejl under indlæsning af guiden. Prøv venligst igen senere.";
+            questionEl.textContent = "Der opstod en fejl. Prøv venligst igen senere.";
         }
     }
 
@@ -70,17 +57,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CORE QUIZ LOGIC ---
     async function selectNextQuestion() {
-        // 1. Ask initial questions first
         const initialQuestion = allQuestions.find(q => q.is_initial && !askedQuestions.has(q.id));
         if (initialQuestion) {
             displayQuestion(initialQuestion);
             return;
         }
-
-        // Show early exit button after initial questions
         earlyExitButton.classList.remove('hidden');
 
-        // 2. Check for a clear winner
         const scores = getProductScores();
         if (scores.length > 1) {
             const threshold = askedQuestions.size > 5 ? AGGRESSIVE_SCORE_THRESHOLD : INITIAL_SCORE_THRESHOLD;
@@ -90,42 +73,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 3. Check if we have AI questions in our queue
         if (aiQuestionQueue.length > 0) {
-            const nextAiQuestion = aiQuestionQueue.shift();
-            displayQuestion(nextAiQuestion);
+            displayQuestion(aiQuestionQueue.shift());
             return;
         }
 
-        // 4. If queue is empty, call the AI to generate a new sequence
         try {
             showLoadingState();
             const candidateProducts = scores.slice(0, 20).map(s => allProducts.find(p => p.id === s.id));
             const response = await fetch('/.netlify/functions/generate-ai-question', {
                 method: 'POST',
-                body: JSON.stringify({
-                    userAnswers: userAnswers.map(a => a.tags).flat(),
-                    candidateProducts: candidateProducts
-                })
+                body: JSON.stringify({ userAnswers: userAnswers.map(a => a.tags).flat(), candidateProducts })
             });
-
             if (!response.ok) throw new Error('AI service failed');
-
             const newAiQuestions = await response.json();
             hideLoadingState();
-
             if (newAiQuestions && newAiQuestions.length > 0) {
                 aiQuestionQueue = newAiQuestions;
-                const firstAiQuestion = aiQuestionQueue.shift();
-                displayQuestion(firstAiQuestion);
+                displayQuestion(aiQuestionQueue.shift());
             } else {
-                // Fallback if AI returns empty array
                 displayResults(scores);
             }
         } catch (error) {
             console.error("AI question generation failed, showing results instead:", error);
             hideLoadingState();
-            displayResults(scores); // Show best results if AI fails
+            displayResults(scores);
         }
     }
 
@@ -139,17 +111,42 @@ document.addEventListener('DOMContentLoaded', () => {
         selectNextQuestion();
     }
     
-    // --- NEW: Handler for multi-select question ---
     function handleMultiSelect() {
-        if (selectedMultiAnswers.size === 0) {
-            // Optional: Add a small visual cue that they should select at least one
-            return;
-        }
+        if (selectedMultiAnswers.size === 0) return;
         const combinedAnswer = {
             answer_text: 'Flere kategorier valgt',
             tags: Array.from(selectedMultiAnswers).flatMap(index => currentQuestion.answers[index].tags)
         };
         handleAnswer(combinedAnswer);
+    }
+
+    async function handleFreeTextSubmit() {
+        const inputEl = document.getElementById('freetext-input');
+        const freeText = inputEl.value.trim();
+        if (freeText.length === 0) return;
+
+        showLoadingState();
+        try {
+            const response = await fetch('/.netlify/functions/interpret-freetext', {
+                method: 'POST',
+                body: JSON.stringify({
+                    userAnswers: userAnswers.map(a => a.tags).flat(),
+                    freeText: freeText
+                })
+            });
+            if (!response.ok) throw new Error('AI interpretation failed');
+            const newTags = await response.json();
+            
+            const freeTextAnswer = {
+                answer_text: `Brugerinput: ${freeText}`,
+                tags: newTags
+            };
+            handleAnswer(freeTextAnswer);
+
+        } catch (error) {
+            console.error("Free-text interpretation failed:", error);
+            selectNextQuestion();
+        }
     }
 
     // --- UI RENDERING ---
@@ -162,23 +159,17 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedMultiAnswers.clear();
 
         if (question.is_multiselect) {
-            // Render checkboxes for multi-select
             question.answers.forEach((answer, index) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = "answer-btn w-full text-left bg-white p-4 rounded-lg border border-gray-200 hover:bg-gray-100 hover:border-blue-500 transition-all duration-200 ease-in-out shadow-sm cursor-pointer flex items-center";
-                wrapper.innerHTML = `
-                    <input type="checkbox" id="answer-${index}" class="mr-3 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 pointer-events-none" data-index="${index}">
-                    <label for="answer-${index}" class="cursor-pointer flex-1">${answer.answer_text}</label>
-                `;
+                wrapper.innerHTML = `<input type="checkbox" id="answer-${index}" class="mr-3 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 pointer-events-none"><label for="answer-${index}" class="cursor-pointer flex-1">${answer.answer_text}</label>`;
                 wrapper.onclick = () => {
-                    const checkbox = wrapper.querySelector('input');
-                    checkbox.checked = !checkbox.checked;
-                    const event = new Event('change', { bubbles: true });
-                    checkbox.dispatchEvent(event);
+                    const cb = wrapper.querySelector('input');
+                    cb.checked = !cb.checked;
+                    cb.dispatchEvent(new Event('change', { bubbles: true }));
                 };
-                const checkbox = wrapper.querySelector('input');
-                checkbox.addEventListener('change', () => {
-                     if (checkbox.checked) {
+                wrapper.querySelector('input').addEventListener('change', (e) => {
+                    if (e.target.checked) {
                         selectedMultiAnswers.add(index);
                         wrapper.classList.add('border-blue-500', 'bg-blue-50');
                     } else {
@@ -188,19 +179,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 answersEl.appendChild(wrapper);
             });
-            // Add a continue button for multi-select
             const continueButton = document.createElement('button');
             continueButton.textContent = 'Videre';
             continueButton.className = 'cta-btn w-full mt-4 px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700';
             continueButton.onclick = handleMultiSelect;
             answersEl.appendChild(continueButton);
         } else {
-            // Render buttons for single-select
             question.answers.forEach(answer => {
                 const button = document.createElement('button');
                 button.className = "answer-btn w-full text-left bg-white p-4 rounded-lg border border-gray-200 hover:bg-gray-100 hover:border-blue-500 transition-all duration-200 ease-in-out shadow-sm";
                 button.textContent = answer.answer_text;
-                button.onclick = () => handleAnswer(answer);
+                
+                if (answer.tags.includes("freetext:true")) {
+                    button.onclick = () => {
+                        answersEl.innerHTML = `
+                            <div class="w-full">
+                                <textarea id="freetext-input" maxlength="250" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Fortæl os lidt mere..."></textarea>
+                                <div id="char-counter" class="text-right text-sm text-gray-500 mt-1">0 / 250</div>
+                                <button id="freetext-submit" class="cta-btn w-full mt-2 px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700">Send</button>
+                            </div>
+                        `;
+                        const inputEl = document.getElementById('freetext-input');
+                        const charCounter = document.getElementById('char-counter');
+                        inputEl.addEventListener('input', () => {
+                            charCounter.textContent = `${inputEl.value.length} / 250`;
+                        });
+                        document.getElementById('freetext-submit').onclick = handleFreeTextSubmit;
+                    };
+                } else {
+                    button.onclick = () => handleAnswer(answer);
+                }
                 answersEl.appendChild(button);
             });
         }
