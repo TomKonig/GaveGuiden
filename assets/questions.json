@@ -58,6 +58,16 @@
         ]
     },
     {
+        "id": "q_price_filter",
+        "question_text": "Noteret! Skal vi kun vise gaver i den prisklasse, eller må der også snige sig et par billigere (men fede) forslag ind?",
+        "is_initial": true,
+        "trigger_tags": ["price:mellem", "price:dyr"],
+        "answers": [
+            { "answer_text": "Ja tak, vis mig alt!", "tags": ["price_filter:flexible"] },
+            { "answer_text": "Nej, hold dig til budgettet.", "tags": ["price_filter:strict"] }
+        ]
+    },
+    {
         "id": "q_categories",
         "question_text": "Sidste ting: Hvilke verdener bevæger personen sig i? (Vælg gerne et par stykker, der passer)",
         "is_initial": true,
