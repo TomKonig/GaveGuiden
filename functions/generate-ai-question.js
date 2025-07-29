@@ -8,9 +8,9 @@ const { MONGODB_URI, OPENAI_API_KEY } = process.env;
 
 // --- PROMPT TEMPLATE FOR THE "DETECTIVE" AI ---
 // This prompt is engineered to be efficient and produce structured JSON output.
-// It now requests an array of up to 3 logically sequential questions.
+// It now requests an array of up to 3 logically sequential questions AND specifies the tone of voice.
 const getAiPrompt = (userAnswers, topProductsSummary) => `
-You are a brilliant Gift Detective for denrettegave.dk. Your goal is to generate a short, logical sequence of clarifying questions to help narrow down the perfect gift.
+You are a brilliant and friendly Gift Detective for denrettegave.dk. Your personality is youthful, helpful, and a little tongue-in-cheek. Your goal is to generate a short, logical sequence of clarifying questions to help narrow down the perfect gift.
 
 **Current User Profile:**
 ${userAnswers.map(a => `- ${a}`).join('\n')}
@@ -21,8 +21,9 @@ ${topProductsSummary}
 **Your Task:**
 1.  Analyze the user profile and the remaining product themes.
 2.  Identify the most effective sequence of questions to ask next. Start broad and get more specific.
-3.  Generate a JSON object containing an array of 1 to 3 question objects. The questions should be in Danish.
-4.  The JSON object must follow this exact schema:
+3.  Generate a JSON object containing an array of 1 to 3 question objects.
+4.  **Crucially, all questions and answers must be in Danish and match our friendly, colloquial, and slightly witty tone of voice.**
+5.  The JSON object must follow this exact schema:
     {
       "questions": [
         {
@@ -33,20 +34,11 @@ ${topProductsSummary}
             {"answer_text": "ANSWER_2_IN_DANISH", "tags": ["key:value"]}
           ],
           "is_differentiator": true
-        },
-        {
-          "id": "q_ai_generated_UNIQUE_ID_2",
-          "question_text": "YOUR_SECOND_QUESTION_IN_DANISH",
-          "answers": [
-            {"answer_text": "ANSWER_1_IN_DANISH", "tags": ["key:value"]},
-            {"answer_text": "ANSWER_2_IN_DANISH", "tags": ["key:value"]}
-          ],
-          "is_differentiator": true
         }
       ]
     }
-5.  The 'tags' should be specific and useful for scoring. Each 'id' must be unique.
-6.  Your entire response must be ONLY the raw JSON object, with no other text or explanations.
+6.  The 'tags' should be specific and useful for scoring. Each 'id' must be unique.
+7.  Your entire response must be ONLY the raw JSON object, with no other text or explanations.
 `;
 
 // --- MAIN HANDLER FUNCTION ---
@@ -78,14 +70,14 @@ exports.handler = async (event) => {
             // ** CACHE HIT **: Return the stored array of questions
             return {
                 statusCode: 200,
-                body: JSON.stringify(cachedResult.questions), // Return the array directly
+                body: JSON.stringify(cachedResult.questions),
             };
         }
 
         // ** CACHE MISS **: Proceed to generate a new question sequence with the AI
 
         // 3. --- PREPARE DATA FOR THE AI PROMPT ---
-        const topProductsSummary = `Based on our analysis, the top gift ideas fall into these categories: ${[...new Set(candidateProducts.flatMap(p => p.tags.filter(t => t.startsWith('interest:')).map(t => t.split(':')[1])))].slice(0, 5).join(', ')}.`;
+        const topProductsSummary = `Based on our analysis, the top gift ideas fall into these categories: ${[...new Set(candidateProducts.flatMap(p => p.tags.filter(t => t.startsWith('interest:') || t.startsWith('category:')).map(t => t.split(':')[1])))].slice(0, 5).join(', ')}.`;
         const prompt = getAiPrompt(userAnswers, topProductsSummary);
 
         // 4. --- CALL OPENAI API ---
@@ -109,12 +101,12 @@ exports.handler = async (event) => {
 
         const data = await response.json();
         const aiResponseText = data.choices[0].message.content;
-        const newQuestionData = JSON.parse(aiResponseText); // This will be an object like { questions: [...] }
+        const newQuestionData = JSON.parse(aiResponseText);
 
         // 5. --- POPULATE THE CACHE FOR FUTURE USE ---
         await cacheCollection.insertOne({
             _id: contextFingerprint,
-            questions: newQuestionData.questions, // Store the array of questions
+            questions: newQuestionData.questions,
             createdAt: new Date(),
         });
 
@@ -123,7 +115,7 @@ exports.handler = async (event) => {
         // 6. --- RETURN THE NEWLY GENERATED QUESTION ARRAY ---
         return {
             statusCode: 200,
-            body: JSON.stringify(newQuestionData.questions), // Return the array directly
+            body: JSON.stringify(newQuestionData.questions),
         };
 
     } catch (error) {
