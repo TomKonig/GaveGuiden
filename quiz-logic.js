@@ -1,25 +1,39 @@
 // /quiz-logic.js
 document.addEventListener('DOMContentLoaded', () => {
+    // --- CONFIGURATION CONSTANTS (NEWLY ADDED) ---
+    const TAG_WEIGHTS = {
+        'gender': 1.5,
+        'age': 1.5,
+        'interest': 2.0,
+        'category': 1.8,
+        'personality': 1.2,
+        'price': 1.0,
+        'differentiator': 2.5
+    };
+    const INITIAL_SCORE_THRESHOLD = 2.0;
+    const AGGRESSIVE_SCORE_THRESHOLD = 3.0;
+    
     // --- GLOBAL STATE ---
     let allProducts = [];
     let allQuestions = [];
     let interestHierarchy = [];
     let allInterestTags = [];
-    
+    let remainingProducts = [];
+
     let questionHistory = [];
     let userAnswers = [];
     let aiQuestionQueue = [];
     let currentQuestion = null;
     let isQuizInitialized = false;
-    let currentRecommendationId = null;  // track primary recommendation product ID for feedback
-    
+    let currentRecommendationId = null; // track primary recommendation product ID for feedback
+
     // --- DOM ELEMENTS ---
     let heroSection, quizSection, questionContainer, backButton, earlyExitButton, resultsSection;
     let primaryResultEl, secondaryResultsEl, restartButton, shareButton;
     let feedbackContainer, starRatingContainer;
     let howItWorksBtn, closeModalBtn, modal;
     let shareModal, closeShareModalBtn, shareLinkInput, copyShareLinkBtn, copyFeedback;
-    
+
     function setupDOMElements() {
         heroSection = document.getElementById('hero-section');
         quizSection = document.getElementById('quiz-section');
@@ -42,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         copyShareLinkBtn = document.getElementById('copy-share-link-btn');
         copyFeedback = document.getElementById('copy-feedback');
     }
-    
+
     async function initializeQuizAssets() {
         if (isQuizInitialized) return;
         try {
@@ -53,16 +67,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetch('assets/standardization.json')
             ]);
             allProducts = await productsRes.json();
+            remainingProducts = [...allProducts];
             allQuestions = await questionsRes.json();
             interestHierarchy = await interestsRes.json();
-            allInterestTags = standardizationRes.ok ? (await standardizationRes.json()).interest : [];
+            allInterestTags = standardizationRes.ok ? (await standardizationRes.json()).interest_tags : [];
             isQuizInitialized = true;
         } catch (error) {
             console.error("Failed to load quiz assets:", error);
             questionContainer.innerHTML = `<h2 class="text-2xl font-bold text-center text-red-600">Fejl: Kunne ikke indlæse quizzen. Prøv venligst igen senere.</h2>`;
         }
     }
-    
+
     function attachEventListeners() {
         document.querySelectorAll('.start-quiz-btn').forEach(btn => btn.addEventListener('click', startQuiz));
         backButton.addEventListener('click', goBack);
@@ -72,8 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
         closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
         modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
         shareButton.addEventListener('click', handleShare);
-        closeShareModalBtn.addEventListener('click', () => shareModal.classList.remove('visible'));
-        shareModal.addEventListener('click', e => { if (e.target === shareModal) shareModal.classList.remove('visible'); });
+        closeShareModalBtn.addEventListener('click', () => shareModal.classList.add('hidden'));
+        shareModal.addEventListener('click', e => { if (e.target === shareModal) shareModal.classList.add('hidden'); });
         copyShareLinkBtn.addEventListener('click', copyShareLink);
         // Star rating events
         starRatingContainer.querySelectorAll('button').forEach(btn => {
@@ -93,56 +108,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Report problem events will be delegated (added when results are rendered)
     }
 
-    function goBack() {
-        if (questionHistory.length === 0) return;
-
-        // Remove the last answer and question from history
-        userAnswers.pop();
-        const lastQuestion = questionHistory.pop();
-
-        // If going back from the results view, hide it and show the quiz
-        if (!resultsSection.classList.contains('hidden')) {
-            resultsSection.classList.add('hidden');
-            questionContainer.classList.remove('hidden');
-        }
-
-        // If we are back to the first question, hide the back button
-        if (questionHistory.length === 0) {
-            backButton.classList.add('hidden');
-        }
-
-        // Re-display the previous question
-        displayQuestion(lastQuestion);
-    }
-
-    function triggerPredictiveBatch(scores) {
-        // This is a "fire-and-forget" call to warm up the AI cache
-        const candidateProducts = scores.slice(0, 20).map(s => {
-            const p = allProducts.find(prod => prod.id === s.id);
-            return p ? { id: p.id, tags: p.tags, score: s.score } : null;
-        }).filter(x => x);
-
-        if (candidateProducts.length > 0) {
-            fetch('/.netlify/functions/generate-question-batch', {
-                method: 'POST',
-                body: JSON.stringify({
-                    userAnswers: userAnswers.flatMap(a => a.tags),
-                    candidateProducts
-                })
-            }).catch(error => {
-                // We don't block the user on this, but we log the error
-                console.warn('Predictive batch call failed:', error);
-            });
-        }
-    }
-    
     async function startQuiz() {
         // If starting from scratch or restarting, reset state
         heroSection.classList.add('hidden');
+        resultsSection.classList.add('hidden');
         quizSection.classList.remove('hidden');
         quizSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        showLoadingState('Indlæser guiden.');
+        showLoadingState('Indlæser guiden...');
         await initializeQuizAssets();
+        remainingProducts = [...allProducts];
         questionHistory = [];
         userAnswers = [];
         aiQuestionQueue = [];
@@ -153,16 +127,8 @@ document.addEventListener('DOMContentLoaded', () => {
         feedbackContainer.classList.add('hidden');
         selectNextQuestion();
     }
-    
-    function switchView(sectionId) {
-        // Utility to switch visible view (unused in current logic, but here for completeness)
-        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        const target = document.getElementById(sectionId);
-        if (target) target.classList.add('active');
-    }
-    
+
     function recalculateRemainingProducts() {
-        // Filter remainingProducts based on userAnswers tags (e.g., strict price filters, interest filters)
         let products = [...allProducts];
         const userTags = new Set(userAnswers.flatMap(a => a.tags));
         // Price filtering
@@ -185,130 +151,133 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         remainingProducts = products;
     }
-    
+
     async function selectNextQuestion() {
-    // Ensure the main container is visible
-    if (questionContainer.classList.contains('hidden')) {
-        questionContainer.classList.remove('hidden');
-    }
-    // Ensure the results section is hidden
-    if (!resultsSection.classList.contains('hidden')) {
-        resultsSection.classList.add('hidden');
-    }
+        hideLoadingState();
+        const unaskedInitial = allQuestions.filter(q => q.is_initial && !questionHistory.some(h => h.id === q.id));
+        const currentTags = new Set(userAnswers.flatMap(a => a.tags));
+        
+        let nextInitialQuestion = unaskedInitial.find(q => q.trigger_tags && q.trigger_tags.some(tag => currentTags.has(tag)));
+        if (!nextInitialQuestion) {
+            nextInitialQuestion = unaskedInitial.find(q => !q.trigger_tags);
+        }
 
-    const scores = calculateScores();
-    log("Top 10 scores:", scores.slice(0, 10));
+        if (nextInitialQuestion) {
+            if (nextInitialQuestion.type === 'interest_hub' || nextInitialQuestion.id === 'q_interest_placeholder') {
+                questionHistory.push(nextInitialQuestion);
+                selectNextQuestion();
+                return;
+            }
+            displayQuestion(nextInitialQuestion);
+            return;
+        }
 
-    const topProductIds = scores.slice(0, 10).map(s => s.id);
-    let usedDifferentiators = new Set(questionHistory.map(q => q.differentiator).filter(d => d));
-    log("Used differentiators:", usedDifferentiators);
+        if (!questionHistory.some(q => q.id === 'q_interest_hub')) {
+            const interestQuestion = { id: 'q_interest_hub', question_text: 'Hvad interesserer personen sig for?' };
+            displayInterestHub(interestQuestion);
+            return;
+        }
 
-    // First, check if there's a pre-fetched AI question that is now optimal
-    const bestPrefetched = findBestPrefetchedQuestion(scores);
-    if (bestPrefetched) {
-        log("Displaying a pre-fetched AI question:", bestPrefetched);
-        // Move from prefetch to main questions array
-        prefetchedAIQuestions = prefetchedAIQuestions.filter(q => q.id !== bestPrefetched.id);
-        allQuestions.push(bestPrefetched);
-        displayQuestion(bestPrefetched);
-        // Trigger a new batch to keep the cache warm
-        triggerPredictiveBatch(scores);
-        return;
-    }
+        earlyExitButton.classList.remove('hidden');
+        const scores = getProductScores();
 
-    // If not, find the best static question
-    let nextQuestion = findBestDifferentiatingQuestion(topProductIds, usedDifferentiators);
-    log("Best static question found:", nextQuestion);
+        if (scores.length > 1) {
+            const threshold = questionHistory.length > 7 ? AGGRESSIVE_SCORE_THRESHOLD : INITIAL_SCORE_THRESHOLD;
+            if (scores[0].score >= scores[1].score * threshold || remainingProducts.length <= 5) {
+                displayResults(scores);
+                return;
+            }
+        }
+        
+        if (aiQuestionQueue.length > 0) {
+            const nextQ = aiQuestionQueue.shift();
+            if (isQuestionStillRelevant(nextQ, scores.slice(0, 5).map(s => allProducts.find(p => p.id === s.id)))) {
+                displayQuestion(nextQ);
+                triggerPredictiveBatch(scores); // New batch call after using a prefetched question
+                return;
+            } else {
+                aiQuestionQueue = [];
+            }
+        }
 
-    if (nextQuestion) {
-        displayQuestion(nextQuestion);
-        // Fire-and-forget a batch call to pre-warm the AI cache
-        triggerPredictiveBatch(scores);
-    } else {
-        // If no suitable static question, fetch a just-in-time AI question
-        log("No suitable static questions. Fetching a JIT AI question.");
-        displayLoading(true);
-        const aiQuestion = await fetchAIQuestion(scores);
-        displayLoading(false);
+        // Fallback to just-in-time single question generation
+        try {
+            showLoadingState();
+            const candidateProducts = scores.slice(0, 20).map(s => {
+                const p = allProducts.find(prod => prod.id === s.id);
+                return p ? { id: p.id, tags: p.tags, score: s.score } : null;
+            }).filter(x => x);
 
-        if (aiQuestion) {
-            log("AI question received:", aiQuestion);
-            allQuestions.push(aiQuestion);
-            displayQuestion(aiQuestion);
-            // **THIS IS THE ONLY ADDITION**
-            // After the JIT question is displayed, trigger the background batch
-            triggerPredictiveBatch(scores);
-        } else {
-            // Fallback: If AI fails, show results
-            log("AI fetch failed. Showing results.");
-            displayResults();
+            const response = await fetch('/.netlify/functions/generate-ai-question', {
+                method: 'POST',
+                body: JSON.stringify({
+                    userAnswers: userAnswers.flatMap(a => a.tags),
+                    candidateProducts
+                })
+            });
+            if (!response.ok) throw new Error('AI question generation failed');
+            
+            const result = await response.json();
+            hideLoadingState();
+
+            // LOGIC CHANGE: The batch call is now triggered AFTER the JIT call succeeds.
+            if (result && result.question && result.question.id) {
+                displayQuestion(result.question);
+                // Trigger predictive batch *after* successfully receiving the JIT question
+                if (result.cacheKey) { // Check if the backend sent a cache key
+                    triggerPredictiveBatch(scores, result.cacheKey);
+                }
+            } else {
+                displayResults(scores);
+            }
+        } catch (error) {
+            console.error("AI question generation failed, showing results instead:", error);
+            hideLoadingState();
+            displayResults(scores);
         }
     }
-}
-    
+
     function displayQuestion(question) {
         currentQuestion = question;
-        // Use appropriate template
         let template;
+
         if (question.answers) {
-            // Standard single/multi-choice question
             template = document.getElementById('single-choice-template').content.cloneNode(true);
             template.querySelector('.question-text').textContent = question.question_text;
             const answersContainer = template.querySelector('.answers-container');
+            answersContainer.innerHTML = ''; // Clear old answers
+
             question.answers.forEach((answer, index) => {
-                if (question.is_multiselect) {
-                    // For multi-select questions (if any in static questions)
-                    const wrapper = document.createElement('div');
-                    wrapper.className = "answer-btn w-full text-left bg-white p-4 rounded-lg border border-gray-200 hover:bg-gray-100 hover:border-blue-500 transition-all duration-200 ease-in-out shadow-sm cursor-pointer flex items-center";
-                    wrapper.innerHTML = `<input type="checkbox" id="answer-${index}" class="mr-3 h-5 w-5 rounded border-gray-300 text-blue-600 pointer-events-none"><label for="answer-${index}" class="cursor-pointer flex-1">${answer.answer_text}</label>`;
-                    wrapper.onclick = () => {
-                        const cb = wrapper.querySelector('input');
-                        cb.checked = !cb.checked;
-                        cb.dispatchEvent(new Event('change', { bubbles: true }));
+                const btn = document.createElement('button');
+                btn.className = "answer-btn w-full text-left bg-white p-4 rounded-lg border border-gray-200 hover:bg-gray-100 hover:border-blue-500 transition-all duration-200 ease-in-out shadow-sm";
+                btn.textContent = answer.answer_text;
+                
+                if (answer.tags && answer.tags.includes("freetext:true")) {
+                    btn.onclick = () => {
+                        answersContainer.innerHTML = `
+                            <div class="w-full">
+                                <textarea id="freetext-input" maxlength="250" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Fortæl os lidt mere..."></textarea>
+                                <div id="char-counter" class="text-right text-sm text-gray-500 mt-1">0 / 250</div>
+                                <button id="freetext-submit" class="cta-btn w-full mt-2 px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700">Send</button>
+                            </div>
+                        `;
+                        const inputEl = document.getElementById('freetext-input');
+                        const charCounter = document.getElementById('char-counter');
+                        inputEl.addEventListener('input', () => {
+                            charCounter.textContent = `${inputEl.value.length} / 250`;
+                        });
+                        document.getElementById('freetext-submit').onclick = handleFreeTextSubmit;
                     };
-                    wrapper.querySelector('input').addEventListener('change', e => {
-                        if (e.target.checked) {
-                            selectedMultiAnswers.add(index);
-                            wrapper.classList.add('border-blue-500', 'bg-blue-50');
-                        } else {
-                            selectedMultiAnswers.delete(index);
-                            wrapper.classList.remove('border-blue-500', 'bg-blue-50');
-                        }
-                    });
-                    answersContainer.appendChild(wrapper);
                 } else {
-                    const btn = document.createElement('button');
-                    btn.className = "answer-btn w-full text-left bg-white p-4 rounded-lg border border-gray-200 hover:bg-gray-100 hover:border-blue-500 transition-all duration-200 ease-in-out shadow-sm";
-                    btn.textContent = answer.answer_text;
-                    if (answer.tags.includes("freetext:true")) {
-                        btn.onclick = () => {
-                            // Show free-text input field
-                            answersContainer.innerHTML = `
-                                <div class="w-full">
-                                    <textarea id="freetext-input" maxlength="250" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Fortæl os lidt mere..."></textarea>
-                                    <div id="char-counter" class="text-right text-sm text-gray-500 mt-1">0 / 250</div>
-                                    <button id="freetext-submit" class="cta-btn w-full mt-2 px-6 py-3 text-white bg-blue-600 rounded-md hover:bg-blue-700">Send</button>
-                                </div>
-                            `;
-                            const inputEl = document.getElementById('freetext-input');
-                            const charCounter = document.getElementById('char-counter');
-                            inputEl.addEventListener('input', () => {
-                                charCounter.textContent = `${inputEl.value.length} / 250`;
-                            });
-                            document.getElementById('freetext-submit').onclick = handleFreeTextSubmit;
-                        };
-                    } else {
-                        btn.onclick = () => handleAnswer(answer);
-                    }
-                    answersContainer.appendChild(btn);
+                    btn.onclick = () => handleAnswer(answer);
                 }
+                answersContainer.appendChild(btn);
             });
         } else {
-            // In case question object doesn't have answers (should not happen normally)
             template = document.getElementById('single-choice-template').content.cloneNode(true);
             template.querySelector('.question-text').textContent = question.question_text;
         }
-        // Render the question template
+
         questionContainer.innerHTML = '';
         questionContainer.appendChild(template);
         const wrapper = questionContainer.querySelector('.question-wrapper');
@@ -324,7 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
         questionContainer.appendChild(template);
         const wrapper = questionContainer.querySelector('.question-wrapper');
         if (wrapper) wrapper.classList.add('active');
-        // Get interactive elements
         const suggestionsEl = document.getElementById('interest-suggestions');
         const searchInput = document.getElementById('interest-search');
         const selectedEl = document.getElementById('selected-interests');
@@ -365,7 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!userSelectedSet.has(pill.key)) {
                 addSelectedPill(pill.name, pill.key);
             }
-            // Adaptive replacement: show a subInterest or a new pill
             const idx = displayedPills.findIndex(p => p.key === pill.key);
             if (idx > -1) {
                 const hasSubs = pill.subInterests && pill.subInterests.length > 0;
@@ -386,14 +353,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             renderSuggestions();
         };
-        // Autocomplete search
         searchInput.addEventListener('input', () => {
             const query = searchInput.value.toLowerCase();
             if (query.length < 2) {
                 autocompleteEl.classList.add('hidden');
                 return;
             }
-            const results = allInterestTags.filter(tag => tag.toLowerCase().includes(query)).slice(0, 5);
+            const results = allInterestTags.filter(tag => tag.toLowerCase().replace(/_/g, ' ').includes(query)).slice(0, 5);
             autocompleteEl.innerHTML = '';
             if (results.length > 0) {
                 results.forEach(result => {
@@ -412,15 +378,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 autocompleteEl.classList.add('hidden');
             }
         });
-        // Initialize suggestions and button
         initialFill();
         submitBtn.onclick = () => {
             if (userSelectedSet.size === 0) return;
             const selectedTags = Array.from(userSelectedSet);
-            const answer = {
-                answer_text: 'Valgte interesser',
-                tags: selectedTags
-            };
+            const answer = { answer_text: 'Valgte interesser', tags: selectedTags };
             handleAnswer(answer);
         };
         backButton.classList.toggle('hidden', questionHistory.length === 0);
@@ -434,14 +396,18 @@ document.addEventListener('DOMContentLoaded', () => {
         backButton.classList.add('hidden');
         earlyExitButton.classList.add('hidden');
     }
-    
+
     function hideLoadingState() {
-        // Once AI response arrives or we move on, allow early exit again if applicable
-        earlyExitButton.classList.remove('hidden');
+        if (questionHistory.length > 2) {
+            earlyExitButton.classList.remove('hidden');
+        }
     }
-    
+
     function getProductScores() {
         const allAnswerTags = userAnswers.flatMap(a => a.tags);
+        if (allAnswerTags.length === 0) {
+            return remainingProducts.map(p => ({ id: p.id, score: 0 })).sort((a,b) => b.score - a.score);
+        }
         const scores = remainingProducts.map(product => {
             let score = 0;
             const productTags = new Set([...(product.tags || []), ...(product.differentiator_tags || [])]);
@@ -456,29 +422,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         return scores.sort((a, b) => b.score - a.score);
     }
-    
+
     function displayResults(scores) {
         questionContainer.classList.add('hidden');
         resultsSection.classList.remove('hidden');
         resultsSection.classList.add('fade-in');
+        backButton.classList.add('hidden');
+        earlyExitButton.classList.add('hidden');
+
         const top5 = scores.slice(0, 5).map(s => allProducts.find(p => p.id === s.id)).filter(p => p);
-        primaryResultEl.innerHTML = createProductCard(top5[0], true);
+        
+        primaryResultEl.innerHTML = top5.length > 0 ? createProductCard(top5[0], true) : '<p>Ingen gaver fundet. Prøv igen.</p>';
         secondaryResultsEl.innerHTML = '';
         if (top5.length > 1) {
             top5.slice(1).forEach(p => {
                 secondaryResultsEl.innerHTML += createProductCard(p, false);
             });
         }
-        // Store current recommendation's primary product ID for share/feedback
         currentRecommendationId = top5.length ? top5[0].id : null;
-        // Attach report-problem events for each result card
         document.querySelectorAll('.report-problem-btn').forEach(btn => {
             btn.addEventListener('click', () => openFlagModal(btn.getAttribute('data-product')));
         });
-        // Show feedback (rating) section
         feedbackContainer.classList.remove('hidden');
     }
-    
+
     function createProductCard(product, isPrimary) {
         if (!product) return '';
         const cardClass = isPrimary ? "bg-white p-6 rounded-lg shadow-lg flex flex-col md:flex-row items-center gap-6" : "bg-white p-4 rounded-lg shadow-md flex items-center gap-4";
@@ -499,20 +466,19 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
     }
-    
+
     function isQuestionStillRelevant(question, topProductsList) {
         if (!question || !Array.isArray(question.answers)) return false;
-        const topProductTags = new Set(topProductsList.flatMap(p => p.tags));
+        const topProductTags = new Set(topProductsList.flatMap(p => p.tags || []));
         let differentiatingAnswers = 0;
         question.answers.forEach(ans => {
-            if (ans.tags.some(tag => topProductTags.has(tag))) {
+            if (ans.tags && ans.tags.some(tag => topProductTags.has(tag))) {
                 differentiatingAnswers++;
             }
         });
-        // relevant if at least two answer options correspond to different tags present in top products
         return differentiatingAnswers >= 2;
     }
-    
+
     function handleAnswer(answer) {
         const prevQuestion = currentQuestion;
         const answerEntry = {
@@ -520,18 +486,12 @@ document.addEventListener('DOMContentLoaded', () => {
             answer_text: answer.answer_text,
             tags: answer.tags || []
         };
-        // Add to history and answers
         userAnswers.push(answerEntry);
         questionHistory.push(prevQuestion);
         recalculateRemainingProducts();
-        // If an AI-generated question was just answered, trigger background fetch for next batch
-        if (prevQuestion.id && prevQuestion.id.startsWith('q_ai')) {
-            const scores = getProductScores();
-            triggerPredictiveBatch(scores);
-        }
         selectNextQuestion();
     }
-    
+
     async function handleFreeTextSubmit() {
         const inputEl = document.getElementById('freetext-input');
         const freeText = inputEl.value.trim();
@@ -546,18 +506,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
             if (!response.ok) throw new Error('AI free-text interpretation failed');
-            const newTags = await response.json();
-            const freeTextAnswer = { answer_text: `Brugerinput: ${freeText}`, tags: newTags };
+            const result = await response.json();
+            const freeTextAnswer = { answer_text: `Brugerinput: ${freeText}`, tags: result.tags || [] };
             handleAnswer(freeTextAnswer);
         } catch (error) {
             console.error("Free-text interpretation failed:", error);
+            hideLoadingState();
             selectNextQuestion();
         }
     }
-    
+
     async function handleShare() {
         try {
-            const primaryProductId = getProductScores()[0].id;
+            const scores = getProductScores();
+            if (scores.length === 0) throw new Error("No products to share.");
+            const primaryProductId = scores[0].id;
             const response = await fetch('/.netlify/functions/create-share-link', {
                 method: 'POST',
                 body: JSON.stringify({ product_id: primaryProductId, quiz_answers: userAnswers })
@@ -566,65 +529,123 @@ document.addEventListener('DOMContentLoaded', () => {
             const { shareId } = await response.json();
             const shareUrl = `${window.location.origin}/?share=${shareId}`;
             shareLinkInput.value = shareUrl;
-            shareModal.classList.add('visible');
+            shareModal.classList.remove('hidden');
             copyFeedback.textContent = '';
         } catch (error) {
             console.error('Share link creation failed:', error);
             alert('Kunne ikke oprette delingslink. Prøv venligst igen.');
         }
     }
-    
+
     function copyShareLink() {
         shareLinkInput.select();
         document.execCommand('copy');
         copyFeedback.textContent = 'Link kopieret!';
         setTimeout(() => { copyFeedback.textContent = ''; }, 2000);
     }
-    
+
     function openFlagModal(productId) {
-        // Simple prompt for now – ideally would be a nice modal form
         const reason = prompt("Rapportér et problem med produktet. Vælg grund:\n- Link virker ikke\n- Billedet mangler\n- Prisen passer ikke\n- Andet (uddyb)");
         if (!reason) return;
-        // Submit flag via API
         fetch('/.netlify/functions/submit-flag', {
             method: 'POST',
             body: JSON.stringify({ productId: productId, reason: reason, quizAnswers: userAnswers })
         })
-        .then(res => res.json())
-        .then(data => {
-            alert('Tak for din feedback!');  // Acknowledge submission
-        })
+        .then(() => alert('Tak for din feedback!'))
         .catch(err => {
             console.error('Error reporting problem:', err);
             alert('Kunne ikke rapportere problemet. Prøv igen senere.');
         });
     }
+
+    // --- NEWLY ADDED/FIXED FUNCTIONS ---
     
+    function goBack() {
+        if (questionHistory.length === 0) return;
+        
+        // Remove the last answer and the question that prompted it
+        userAnswers.pop();
+        questionHistory.pop();
+        
+        // Get the "new" current question from the end of the history
+        const prevQuestion = questionHistory[questionHistory.length - 1];
+        
+        // If results were showing, hide them and show the quiz
+        if (!resultsSection.classList.contains('hidden')) {
+            resultsSection.classList.add('hidden');
+            quizSection.classList.remove('hidden');
+        }
+
+        // We need to re-render the previous question
+        if (prevQuestion) {
+            if (prevQuestion.id === 'q_interest_hub') {
+                displayInterestHub(prevQuestion);
+            } else {
+                displayQuestion(prevQuestion);
+            }
+        } else {
+            // If there's no previous question, go back to the start
+            startQuiz();
+        }
+    }
+
+    function triggerPredictiveBatch(scores, cacheKey = null) {
+        console.log("Triggering predictive batch call...");
+        const candidateProducts = scores.slice(0, 20).map(s => {
+            const p = allProducts.find(prod => prod.id === s.id);
+            return p ? { id: p.id, tags: p.tags, score: s.score } : null;
+        }).filter(x => x);
+
+        if (candidateProducts.length > 0) {
+            const payload = {
+                userAnswers: userAnswers.flatMap(a => a.tags),
+                candidateProducts
+            };
+            if(cacheKey) payload.cacheKey = cacheKey;
+
+            fetch('/.netlify/functions/generate-question-batch', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.questions && Array.isArray(data.questions)) {
+                    aiQuestionQueue.push(...data.questions);
+                    console.log(`Added ${data.questions.length} questions to the prefetch queue.`);
+                }
+            })
+            .catch(error => {
+                console.warn('Predictive batch call failed:', error);
+            });
+        }
+    }
+
     // On page load, initialize and handle shared result if present
     setupDOMElements();
     attachEventListeners();
     const params = new URLSearchParams(window.location.search);
     if (params.has('share')) {
-        // If a share ID is present in URL, load the shared result
         const shareId = params.get('share');
+        showLoadingState('Henter delt resultat...');
         fetch(`/.netlify/functions/get-shared-result?id=${shareId}`)
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error("Shared result not found or invalid.");
+                return res.json();
+            })
             .then(data => {
                 if (!data.product_id || !data.quiz_answers) throw new Error("Invalid shared data");
-                // Initialize quiz (load assets) then use shared answers to compute results
                 initializeQuizAssets().then(() => {
                     userAnswers = Array.isArray(data.quiz_answers) ? data.quiz_answers : Object.values(data.quiz_answers);
-                    // Recalculate products and display results directly
                     recalculateRemainingProducts();
                     const finalScores = getProductScores();
                     displayResults(finalScores);
-                    // Hide the start screen since we're directly showing results
                     heroSection.classList.add('hidden');
                     quizSection.classList.remove('hidden');
                 });
             })
             .catch(err => {
                 console.error("Failed to load shared result:", err);
+                hideLoadingState();
                 alert("Ugyldigt eller udløbet delingslink.");
             });
     }
