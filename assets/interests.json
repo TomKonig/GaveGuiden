@@ -31,6 +31,10 @@
       { "name": "Mode", "key": "interest:fashion" },
       { "name": "Wearables", "key": "interest:wearables" },
       { "name": "Vintage", "key": "interest:vintage" }
+      { "name": "Parfumer", "key": "interest:parfume" }
+      { "name": "Ure", "key": "interest:ure" }
+      { "name": "Lingeri", "key": "interest:lingeri" }
+      
     ]
   },
   {
