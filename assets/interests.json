@@ -24,6 +24,16 @@
     ]
   },
   {
+    "name": "Mode & Smykker",
+    "key": "category:mode_og_smykker",
+    "subInterests": [
+      { "name": "Smykker", "key": "interest:smykker" },
+      { "name": "Mode", "key": "interest:fashion" },
+      { "name": "Wearables", "key": "interest:wearables" },
+      { "name": "Vintage", "key": "interest:vintage" }
+    ]
+  },
+  {
     "name": "Bolig & Design",
     "key": "category:bolig_have_interiør",
     "subInterests": [
