@@ -1,50 +1,58 @@
 // /functions/generate-ai-question.js
 const { connectToDatabase } = require('./utils/mongodb-client');
 const crypto = require('crypto');
+const fs = require('fs').promises;
+const path = require('path');
 const { OPENAI_API_KEY } = process.env;
 
-const getAiPrompt = (userAnswers, contenderThemes) => `
-You are a brilliant Gift Detective for denrettegave.dk. Your task is to ask the single smartest question to pinpoint the perfect gift. **Be concise!** Your tone is witty and friendly (in Danish).
- 
-**Current User Profile:**
-${userAnswers.map(a => `- ${a}`).join('\n')}
- 
-**Analysis of Top Candidates (Score-Weighted Contender Themes):**
-${contenderThemes.map(theme => `- ${theme.tag} (Relevans: ${theme.score})`).join('\n')}
- 
-**Your Strategy (choose one):**
-1. **Differentiate the Leaders:** If multiple themes have high and close scores, ask a question to separate them (e.g., "Er de mere til hygge derhjemme, eller skal der ske noget ude i det fri?").
-2. **Confirm a Niche:** If one niche theme has a surprisingly high score, ask a question to confirm that interest (e.g., "Jeg fornemmer en interesse for retro-spil. Er det noget, der kunne hitte?").
- 
-**Now output a JSON object for the single best question.** The LAST answer option must be a user-friendly escape hatch ("Ingen af disse passer...") with tag ["freetext:true"].
-Format the JSON as:
-{
-  "question": {
-    "id": "q_ai_${crypto.randomBytes(4).toString('hex')}",
-    "question_text": "DIN SPØRGSMÅL HER",
-    "is_differentiator": true,
-    "answers": [
-      { "answer_text": "SVAR 1", "tags": ["key:value"] },
-      { "answer_text": "SVAR 2", "tags": ["key:value"] },
-      { "answer_text": "Ingen af disse passer...", "tags": ["freetext:true"] }
-    ]
-  }
-}`;
- 
+const getAiPrompt = (tagsString, profileString) => `You are an expert personal shopper for denrettegave.dk. Your task is to ask the single smartest question to get closer to pinpointing the perfect gift for the customer's chosen recipient. Be concise! Your tone is friendly and youthful. Answer in Danish.
+
+The top product categories (referred to as tags) being considered are in a single string below. After each tag is a parenthesis containing two numbers. First, the specificity (or niche-level) of the tag, secondly its interest score. We are particularly interested confirming or eliminating highly specific and niche tags, as they are closer to a purchase decision.
+
+You must either:
+Try to differentiate the leaders: If multiple tags have high and close scores, ask a question to separate them (e.g., "Er de mere til hygge derhjemme, eller skal der ske noget ude i det fri?")
+Or confirm a niche: If one niche tag has a surprisingly high score compared to its relative obscurity, ask a question to confirm that interest (e.g., "Jeg fornemmer en interesse for retro-spil. Er det noget, der kunne hitte?"). 
+
+Your answer options must either be multiple-choice or yes/no/I don't know/escape hatch.
+
+STRICT: Output ONLY a JSON object containing the single best question to further narrow down the field. 
+STRICT: Your answer options must ONLY contain interest keys exactly identical to any (or multiple) of the tags in your received prompt. (E.g. if you receive a string containing “fiskeri (3,3), naturliv (2,4), sexlegetøj (5,2), you may choose "fiskeri, naturliv" or "sexlegetøj" but not “fluefiskeri” or “camping”). You MUST not invent new tags. Your answer options can focus on more than one tag at a time, if they fit naturally together. 
+STRICT: If an answer option includes multiple tags, they MUST be natural fits with each other. For example, "personlig pleje, smykker" is a sensible combination, whereas "computerspil, lædermøbler" is not. Equally, "sexlegetøj" fits naturally with "romantik" but not with "brætspil".
+STRICT: The LAST answer option MUST be a user-friendly escape hatch ("Ingen af disse passer...") with tag ["freetext:true"]. Provide a maximum of four options, escape hatch included.
+STRICT: Format the JSON EXACTLY as: { "question": { "id": "q_ai_${crypto.randomBytes(4).toString('hex')}", "question_text": "DIT SPØRGSMÅL HER", "answers": [ { "answer_text": "SVAR 1", "tags": ["en_interesse_key"] }, { "answer_text": "SVAR 2", "tags": ["en_anden_key", "endnu_en_key"] }, { "answer_text": "Ingen af disse passer...", "tags": ["freetext:true"] } ] } }
+
+${tagsString}
+${profileString}`;
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
-  // This line is for local testing if you don't have Netlify env vars set
-  // require('dotenv').config(); 
-  const { OPENAI_API_KEY } = process.env;
-  const crypto = require('crypto');
-  const { connectToDatabase } = require('./utils/mongodb-client');
 
   try {
+    const interestsPath = path.join(__dirname, '..', 'assets', 'interests.json');
+    const interestsData = await fs.readFile(interestsPath, 'utf8');
+    const interests = JSON.parse(interestsData);
+    const interestsMap = new Map(interests.map(i => [i.key, i]));
+    const depthCache = new Map();
+
+    const calculateDepth = (interestKey) => {
+      if (depthCache.has(interestKey)) return depthCache.get(interestKey);
+      const interest = interestsMap.get(interestKey);
+      if (!interest) return 1;
+      if (!interest.parents || interest.parents.length === 0) {
+        depthCache.set(interestKey, 1);
+        return 1;
+      }
+      const parentDepths = interest.parents.map(parentKey => calculateDepth(parentKey));
+      const maxDepth = Math.max(...parentDepths) + 1;
+      depthCache.set(interestKey, maxDepth);
+      return maxDepth;
+    };
+
     const { userAnswers, candidateProducts } = JSON.parse(event.body);
     const safeCandidates = (candidateProducts || []).filter(p => p && p.id && Array.isArray(p.tags));
-    const sortedAnswers = [...userAnswers].sort().join(',');
+    const sortedAnswers = [...new Set(userAnswers)].sort().join(',');
     const sortedProductIds = safeCandidates.map(p => p.id).sort().join(',');
     const contextString = `${sortedAnswers}|${sortedProductIds}`;
     const contextFingerprint = crypto.createHash('sha256').update(contextString).digest('hex');
@@ -58,28 +66,12 @@ exports.handler = async (event) => {
       return { statusCode: 200, body: JSON.stringify(cached.question) };
     }
     
-    const batchFingerprint = crypto.createHash('sha256').update(`batch|${contextString}`).digest('hex');
-    const cachedBatch = await cacheCollection.findOne({ _id: batchFingerprint });
-    if (cachedBatch && Array.isArray(cachedBatch.questions) && cachedBatch.questions.length > 0) {
-      console.log("Found cached batch, returning first question.");
-      const firstQuestion = cachedBatch.questions.shift();
-      if (cachedBatch.questions.length > 0) {
-        await cacheCollection.updateOne({ _id: batchFingerprint }, { $set: { questions: cachedBatch.questions } });
-      } else {
-        await cacheCollection.deleteOne({ _id: batchFingerprint });
-      }
-      return { statusCode: 200, body: JSON.stringify(firstQuestion) };
-    }
-
-    // --- UPDATED LOGIC IS HERE ---
-    
-    // Calculate theme scores
     const themeScores = {};
+    const interestKeys = new Set(interests.map(i => i.key));
     safeCandidates.forEach(p => {
       const pScore = p.score || 1;
-      (p.tags || []).filter(t => t.startsWith('interest:') || t.startsWith('category:')).forEach(t => {
-        const themeKey = t.split(':')[1];
-        themeScores[themeKey] = (themeScores[themeKey] || 0) + pScore;
+      (p.tags || []).filter(t => interestKeys.has(t)).forEach(t => {
+        themeScores[t] = (themeScores[t] || 0) + pScore;
       });
     });
     
@@ -88,22 +80,32 @@ exports.handler = async (event) => {
     const samplingPool = allSortedThemes.slice(10, 35);
     const shuffledPool = samplingPool.sort(() => 0.5 - Math.random());
     const randomNicheThemes = shuffledPool.slice(0, 5);
-    const finalThemesForPrompt = [...topThemes, ...randomNicheThemes]
-      .map(([tag, score]) => ({ tag: tag.replace(/_/g, ' '), score: score.toFixed(1) }));
+    const finalThemes = [...topThemes, ...randomNicheThemes];
 
-    const prompt = getAiPrompt(userAnswers, finalThemesForPrompt);
+    const finalThemesWithDetails = finalThemes.map(([tagKey, score]) => ({
+        tag: tagKey,
+        score: Math.round(score),
+        specificity: calculateDepth(tagKey)
+    }));
+
+    const tagsString = "Tags: " + finalThemesWithDetails
+        .map(t => `${t.tag.replace(/_/g, ' ')} (${t.specificity},${t.score})`)
+        .join(', ');
+
+    const profileString = "Profile: " + [...new Set(userAnswers)].join(' - ');
+
+    const prompt = getAiPrompt(tagsString, profileString);
     
-    console.log("--> Attempting to call OpenAI with model:", 'gpt-4o-mini');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7
+        temperature: 0.7,
+        response_format: { type: "json_object" }
       })
     });
-    console.log("<-- OpenAI responded with status:", response.status);
 
     if (!response.ok) {
       const errText = await response.text();
@@ -115,24 +117,15 @@ exports.handler = async (event) => {
     const rawContent = data.choices[0]?.message?.content;
     
     if (!rawContent) {
-      console.error('OpenAI returned empty content.');
-      return { statusCode: 500, body: JSON.stringify({ error: 'AI returned no content.' }) };
+        console.error('OpenAI returned empty content.');
+        return { statusCode: 500, body: JSON.stringify({ error: 'AI returned no content.' }) };
     }
     
-    // --- THIS IS THE FIX ---
-    // We must parse the AI's string response into a JSON object before sending it back.
     const aiResponseObject = JSON.parse(rawContent); 
 
-    const questionObj = aiResponseObject.question || aiResponseObject;
-    if (!questionObj || !questionObj.id || !Array.isArray(questionObj.answers)) {
-      console.error('AI response has invalid structure:', aiResponseObject);
-      return { statusCode: 500, body: JSON.stringify({ error: 'AI response structure invalid.' }) };
-    }
-
-    await cacheCollection.insertOne({ _id: contextFingerprint, question: questionObj, createdAt: new Date() });
+    await cacheCollection.insertOne({ _id: contextFingerprint, question: aiResponseObject, createdAt: new Date() });
     
-    // Return the PARSED object, not the raw string.
-    return { statusCode: 200, body: JSON.stringify(questionObj) };
+    return { statusCode: 200, body: rawContent };
 
   } catch (error) {
     console.error('Error in generate-ai-question function:', error);
