@@ -1,9 +1,14 @@
 // /quiz-engine.js
 
 import { dot, norm } from './lib/math.js';
+import { ThompsonSampling } from './lib/thompsonSampling.js';
 
 // --- CONFIGURATION & STATE ---
 const ALPHA = 0.6; // Balances TF-IDF and Semantic scores
+const MAIN_CATEGORIES = [
+    "Elektronik", "Tøj & Accessoirer", "Skønhed & Pleje", "Hjem & Indretning",
+    "Køkken & Madlavning", "Oplevelser", "Hobby", "Bøger & Spil", "Børn & Baby"
+];
 
 // Data stores
 let allProducts = [];
@@ -17,6 +22,7 @@ let userAnswers = [];
 let questionHistory = [];
 let currentQuestion = null;
 let isQuizInitialized = false;
+let bandit; // The Thompson Sampling bandit instance
 
 // --- INITIALIZATION ---
 export async function initializeQuizAssets() {
@@ -34,7 +40,6 @@ export async function initializeQuizAssets() {
         allQuestions = await questionsRes.json();
         idfScores = await idfRes.json();
 
-        // Convert embedding arrays to maps for faster lookup
         const productEmbeddingsList = await prodEmbRes.json();
         productEmbeddings = productEmbeddingsList.reduce((acc, item) => {
             acc[item.id] = item.embedding;
@@ -58,17 +63,12 @@ export function resetQuizState() {
     questionHistory = [];
     userAnswers = [];
     currentQuestion = null;
+    // Initialize the Thompson Sampling bandit with our main categories
+    bandit = new ThompsonSampling(MAIN_CATEGORIES);
     return selectNextQuestion();
 }
 
 // --- CORE SCORING & PRODUCT LOGIC ---
-
-/**
- * Calculates the cosine similarity between two vectors.
- * @param {number[]} vecA - The first vector.
- * @param {number[]} vecB - The second vector.
- * @returns {number} The cosine similarity score (0 to 1).
- */
 function cosineSimilarity(vecA, vecB) {
     if (!vecA || !vecB) return 0;
     const dotProduct = dot(vecA, vecB);
@@ -79,65 +79,40 @@ function cosineSimilarity(vecA, vecB) {
 }
 
 export function getProductScores() {
-    // --- PRE-FILTERING ---
     let eligibleProducts = [...allProducts];
 
-    // 1. Find gender and budget from answers
     let recipientGender = null;
     let budget = null;
     userAnswers.forEach(answer => {
         const genderTag = answer.tags.find(t => t.startsWith('gender_'));
-        if (genderTag) {
-            recipientGender = genderTag.split('_')[1]; // e.g., 'man' or 'woman'
-        }
+        if (genderTag) recipientGender = genderTag.split('_')[1];
         const budgetTag = answer.tags.find(t => t.startsWith('budget_'));
-        if (budgetTag) {
-            budget = parseInt(budgetTag.split('_')[1], 10); // e.g., 500 or 1000
-        }
+        if (budgetTag) budget = parseInt(budgetTag.split('_')[1], 10);
     });
 
-    // 2. Apply Gender Filter based on exclusivity
     if (recipientGender) {
-        eligibleProducts = eligibleProducts.filter(p => {
-            return p.gender === recipientGender || p.gender === 'all';
-        });
+        eligibleProducts = eligibleProducts.filter(p => p.gender === recipientGender || p.gender === 'all');
     }
-
-    // 3. Apply Budget Filter (Hard Ceiling)
     if (budget !== null) {
         eligibleProducts = eligibleProducts.filter(p => p.price <= budget);
     }
-    // --- END PRE-FILTERING ---
-
 
     const allAnswerTags = userAnswers.flatMap(answer => answer.tags);
     if (allAnswerTags.length === 0) {
-        return eligibleProducts.map(p => ({ id: p.id, score: 0 }));
+        return { scores: eligibleProducts.map(p => ({ id: p.id, score: 0 })), eligibleProductIds: eligibleProducts.map(p => p.id) };
     }
 
-    // Calculate the user's semantic profile embedding
-    const userInterestEmbeddings = allAnswerTags
-        .map(tag => tagEmbeddings[tag])
-        .filter(Boolean);
-
+    const userInterestEmbeddings = allAnswerTags.map(tag => tagEmbeddings[tag]).filter(Boolean);
     let userEmbedding = new Array(384).fill(0);
     if (userInterestEmbeddings.length > 0) {
-        userInterestEmbeddings.forEach(emb => {
-            emb.forEach((val, i) => userEmbedding[i] += val);
-        });
+        userInterestEmbeddings.forEach(emb => emb.forEach((val, i) => userEmbedding[i] += val));
         userEmbedding = userEmbedding.map(v => v / userInterestEmbeddings.length);
     }
 
-    // Calculate scores for each *eligible* product
     const scores = eligibleProducts.map(product => {
         const productTags = new Set([...(product.tags || []), ...(product.differentiator_tags || [])]);
-
-        // Calculate TF-IDF Score
         let tfidfScore = 0;
-        const userTagCounts = allAnswerTags.reduce((acc, tag) => {
-            acc[tag] = (acc[tag] || 0) + 1;
-            return acc;
-        }, {});
+        const userTagCounts = allAnswerTags.reduce((acc, tag) => { acc[tag] = (acc[tag] || 0) + 1; return acc; }, {});
 
         productTags.forEach(tag => {
             if (userTagCounts[tag]) {
@@ -147,34 +122,53 @@ export function getProductScores() {
             }
         });
 
-        // Calculate Semantic Similarity Score
         const productEmbedding = productEmbeddings[product.id];
         const semanticScore = cosineSimilarity(userEmbedding, productEmbedding);
-
-        // Combine into Hybrid Score
         const finalScore = (ALPHA * tfidfScore) + ((1 - ALPHA) * semanticScore);
-        
+
         return { id: product.id, score: finalScore };
     });
 
-    return scores.sort((a, b) => b.score - a.score);
+    return {
+        scores: scores.sort((a, b) => b.score - a.score),
+        eligibleProductIds: eligibleProducts.map(p => p.id)
+    };
 }
 
-// --- QUESTION SELECTION & ANSWER HANDLING (Simplified for Phase 2) ---
-export async function selectNextQuestion() {
-    const unaskedInitial = allQuestions.filter(q => q.is_initial && !questionHistory.some(h => h.id === q.id));
 
-    if (unaskedInitial.length > 0) {
-        currentQuestion = unaskedInitial[0];
-        return { type: 'question', data: currentQuestion };
+// --- DYNAMIC QUESTION SELECTION & ANSWER HANDLING ---
+export async function selectNextQuestion() {
+    const { scores } = getProductScores();
+
+    // End condition: If few products left or many questions asked, show results.
+    if (scores.length <= 5 || questionHistory.length >= 8) {
+        return { type: 'results', data: scores };
     }
 
-    // If initial questions are done, show results.
-    const scores = getProductScores();
-    return { type: 'results', data: scores };
+    // Use the bandit to select the next category to explore
+    const chosenCategory = bandit.selectArm();
+    const potentialQuestions = allQuestions.filter(q =>
+        q.category === chosenCategory && !questionHistory.some(h => h.id === q.id)
+    );
+
+    if (potentialQuestions.length > 0) {
+        // For now, we just pick the first available question in the category
+        currentQuestion = potentialQuestions[0];
+    } else {
+        // If no pre-written questions are left, fall back to any unasked question
+        // In the future, this is where we would trigger a call to the AI.
+        const anyUnasked = allQuestions.filter(q => !questionHistory.some(h => h.id === q.id));
+        if (anyUnasked.length === 0) return { type: 'results', data: scores };
+        currentQuestion = anyUnasked[0];
+    }
+
+    return { type: 'question', data: currentQuestion };
 }
 
-export function handleAnswer(answer) {
+export async function handleAnswer(answer) {
+    const { scores: scoresBefore } = getProductScores();
+    const gapBefore = (scoresBefore[0]?.score || 0) - (scoresBefore[1]?.score || 0);
+
     const answerEntry = {
         question_text: currentQuestion.question_text,
         answer_text: answer.answer_text,
@@ -182,16 +176,23 @@ export function handleAnswer(answer) {
     };
     userAnswers.push(answerEntry);
     questionHistory.push(currentQuestion);
+
+    const { scores: scoresAfter } = getProductScores();
+    const gapAfter = (scoresAfter[0]?.score || 0) - (scoresAfter[1]?.score || 0);
+
+    // REWARD: Did this question increase the score gap between the top 2 products?
+    const reward = gapAfter > gapBefore ? 1 : 0;
+    bandit.update(currentQuestion.category, reward);
+
     return selectNextQuestion();
 }
 
 export function goBackLogic() {
     if (questionHistory.length === 0) return { type: 'start' };
-    
+
     userAnswers.pop();
     const lastQuestion = questionHistory.pop();
-    
     currentQuestion = lastQuestion || allQuestions[0];
-    
+
     return { type: 'question', data: currentQuestion };
 }
