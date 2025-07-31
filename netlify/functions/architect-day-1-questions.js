@@ -3,7 +3,7 @@
 const { Octokit } = require('@octokit/rest');
 
 // --- CONFIGURATION ---
-const GITHUB_OWNER = 'YOUR_GITHUB_USERNAME'; // IMPORTANT: Replace with your GitHub username
+const GITHUB_OWNER = 'TomKonig'; // IMPORTANT: Replace with your GitHub username
 const GITHUB_REPO = 'gaveguiden'; // IMPORTANT: Replace if your repo name is different
 const FILE_PATH = 'public/assets/questions.json';
 
