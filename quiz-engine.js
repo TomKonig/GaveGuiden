@@ -1,9 +1,9 @@
 // /quiz-engine.js
 
-import { dot, norm } from './lib/math.js'; // Using the mathjs library we installed
+import { dot, norm } from './lib/math.js';
 
 // --- CONFIGURATION & STATE ---
-const ALPHA = 0.6; // Balances TF-IDF and Semantic scores [cite: 172]
+const ALPHA = 0.6; // Balances TF-IDF and Semantic scores
 
 // Data stores
 let allProducts = [];
@@ -13,9 +13,8 @@ let productEmbeddings = {};
 let tagEmbeddings = {};
 
 // Quiz state
-let remainingProducts = [];
-let questionHistory = [];
 let userAnswers = [];
+let questionHistory = [];
 let currentQuestion = null;
 let isQuizInitialized = false;
 
@@ -56,7 +55,6 @@ export async function initializeQuizAssets() {
 }
 
 export function resetQuizState() {
-    remainingProducts = [...allProducts];
     questionHistory = [];
     userAnswers = [];
     currentQuestion = null;
@@ -77,16 +75,47 @@ function cosineSimilarity(vecA, vecB) {
     const magnitudeA = norm(vecA);
     const magnitudeB = norm(vecB);
     if (magnitudeA === 0 || magnitudeB === 0) return 0;
-    return dotProduct / (magnitudeA * magnitudeB); // [cite: 390]
+    return dotProduct / (magnitudeA * magnitudeB);
 }
 
 export function getProductScores() {
-    const allAnswerTags = userAnswers.flatMap(answer => answer.tags);
-    if (allAnswerTags.length === 0) {
-        return remainingProducts.map(p => ({ id: p.id, score: 0 }));
+    // --- PRE-FILTERING ---
+    let eligibleProducts = [...allProducts];
+
+    // 1. Find gender and budget from answers
+    let recipientGender = null;
+    let budget = null;
+    userAnswers.forEach(answer => {
+        const genderTag = answer.tags.find(t => t.startsWith('gender_'));
+        if (genderTag) {
+            recipientGender = genderTag.split('_')[1]; // e.g., 'man' or 'woman'
+        }
+        const budgetTag = answer.tags.find(t => t.startsWith('budget_'));
+        if (budgetTag) {
+            budget = parseInt(budgetTag.split('_')[1], 10); // e.g., 500 or 1000
+        }
+    });
+
+    // 2. Apply Gender Filter based on exclusivity
+    if (recipientGender) {
+        eligibleProducts = eligibleProducts.filter(p => {
+            return p.gender === recipientGender || p.gender === 'all';
+        });
     }
 
-    // 1. Calculate the user's semantic profile embedding by averaging their selected tags' embeddings [cite: 166]
+    // 3. Apply Budget Filter (Hard Ceiling)
+    if (budget !== null) {
+        eligibleProducts = eligibleProducts.filter(p => p.price <= budget);
+    }
+    // --- END PRE-FILTERING ---
+
+
+    const allAnswerTags = userAnswers.flatMap(answer => answer.tags);
+    if (allAnswerTags.length === 0) {
+        return eligibleProducts.map(p => ({ id: p.id, score: 0 }));
+    }
+
+    // Calculate the user's semantic profile embedding
     const userInterestEmbeddings = allAnswerTags
         .map(tag => tagEmbeddings[tag])
         .filter(Boolean);
@@ -96,14 +125,14 @@ export function getProductScores() {
         userInterestEmbeddings.forEach(emb => {
             emb.forEach((val, i) => userEmbedding[i] += val);
         });
-        userEmbedding = userEmbedding.map(v => v / userInterestEmbeddings.length); // Averaging
+        userEmbedding = userEmbedding.map(v => v / userInterestEmbeddings.length);
     }
 
-    // 2. Calculate scores for each product
-    const scores = remainingProducts.map(product => {
+    // Calculate scores for each *eligible* product
+    const scores = eligibleProducts.map(product => {
         const productTags = new Set([...(product.tags || []), ...(product.differentiator_tags || [])]);
 
-        // 2a. Calculate TF-IDF Score
+        // Calculate TF-IDF Score
         let tfidfScore = 0;
         const userTagCounts = allAnswerTags.reduce((acc, tag) => {
             acc[tag] = (acc[tag] || 0) + 1;
@@ -112,17 +141,17 @@ export function getProductScores() {
 
         productTags.forEach(tag => {
             if (userTagCounts[tag]) {
-                const tf = userTagCounts[tag]; // Term Frequency
-                const idf = idfScores[tag] || 0; // Inverse Document Frequency (fallback to 0)
+                const tf = userTagCounts[tag];
+                const idf = idfScores[tag] || 0;
                 tfidfScore += tf * idf;
             }
         });
 
-        // 2b. Calculate Semantic Similarity Score
+        // Calculate Semantic Similarity Score
         const productEmbedding = productEmbeddings[product.id];
-        const semanticScore = cosineSimilarity(userEmbedding, productEmbedding); // 
+        const semanticScore = cosineSimilarity(userEmbedding, productEmbedding);
 
-        // 2c. Combine into Hybrid Score using alpha 
+        // Combine into Hybrid Score
         const finalScore = (ALPHA * tfidfScore) + ((1 - ALPHA) * semanticScore);
         
         return { id: product.id, score: finalScore };
@@ -131,8 +160,7 @@ export function getProductScores() {
     return scores.sort((a, b) => b.score - a.score);
 }
 
-// --- QUESTION SELECTION & ANSWER HANDLING (Simplified for now) ---
-// Note: We will replace this with the Multi-Armed Bandit logic in Phase 3.
+// --- QUESTION SELECTION & ANSWER HANDLING (Simplified for Phase 2) ---
 export async function selectNextQuestion() {
     const unaskedInitial = allQuestions.filter(q => q.is_initial && !questionHistory.some(h => h.id === q.id));
 
@@ -163,9 +191,7 @@ export function goBackLogic() {
     userAnswers.pop();
     const lastQuestion = questionHistory.pop();
     
-    // Find the question before the last one to display it again
-    currentQuestion = questionHistory.length > 0 ? questionHistory[questionHistory.length -1] : allQuestions[0];
+    currentQuestion = lastQuestion || allQuestions[0];
     
-    // This is a simplified back logic. We will refine this.
     return { type: 'question', data: currentQuestion };
 }
