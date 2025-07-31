@@ -1,9 +1,6 @@
 // /functions/generate-question-batch.js
 const { connectToDatabase } = require('./utils/mongodb-client');
 const crypto = require('crypto');
-const fs = require('fs').promises;
-const path = require('path');
-const { OPENAI_API_KEY } = process.env;
 
 const getBatchPrompt = (tagsString, profileString) => `You are an expert personal shopper for denrettegave.dk. Your task is to create a logical sequence of 2-3 follow-up questions to pinpoint the perfect gift. The first question should be broader, the next ones more specific. Be concise, friendly, and youthful. Answer in Danish.
 
@@ -23,107 +20,61 @@ ${tagsString}
 ${profileString}`;
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
-  }
+    if (event.httpMethod !== 'POST') {
+        return { statusCode: 405, body: 'Method Not Allowed' };
+    }
 
-  try {
-    const interestsPath = path.join(__dirname, '..', 'assets', 'interests.json');
-    const interestsData = await fs.readFile(interestsPath, 'utf8');
-    const interests = JSON.parse(interestsData);
-    const interestsMap = new Map(interests.map(i => [i.key, i]));
-    const depthCache = new Map();
+    try {
+        const { userAnswers, themesWithDetails } = JSON.parse(event.body);
 
-    const calculateDepth = (interestKey) => {
-        if (depthCache.has(interestKey)) return depthCache.get(interestKey);
-        const interest = interestsMap.get(interestKey);
-        if (!interest) return 1;
-        if (!interest.parents || interest.parents.length === 0) {
-            depthCache.set(interestKey, 1);
-            return 1;
+        const sortedAnswers = [...new Set(userAnswers)].sort().join(',');
+        const sortedThemes = (themesWithDetails || []).map(t => `${t.tag}(${t.specificity},${t.score})`).sort().join(',');
+        const contextString = `batch|${sortedAnswers}|${sortedThemes}`;
+        const contextFingerprint = crypto.createHash('sha256').update(contextString).digest('hex');
+
+        const db = await connectToDatabase();
+        const cacheCollection = db.collection('question_cache');
+
+        const cached = await cacheCollection.findOne({ _id: contextFingerprint });
+        if (cached) {
+            return { statusCode: 200, body: JSON.stringify({ message: "Batch already cached." }) };
         }
-        const parentDepths = interest.parents.map(parentKey => calculateDepth(parentKey));
-        const maxDepth = Math.max(...parentDepths) + 1;
-        depthCache.set(interestKey, maxDepth);
-        return maxDepth;
-    };
 
-    const { userAnswers, candidateProducts } = JSON.parse(event.body);
-    const safeCandidates = (candidateProducts || []).filter(p => p && p.id && Array.isArray(p.tags));
-    const sortedAnswers = [...new Set(userAnswers)].sort().join(',');
-    const sortedProductIds = safeCandidates.map(p => p.id).sort().join(',');
-    const contextString = `batch|${sortedAnswers}|${sortedProductIds}`;
-    const contextFingerprint = crypto.createHash('sha256').update(contextString).digest('hex');
+        const tagsString = "Tags: " + (themesWithDetails || [])
+            .map(t => `${t.tag.replace(/_/g, ' ')} (${t.specificity},${t.score})`)
+            .join(', ');
 
-    const db = await connectToDatabase();
-    const cacheCollection = db.collection('question_cache');
+        const profileString = "Profile: " + [...new Set(userAnswers)].join(' - ');
+        const prompt = getBatchPrompt(tagsString, profileString);
 
-    const cached = await cacheCollection.findOne({ _id: contextFingerprint });
-    if (cached && cached.questions) {
-      return { statusCode: 200, body: JSON.stringify({ message: "Batch already cached." }) };
-    }
-
-    const themeScores = {};
-    const interestKeys = new Set(interests.map(i => i.key));
-    safeCandidates.forEach(p => {
-        const pScore = p.score || 1;
-        (p.tags || []).filter(t => interestKeys.has(t)).forEach(t => {
-            themeScores[t] = (themeScores[t] || 0) + pScore;
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.75,
+                response_format: { type: "json_object" }
+            })
         });
-    });
-    
-    const allSortedThemes = Object.entries(themeScores).sort((a, b) => b[1] - a[1]);
-    const topThemes = allSortedThemes.slice(0, 10);
-    const samplingPool = allSortedThemes.slice(10, 35);
-    const shuffledPool = samplingPool.sort(() => 0.5 - Math.random());
-    const randomNicheThemes = shuffledPool.slice(0, 5);
-    const finalThemes = [...topThemes, ...randomNicheThemes];
 
-    const finalThemesWithDetails = finalThemes.map(([tagKey, score]) => ({
-        tag: tagKey,
-        score: Math.round(score),
-        specificity: calculateDepth(tagKey)
-    }));
+        if (!response.ok) {
+            throw new Error(`OpenAI API failure: ${response.statusText}`);
+        }
 
-    const tagsString = "Tags: " + finalThemesWithDetails
-        .map(t => `${t.tag.replace(/_/g, ' ')} (${t.specificity},${t.score})`)
-        .join(', ');
+        const data = await response.json();
+        const rawContent = data.choices[0]?.message?.content;
+        if (!rawContent) {
+            throw new Error('AI returned no content for batch.');
+        }
 
-    const profileString = "Profile: " + [...new Set(userAnswers)].join(' - ');
-      
-    const prompt = getBatchPrompt(tagsString, profileString);
-    
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` },
-        body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [{ role: 'user', content: prompt }],
-            temperature: 0.75,
-            response_format: { type: "json_object" }
-        })
-    });
+        const aiResponseObject = JSON.parse(rawContent);
+        await cacheCollection.insertOne({ _id: contextFingerprint, questions: aiResponseObject.questions, createdAt: new Date() });
+        
+        return { statusCode: 200, body: JSON.stringify({ message: "Successfully generated and cached batch." }) };
 
-    if (!response.ok) {
-        const errText = await response.text();
-        console.error('OpenAI API error:', errText);
-        return { statusCode: 502, body: JSON.stringify({ error: `OpenAI API failure: ${response.statusText}` }) };
+    } catch (error) {
+        console.error('Error in generate-question-batch function:', error);
+        return { statusCode: 500, body: JSON.stringify({ error: 'Failed to generate question batch.' }) };
     }
-
-    const data = await response.json();
-    const rawContent = data.choices[0]?.message?.content;
-    if (!rawContent) {
-        console.error('OpenAI returned empty content for batch.');
-        return { statusCode: 500, body: JSON.stringify({ error: 'AI returned no content for batch.' }) };
-    }
-
-    const aiResponseObject = JSON.parse(rawContent);
-    await cacheCollection.insertOne({ _id: contextFingerprint, questions: aiResponseObject.questions, createdAt: new Date() });
-    
-    return { statusCode: 200, body: JSON.stringify({ message: "Successfully generated and cached batch." }) };
-
-  } catch (error) {
-    console.error('Error in generate-question-batch function:', error);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to generate question batch.' }) };
-  }
 };
