@@ -26,22 +26,31 @@ let currentQuestion = null;
 let isQuizInitialized = false;
 
 // --- INITIALIZATION ---
+
 export async function initializeQuizAssets() {
     if (isQuizInitialized) return;
     try {
-        const [productsRes, questionsRes, interestsRes, standardizationRes] = await Promise.all([
+        // We no longer need to fetch 'standardization.json' here.
+        const [productsRes, questionsRes, interestsRes] = await Promise.all([
             fetch('assets/products.json'),
             fetch('assets/questions.json'),
-            fetch('assets/interests.json'),
-            fetch('assets/standardization.json')
+            fetch('assets/interests.json')
         ]);
+
         allProducts = await productsRes.json();
         remainingProducts = [...allProducts];
         allQuestions = await questionsRes.json();
         interestHierarchy = await interestsRes.json();
-        allInterestTags = standardizationRes.ok ? (await standardizationRes.json()).interest_tags : [];
+        
+        // --- THIS IS THE FIX ---
+        // We now build the list of all interest tags directly from interests.json,
+        // which is the single source of truth.
+        allInterestTags = interestHierarchy.map(interest => interest.key);
+        // --- END OF FIX ---
+
         isQuizInitialized = true;
         await calculateAndStoreInterestDepths();
+
     } catch (error) {
         console.error("Failed to load quiz assets:", error);
         throw error; // Re-throw to be caught by the UI handler
