@@ -26,8 +26,90 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentQuestion = null;
     let isQuizInitialized = false;
     let currentRecommendationId = null; // track primary recommendation product ID for feedback
+    let interestDepthsMap = new Map();
 
     // --- DOM ELEMENTS ---
+    
+    // --- NEW HELPER FUNCTIONS FOR AI DATA PREPARATION ---
+
+    // This function calculates the "depth" of each interest and stores it in a map for fast access.
+    async function calculateAndStoreInterestDepths() {
+        if (!interestHierarchy || interestHierarchy.length === 0) {
+             console.error("Interest hierarchy not loaded, cannot calculate depths.");
+             return;
+        }
+        
+        const interestsMap = new Map(interestHierarchy.map(i => [i.key, i]));
+        const depthCache = new Map();
+
+        const calculateDepth = (interestKey) => {
+            if (depthCache.has(interestKey)) return depthCache.get(interestKey);
+            
+            const interest = interestsMap.get(interestKey);
+            // If a tag is not in the hierarchy, give it a default depth of 1.
+            if (!interest) return 1;
+
+            if (!interest.parents || interest.parents.length === 0) {
+                depthCache.set(interestKey, 1);
+                return 1;
+            }
+
+            const parentDepths = interest.parents.map(parentKey => calculateDepth(parentKey));
+            const maxDepth = Math.max(...parentDepths) + 1;
+            depthCache.set(interestKey, maxDepth);
+            return maxDepth;
+        };
+
+        // We now need to use `allInterestTags` which holds all possible interest keys.
+        for (const interestKey of allInterestTags) {
+            // The key in allInterestTags might be prefixed, e.g., "interest:sport". We need the raw key.
+            const rawKey = interestKey.includes(':') ? interestKey.split(':')[1] : interestKey;
+            calculateDepth(rawKey);
+        }
+        
+        // This is a global variable we need to declare at the top.
+        interestDepthsMap = depthCache;
+        console.log("Interest depths have been pre-calculated.");
+    }
+
+    // This function prepares the final data payload for our AI functions.
+    function getThemesForAI(candidateProducts) {
+        const themeScores = {};
+        
+        // Use allInterestTags to identify valid interest tags on products.
+        const validInterestKeys = new Set(allInterestTags);
+
+        candidateProducts.forEach(p => {
+            if (!p || !p.tags) return;
+            const pScore = p.score || 1;
+            // Check both regular tags and differentiator tags for interests.
+            const allProductTags = [...(p.tags || []), ...(p.differentiator_tags || [])];
+
+            allProductTags.filter(t => validInterestKeys.has(t)).forEach(t => {
+                themeScores[t] = (themeScores[t] || 0) + pScore;
+            });
+        });
+
+        const allSortedThemes = Object.entries(themeScores).sort((a, b) => b[1] - a[1]);
+        
+        const topThemes = allSortedThemes.slice(0, 10);
+        const samplingPool = allSortedThemes.slice(10, 35);
+        const shuffledPool = samplingPool.sort(() => 0.5 - Math.random());
+        const randomNicheThemes = shuffledPool.slice(0, 5);
+        const finalThemes = [...topThemes, ...randomNicheThemes];
+
+        const themesWithDetails = finalThemes.map(([tagKey, score]) => {
+            const rawKey = tagKey.includes(':') ? tagKey.split(':')[1] : tagKey;
+            return {
+                tag: tagKey, // Send the full tag, e.g., "interest:sport"
+                score: Math.round(score),
+                specificity: interestDepthsMap.get(rawKey) || 1
+            };
+        });
+
+        return themesWithDetails;
+    }
+    
     let heroSection, quizSection, questionContainer, backButton, earlyExitButton, resultsSection;
     let primaryResultEl, secondaryResultsEl, restartButton, shareButton;
     let feedbackContainer, starRatingContainer;
@@ -72,6 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
             interestHierarchy = await interestsRes.json();
             allInterestTags = standardizationRes.ok ? (await standardizationRes.json()).interest_tags : [];
             isQuizInitialized = true;
+            await calculateAndStoreInterestDepths();
         } catch (error) {
             console.error("Failed to load quiz assets:", error);
             questionContainer.innerHTML = `<h2 class="text-2xl font-bold text-center text-red-600">Fejl: Kunne ikke indlæse quizzen. Prøv venligst igen senere.</h2>`;
@@ -219,12 +302,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 return p ? { id: p.id, tags: p.tags, score: s.score } : null;
             }).filter(x => x);
 
-            // The actual API call for a single question
+            // Use our new helper function to prepare the data
+            const themesWithDetails = getThemesForAI(candidateProducts);
+
+            // The actual API call for a single question, now with a simpler payload
             const response = await fetch('/.netlify/functions/generate-ai-question', {
                 method: 'POST',
                 body: JSON.stringify({
                     userAnswers: userAnswers.flatMap(a => a.tags),
-                    candidateProducts
+                    themesWithDetails // Send the processed themes instead of raw products
                 })
             });
 
@@ -621,9 +707,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }).filter(x => x);
 
         if (candidateProducts.length > 0) {
+            // Use our new helper function here as well
+            const themesWithDetails = getThemesForAI(candidateProducts);
+
             const payload = {
                 userAnswers: userAnswers.flatMap(a => a.tags),
-                candidateProducts
+                themesWithDetails // Send the processed themes
             };
             if(cacheKey) payload.cacheKey = cacheKey;
 
