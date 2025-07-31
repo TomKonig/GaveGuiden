@@ -147,8 +147,16 @@ function displayQuestion(question) {
         }
         answersContainer.appendChild(btn);
     });
+    
     questionContainer.innerHTML = '';
     questionContainer.appendChild(template);
+
+    // --- THIS IS THE FIX ---
+    // We find the newly added question wrapper and add the 'active' class to make it visible.
+    const wrapper = questionContainer.querySelector('.question-wrapper');
+    if (wrapper) {
+        wrapper.classList.add('active');
+    }
 }
 
 function displayInterestHub(question) {
@@ -156,8 +164,15 @@ function displayInterestHub(question) {
     template.querySelector('.question-text').textContent = question.question_text;
     questionContainer.innerHTML = '';
     questionContainer.appendChild(template);
+
+    // --- THIS IS THE FIX ---
+    // We do the same for the interest hub to ensure it becomes visible.
+    const wrapper = questionContainer.querySelector('.question-wrapper');
+    if (wrapper) {
+        wrapper.classList.add('active');
+    }
     
-    // This is the full, original logic for the interest hub
+    // The rest of the original, complex logic for the hub remains the same...
     const suggestionsEl = document.getElementById('interest-suggestions');
     const searchInput = document.getElementById('interest-search');
     const selectedEl = document.getElementById('selected-interests');
@@ -186,7 +201,7 @@ function displayInterestHub(question) {
         userSelectedSet.add(key);
         const pillDiv = document.createElement('div');
         pillDiv.className = "selected-pill bg-blue-600 text-white px-3 py-1 rounded-full flex items-center text-sm";
-        pillDiv.dataset.key = key; // Store key for submission
+        pillDiv.dataset.key = key;
         pillDiv.innerHTML = `<span>${name}</span><button class="ml-2 font-bold">&times;</button>`;
         pillDiv.querySelector('button').onclick = () => {
             userSelectedSet.delete(key);
@@ -222,6 +237,40 @@ function displayInterestHub(question) {
         }
         renderSuggestions();
     };
+    
+    searchInput.addEventListener('input', () => {
+        const query = searchInput.value.toLowerCase();
+        if (query.length < 2) {
+            autocompleteEl.classList.add('hidden');
+            return;
+        }
+        const results = engine.allInterestTags.filter(tag => tag.toLowerCase().replace(/_/g, ' ').includes(query)).slice(0, 5);
+        autocompleteEl.innerHTML = '';
+        if (results.length > 0) {
+            results.forEach(result => {
+                const div = document.createElement('div');
+                div.className = 'p-2 hover:bg-gray-100 cursor-pointer';
+                div.textContent = result.replace(/_/g, ' ');
+                div.onclick = () => {
+                    addSelectedPill(div.textContent, `interest:${result}`);
+                    searchInput.value = '';
+                    autocompleteEl.classList.add('hidden');
+                };
+                autocompleteEl.appendChild(div);
+            });
+            autocompleteEl.classList.remove('hidden');
+        } else {
+            autocompleteEl.classList.add('hidden');
+        }
+    });
+    
+    initialFill();
+    submitBtn.onclick = () => {
+        if (userSelectedSet.size === 0) return;
+        const answer = { answer_text: 'Valgte interesser', tags: Array.from(userSelectedSet) };
+        processEngineResponse(engine.handleAnswer(answer));
+    };
+}
     
     searchInput.addEventListener('input', () => {
         const query = searchInput.value.toLowerCase();
