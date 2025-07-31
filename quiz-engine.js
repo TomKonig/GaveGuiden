@@ -1,7 +1,7 @@
 // /quiz-engine.js
 
 import { dot, norm } from './lib/math.js';
-import { ThompsonSampling } from './lib/thompsonSampling.js';
+import { ThompsonSampling } from './lib/thompsonSampling.ts';
 
 // --- CONFIGURATION & STATE ---
 const ALPHA = 0.6; // Balances TF-IDF and Semantic scores
