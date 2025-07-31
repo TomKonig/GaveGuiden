@@ -165,8 +165,7 @@ function displayInterestHub(question) {
     questionContainer.innerHTML = '';
     questionContainer.appendChild(template);
 
-    // --- THIS IS THE FIX ---
-    // We do the same for the interest hub to ensure it becomes visible.
+    // We find the newly added question wrapper and add the 'active' class to make it visible.
     const wrapper = questionContainer.querySelector('.question-wrapper');
     if (wrapper) {
         wrapper.classList.add('active');
@@ -237,40 +236,6 @@ function displayInterestHub(question) {
         }
         renderSuggestions();
     };
-    
-    searchInput.addEventListener('input', () => {
-        const query = searchInput.value.toLowerCase();
-        if (query.length < 2) {
-            autocompleteEl.classList.add('hidden');
-            return;
-        }
-        const results = engine.allInterestTags.filter(tag => tag.toLowerCase().replace(/_/g, ' ').includes(query)).slice(0, 5);
-        autocompleteEl.innerHTML = '';
-        if (results.length > 0) {
-            results.forEach(result => {
-                const div = document.createElement('div');
-                div.className = 'p-2 hover:bg-gray-100 cursor-pointer';
-                div.textContent = result.replace(/_/g, ' ');
-                div.onclick = () => {
-                    addSelectedPill(div.textContent, `interest:${result}`);
-                    searchInput.value = '';
-                    autocompleteEl.classList.add('hidden');
-                };
-                autocompleteEl.appendChild(div);
-            });
-            autocompleteEl.classList.remove('hidden');
-        } else {
-            autocompleteEl.classList.add('hidden');
-        }
-    });
-    
-    initialFill();
-    submitBtn.onclick = () => {
-        if (userSelectedSet.size === 0) return;
-        const answer = { answer_text: 'Valgte interesser', tags: Array.from(userSelectedSet) };
-        processEngineResponse(engine.handleAnswer(answer));
-    };
-}
     
     searchInput.addEventListener('input', () => {
         const query = searchInput.value.toLowerCase();
