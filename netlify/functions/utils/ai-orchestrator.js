@@ -12,14 +12,14 @@ const LEDGER_ENDPOINT = `${process.env.URL}/.netlify/functions/token-ledger`;
  * @param {string} params.prompt - The user prompt for the AI.
  * @param {string} params.agent_name - The name of the agent making the call.
  * @param {number} params.estimated_cost - The estimated token cost (only for 'gpt-4.5-preview').
+ * @param {object} params.response_format - Optional response format for OpenAI.
  * @returns {Promise<string>} - The content response from the AI model.
  */
 async function callAI(params) {
-    const { model, prompt, agent_name, estimated_cost = 0 } = params;
+    const { model, prompt, agent_name, estimated_cost = 0, response_format } = params;
 
     // --- Step 1: Handle GPT-4.5-preview (Budgeted) ---
     if (model === 'gpt-4.5-preview') {
-        // --- A: Request permission from Token Ledger ---
         const ledgerRequest = await fetch(LEDGER_ENDPOINT, {
             method: 'POST',
             body: JSON.stringify({ action: 'request', agent_name, estimated_cost })
@@ -27,23 +27,25 @@ async function callAI(params) {
         const ledgerResponse = await ledgerRequest.json();
 
         if (ledgerResponse.status !== 'approved') {
-            // Log the halt and stop execution for this agent.
             console.error(`CRITICAL: ${agent_name} halted. Reason: Token request denied.`);
             throw new Error('Token budget request denied.');
         }
 
-        // --- B: Call the OpenAI API ---
+        const body = {
+            model: 'gpt-4.5-preview',
+            messages: [{ role: 'user', content: prompt }],
+        };
+        if (response_format) {
+            body.response_format = response_format;
+        }
+
         const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${process.env.OPENAI_API_KEY_GPT45}`
             },
-            body: JSON.stringify({
-                model: 'gpt-4.5-preview',
-                messages: [{ role: 'user', content: prompt }],
-                // Add other parameters like temperature, response_format etc. as needed
-            })
+            body: JSON.stringify(body)
         });
         const openaiData = await openaiResponse.json();
         
@@ -53,7 +55,6 @@ async function callAI(params) {
 
         const actual_cost = openaiData.usage.total_tokens;
 
-        // --- C: Report actual usage back to Token Ledger ---
         await fetch(LEDGER_ENDPOINT, {
             method: 'POST',
             body: JSON.stringify({ action: 'report', agent_name, estimated_cost, actual_cost })
@@ -62,12 +63,18 @@ async function callAI(params) {
         return openaiData.choices[0].message.content;
     }
 
-    // --- Step 2: Handle Gemini 2.5 Flash (Free Tier) ---
+    // --- Step 2: Handle Gemini 2.5 Flash (Free Tier with Search) ---
     if (model === 'gemini-2.5-flash') {
+        const geminiBody = {
+            contents: [{ parts: [{ text: prompt }] }],
+            // NEW: This instruction enables Google Search for the model.
+            tools: [{ Google Search: {} }]
+        };
+
         const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            body: JSON.stringify(geminiBody)
         });
         const geminiData = await geminiResponse.json();
 
