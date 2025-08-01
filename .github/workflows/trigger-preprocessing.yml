@@ -1,0 +1,18 @@
+# .github/workflows/trigger_preprocessing.yml
+
+name: Trigger Pre-processing on Product Update
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'assets/products.json'
+
+jobs:
+  trigger_netlify_function:
+    name: Trigger Netlify Pre-processing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send POST Request to Netlify Build Hook
+        run: curl -X POST -d '{}' https://api.netlify.com/build_hooks/688c8cc08f943530a5d72497
