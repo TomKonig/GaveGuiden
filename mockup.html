@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Den Rette Gave – Mobile-safe Dynamic Background</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --accent-start: #5B8CFF;
+      --accent-end:   #8A5CFF;
+      --text: #0b1020;
+      --muted: #5a6472;
+      --bg: #ffffff;
+      --grid: rgba(13,15,30,.06);
+      --shadow: 0 10px 30px rgba(22, 24, 40, .08), 0 2px 8px rgba(22, 24, 40, .06);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    html, body { height: 100%; }
+    body{
+      margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color: var(--text); background: var(--bg); line-height: 1.55; overflow-x: hidden;
+      display:flex; flex-direction:column;
+    }
+    /* Subtle wireframe background */
+    .page-bg{ position: fixed; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(65% 50% at 100% 0%, rgba(99,102,241,.08), transparent 60%),
+        radial-gradient(70% 60% at 0% 100%, rgba(56,189,248,.06), transparent 60%);
+      z-index:0;
+    }
+    .page-bg::after{
+      content:""; position:absolute; inset:0;
+      background-image:
+        linear-gradient(0deg, var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 28px 28px, 28px 28px;
+      mask-image: radial-gradient(60% 60% at 50% 40%, rgba(0,0,0,.8), transparent 70%);
+    }
+
+    /* Backdrop layer just for icons so we can manage z-index */
+    #icon-layer{
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      overflow: hidden;
+    }
+
+    /* Layout */
+    .container{ width: min(1120px, 92vw); margin: 0 auto; }
+    .nav{ display:flex; align-items:center; justify-content:space-between; padding: 18px 0; position:relative; z-index:2; }
+    .brand{ display:flex; align-items:center; gap:12px; font-weight:700; font-size:20px; }
+    .logo{ width:34px; height:34px; border-radius:10px; background-image: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+      display:grid; place-items:center; color:white; box-shadow: var(--shadow); }
+    .nav a{ text-decoration:none; color:#596273; font-weight:600; }
+    .nav a:hover{ color:var(--text); }
+
+    /* Horizontally centered hero container */
+    .hero-wrap{ display:flex; justify-content:center; padding: clamp(18px, 6vw, 64px) 0; position:relative; z-index:1; }
+    .surface{
+      text-align:center;
+      width:min(760px, 92vw);
+      margin:0 auto;
+      padding: clamp(16px, 4vw, 28px) clamp(18px, 4vw, 36px);
+      background: rgba(255,255,255,.9);
+      backdrop-filter: saturate(120%) blur(6px);
+      border:1px solid rgba(11,16,32,.06);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      position:relative; z-index:2;
+    }
+
+    .eyebrow{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:6px 10px; border-radius:999px; background: rgba(99,102,241,.08);
+      color:#4338ca; font-weight:600; font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+      border:1px solid rgba(99,102,241,.20);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.6);
+      margin:0 auto;
+    }
+    h1{
+      margin:14px 0 8px; font-size: clamp(32px, 5.2vw, 56px); line-height:1.05; letter-spacing:-.01em;
+      background-image: linear-gradient(120deg, var(--accent-start), var(--accent-end));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .lead{ font-size: clamp(15px, 2.2vw, 20px); color:#5a6472; max-width:60ch; margin:0 auto; }
+
+    .actions{ display:flex; align-items:center; justify-content:center; gap:14px; margin-top:22px; flex-wrap:wrap; }
+    .btn{ appearance:none; border:0; cursor:pointer; font-weight:700; letter-spacing:.01em;
+      padding:14px 20px; border-radius:12px; box-shadow: var(--shadow); transition: transform .15s ease, box-shadow .2s ease; }
+    .btn-primary{ background-image: linear-gradient(135deg, var(--accent-start), var(--accent-end)); color:#fff; }
+    .btn-primary:hover{ transform: translateY(-1px) scale(1.01); }
+    .btn-link{ background:transparent; color:var(--text); }
+    .btn-link:hover{ text-decoration: underline; }
+
+    /* Icon instances (JS-driven motion) */
+    svg.icon{ position:absolute; opacity:.58; filter: drop-shadow(0 6px 18px rgba(95,99,242,.18)); pointer-events:none; will-change: transform; }
+    svg.icon[data-variant="soft"]{ opacity:.38 }
+
+    @media (max-width:520px){
+      .logo{ width:30px; height:30px }
+      .brand{ font-size:18px }
+      h1{ font-size: 32px; }
+      .lead{ font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-bg" aria-hidden="true"></div>
+  <div id="icon-layer" aria-hidden="true"></div>
+
+  <!-- Icon symbols (stroke uses placeholder id that we'll remap when inlining) -->
+  <svg id="defs" xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;">
+    <defs>
+      <!-- We keep a 'stroke' id in symbols; JS will inline them and remap to a per-icon gradient -->
+      <symbol id="i-gift" viewBox="0 0 24 24">
+        <g fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="8" width="18" height="13" rx="2"></rect>
+          <path d="M12 8v13M3 12h18"></path>
+          <path d="M7.5 6.5a2.5 2.5 0 1 1 5 0v1.5H10c-1.4 0-2.5-1.1-2.5-2.5Z"></path>
+          <path d="M16.5 6.5a2.5 2.5 0 1 0-5 0v1.5H14c1.4 0 2.5-1.1 2.5-2.5Z"></path>
+        </g>
+      </symbol>
+      <symbol id="i-sparkle" viewBox="0 0 24 24">
+        <g fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3l1.6 4.8L18 9.3l-4.4 1.6L12 16l-1.6-5.1L6 9.3l4.4-1.6L12 3Z"/>
+        </g>
+      </symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24">
+        <path d="M12 20s-7-4.7-7-9.2A4.8 4.8 0 0 1 9.7 6c1.1 0 2.2.5 3 1.3A4.3 4.3 0 0 1 15.7 6 4.8 4.8 0 0 1 19 10.8C19 15.3 12 20 12 20z"
+              fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-tag" viewBox="0 0 24 24">
+        <g fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12l9-9 9 9-9 9-9-9z"/>
+          <circle cx="12" cy="7.5" r="1.6"/>
+        </g>
+      </symbol>
+      <symbol id="i-bag" viewBox="0 0 24 24">
+        <g fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="8" width="14" height="12" rx="2"/>
+          <path d="M9 8a3 3 0 0 1 6 0"/>
+        </g>
+      </symbol>
+      <symbol id="i-balloon" viewBox="0 0 24 24">
+        <g fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="7.5" rx="5" ry="6"/>
+          <path d="M12 13.5v5M12 18.5c-1 .6-2 .9-3 1"/>
+        </g>
+      </symbol>
+      <symbol id="i-star" viewBox="0 0 24 24">
+        <path d="M12 3l2.4 5 5.6.6-4.2 3.9 1.2 5.5L12 15.8 6.9 18l1.2-5.5L3.9 8.6 9.6 8z"
+              fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-compass" viewBox="0 0 24 24">
+        <g fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M9.5 14.5l2.2-5.2 5.2-2.2-2.2 5.2-5.2 2.2z"/>
+          <circle cx="12" cy="12" r="1"/>
+        </g>
+      </symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24">
+        <g fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="16" rx="2"/>
+          <path d="M7 3v4M17 3v4M3 10h18"/>
+        </g>
+      </symbol>
+      <symbol id="i-music" viewBox="0 0 24 24">
+        <g fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM13 14V6l6-2v8"/>
+          <path d="M19 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
+        </g>
+      </symbol>
+      <symbol id="i-book" viewBox="0 0 24 24">
+        <g fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 4h8a3 3 0 0 1 3 3v13H9a3 3 0 0 1-3-3V4z"/>
+          <path d="M6 18h11"/>
+        </g>
+      </symbol>
+      <symbol id="i-camera" viewBox="0 0 24 24">
+        <g fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="7" width="18" height="12" rx="3"/>
+          <circle cx="12" cy="13" r="3.5"/>
+          <path d="M8 7l1.5-2h5L16 7"/>
+        </g>
+      </symbol>
+      <symbol id="i-trophy" viewBox="0 0 24 24">
+        <g fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 5h8v3a4 4 0 0 1-8 0V5z"/>
+          <path d="M6 7H4a3 3 0 0 0 6 0M18 7h2a3 3 0 0 1-6 0"/>
+          <path d="M10 12v2a2 2 0 0 0 4 0v-2M9 18h6v2H9z"/>
+        </g>
+      </symbol>
+      <symbol id="i-leaf" viewBox="0 0 24 24">
+        <g fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 4c-8 0-12 4-12 12 8 0 12-4 12-12z"/>
+          <path d="M8 16l8-8"/>
+        </g>
+      </symbol>
+      <symbol id="i-coffee" viewBox="0 0 24 24">
+        <g fill="none" stroke="url(#stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 9h12v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9z"/>
+          <path d="M16 10h2a3 3 0 0 1 0 6h-2"/>
+          <path d="M9 3c0 1-.7 1.3-.7 2s.7 1 .7 2M12 3c0 1-.7 1.3-.7 2s.7 1 .7 2"/>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
+  <header class="container nav" aria-label="Top navigation">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">🎁</div>
+      Den Rette Gave
+    </div>
+    <nav><a href="#cta">Sådan fungerer det</a></nav>
+  </header>
+
+  <main class="hero-wrap">
+    <section class="surface" id="cta">
+      <div class="eyebrow">Intelligent gaveguide</div>
+      <h1>Gaven, der altid rammer plet.</h1>
+      <p class="lead">Stop med at gætte. Vores intelligente guide finder den perfekte gave baseret på personlighed og interesser.</p>
+
+      <div class="actions">
+        <button class="btn btn-primary">Tag quizzen nu</button>
+        <button class="btn btn-link">Se et eksempel</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      const ICONS = ["i-gift","i-sparkle","i-heart","i-tag","i-bag","i-balloon","i-star","i-compass","i-calendar","i-music","i-book","i-camera","i-trophy","i-leaf","i-coffee"];
+      const layer = document.getElementById('icon-layer');
+      const surface = document.querySelector('.surface');
+      const svgNS = "http://www.w3.org/2000/svg";
+
+      const CONFIG = {
+        count: 6,
+        minSize: 42,
+        maxSize: 60,
+        speedMin: 6,
+        speedMax: 12,
+        sepRadiusPad: 6,
+        wander: 0.06,
+        tickLimit: 60,
+        edgePadding: 12
+      };
+
+      const icons = [];
+      let gradCounter = 0;
+
+      function rand(a, b){ return a + Math.random()*(b-a); }
+      function choice(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+      function rectNoFly(){
+        const r = surface.getBoundingClientRect();
+        return {x:r.left-16, y:r.top-16, w:r.width+32, h:r.height+32};
+      }
+      function intersectsRect(x,y,w,h, R){
+        return !(x + w < R.x || x > R.x + R.w || y + h < R.y || y > R.y + R.h);
+      }
+      function overlapsAny(x,y,w,h, self){
+        for(const o of icons){
+          if(o === self) continue;
+          if(Math.hypot((o.x+o.w/2)-(x+w/2),(o.y+o.h/2)-(y+h/2)) < (o.w+o.h+w+h)/8 + CONFIG.sepRadiusPad){
+            return true;
+          }
+        }
+        return false;
+      }
+      function position(icon){ icon.el.style.transform = `translate3d(${icon.x}px, ${icon.y}px, 0)`; }
+
+      function inlineSymbolInto(svg, symbolId, gradId){
+        const sym = document.getElementById(symbolId);
+        if(!sym){ return; }
+        // local gradient defs per icon
+        const defs = document.createElementNS(svgNS, 'defs');
+        const lg = document.createElementNS(svgNS, 'linearGradient');
+        lg.setAttribute('id', gradId);
+        lg.setAttribute('x1','0%'); lg.setAttribute('y1','0%');
+        lg.setAttribute('x2','100%'); lg.setAttribute('y2','100%');
+        const s1 = document.createElementNS(svgNS, 'stop');
+        s1.setAttribute('offset','0%');  s1.setAttribute('stop-color','var(--accent-start)');
+        const s2 = document.createElementNS(svgNS, 'stop');
+        s2.setAttribute('offset','100%'); s2.setAttribute('stop-color','var(--accent-end)');
+        lg.appendChild(s1); lg.appendChild(s2);
+        defs.appendChild(lg);
+        svg.appendChild(defs);
+
+        // copy children from symbol and remap stroke url(#stroke) -> url(#gradId)
+        const g = document.createElementNS(svgNS, 'g');
+        for(const child of sym.children){
+          const c = child.cloneNode(true);
+          g.appendChild(c);
+        }
+        const all = g.querySelectorAll('*');
+        all.forEach(n => {
+          const st = n.getAttribute('stroke');
+          if(st && st.includes('url(')){
+            n.setAttribute('stroke', `url(#${gradId})`);
+          }
+        });
+        svg.appendChild(g);
+      }
+
+      function addIcon(id, opts={}){
+        const name = id || choice(ICONS);
+        const size = Math.round(opts.size || rand(CONFIG.minSize, CONFIG.maxSize));
+
+        const el = document.createElementNS(svgNS, "svg");
+        el.classList.add("icon");
+        if(opts.soft) el.dataset.variant = "soft";
+        el.setAttribute("width", size);
+        el.setAttribute("height", size);
+        el.setAttribute("viewBox", "0 0 24 24");
+        el.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+        // Unique gradient per icon to avoid cross-root issues
+        const gradId = "stroke-" + (++gradCounter);
+        inlineSymbolInto(el, name, gradId);
+
+        layer.appendChild(el);
+
+        const w = size, h = size;
+        const speed = rand(CONFIG.speedMin, CONFIG.speedMax);
+
+        let x, y, tries = 0;
+        const pad = CONFIG.edgePadding;
+        const nf = rectNoFly();
+
+        do {
+          const edge = Math.random();
+          if(edge < .25){ x = rand(pad, window.innerWidth - w - pad); y = rand(pad, pad + 60); }
+          else if(edge < .5){ x = rand(pad, window.innerWidth - w - pad); y = rand(window.innerHeight - h - 60, window.innerHeight - h - pad); }
+          else if(edge < .75){ x = rand(pad, pad + 60); y = rand(pad, window.innerHeight - h - pad); }
+          else { x = rand(window.innerWidth - w - 60, window.innerWidth - w - pad); y = rand(pad, window.innerHeight - h - pad); }
+          tries++; if(tries > 200) break;
+        } while (intersectsRect(x,y,w,h,nf) || overlapsAny(x,y,w,h, null));
+
+        const angle = rand(0, Math.PI*2);
+        const vx = Math.cos(angle)*speed;
+        const vy = Math.sin(angle)*speed;
+
+        const icon = { el, name, x, y, w, h, vx, vy, speed };
+        icons.push(icon);
+        position(icon);
+        return el;
+      }
+
+      function step(dt){
+        const nf = rectNoFly();
+        const W = window.innerWidth, H = window.innerHeight;
+        const pad = CONFIG.edgePadding;
+
+        // gentle wander
+        for(const a of icons){
+          const ax = (Math.random() - 0.5) * CONFIG.wander;
+          const ay = (Math.random() - 0.5) * CONFIG.wander;
+          a.vx += ax; a.vy += ay;
+          const s = Math.hypot(a.vx,a.vy) || 1;
+          const target = a.speed;
+          a.vx = a.vx / s * target;
+          a.vy = a.vy / s * target;
+        }
+
+        // separation
+        for(let i=0;i<icons.length;i++){
+          for(let j=i+1;j<icons.length;j++){
+            const a = icons[i], b = icons[j];
+            const dx = (b.x + b.w/2) - (a.x + a.w/2);
+            const dy = (b.y + b.h/2) - (a.y + a.h/2);
+            const dist = Math.hypot(dx,dy) || 0.0001;
+            const minDist = (a.w + b.w)/2 + CONFIG.sepRadiusPad;
+            if(dist < minDist){
+              const overlap = (minDist - dist) * 0.5;
+              const nx = dx/dist, ny = dy/dist;
+              a.x -= nx * overlap; a.y -= ny * overlap;
+              b.x += nx * overlap; b.y += ny * overlap;
+              a.vx -= nx * 0.5; a.vy -= ny * 0.5;
+              b.vx += nx * 0.5; b.vy += ny * 0.5;
+            }
+          }
+        }
+
+        for(const a of icons){
+          a.x += a.vx * dt;
+          a.y += a.vy * dt;
+
+          if(a.x < pad){ a.x = pad; a.vx = Math.abs(a.vx); }
+          if(a.y < pad){ a.y = pad; a.vy = Math.abs(a.vy); }
+          if(a.x + a.w > W - pad){ a.x = W - pad - a.w; a.vx = -Math.abs(a.vx); }
+          if(a.y + a.h > H - pad){ a.y = H - pad - a.h; a.vy = -Math.abs(a.vy); }
+
+          // avoid the hero surface
+          if(!(a.x + a.w < nf.x || a.x > nf.x + nf.w || a.y + a.h < nf.y || a.y > nf.y + nf.h)){
+            const cx = a.x + a.w/2, cy = a.y + a.h/2;
+            const left = Math.abs(cx - nf.x);
+            const right = Math.abs((nf.x + nf.w) - cx);
+            const top = Math.abs(cy - nf.y);
+            const bottom = Math.abs((nf.y + nf.h) - cy);
+            const m = Math.min(left,right,top,bottom);
+            if(m === left) a.x = nf.x - a.w - 2;
+            else if(m === right) a.x = nf.x + nf.w + 2;
+            else if(m === top) a.y = nf.y - a.h - 2;
+            else a.y = nf.y + nf.h + 2;
+            const dx = (cx < nf.x) ? -1 : (cx > nf.x+nf.w ? 1 : 0);
+            const dy = (cy < nf.y) ? -1 : (cy > nf.y+nf.h ? 1 : 0);
+            a.vx += dx * 0.8; a.vy += dy * 0.8;
+          }
+
+          position(a);
+        }
+      }
+
+      let last=performance.now(), raf;
+      function loop(now){
+        const dtms = Math.min(1000/CONFIG.tickLimit, now - last);
+        last = now;
+        step(dtms/1000);
+        raf = requestAnimationFrame(loop);
+      }
+
+      function addInitial(){
+        for(let i=0;i<CONFIG.count;i++){
+          addIcon(choice(ICONS), {soft: Math.random()>.5});
+        }
+      }
+
+      // Public API
+      window.addIcon = (id,opts)=>addIcon(id,opts);
+      window.iconNames = ICONS;
+      window.iconEngine = {
+        pause(){ cancelAnimationFrame(raf); },
+        resume(){ last=performance.now(); raf=requestAnimationFrame(loop); },
+        list(){ return icons.map(i=>({name:i.name, x:Math.round(i.x), y:Math.round(i.y), w:i.w})); }
+      };
+
+      addInitial();
+      raf = requestAnimationFrame(loop);
+
+      // Reflow on resize
+      window.addEventListener('resize', ()=>{
+        const pad = CONFIG.edgePadding;
+        const W = window.innerWidth, H = window.innerHeight;
+        for(const a of icons){
+          if(a.x + a.w > W - pad) a.x = W - pad - a.w;
+          if(a.y + a.h > H - pad) a.y = H - pad - a.h;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
