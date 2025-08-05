@@ -22,15 +22,30 @@ const INTERESTS_FILE_PATH = path.join(PROJECT_ROOT, 'assets/interests.json');
 // --- HELPER: Scopes the interest tree ---
 function getScopedInterestTree(allInterests, parentKey) {
     const scopedTree = new Map();
-    const queue = [parentKey];
+    const queue = [parentKey]; 
+
     while (queue.length > 0) {
-        const currentKey = queue.shift();
-        if (scopedTree.has(currentKey)) continue;
+        const currentKey = queue.shift(); 
+
+        if (scopedTree.has(currentKey)) {
+            continue; 
+        }
+
         const category = allInterests.find(i => i.key === currentKey);
         if (category) {
             scopedTree.set(currentKey, category);
-            const children = allInterests.filter(child => Array.isArray(child.parents) && child.parents.includes(currentKey));
-            children.forEach(child => { if (!scopedTree.has(child.key)) queue.push(child.key); });
+
+            // --- THE FIX is in the next line ---
+            // We must use the parent's ID (category.id) to find its children, not its key.
+            const children = allInterests.filter(child => 
+                Array.isArray(child.parents) && child.parents.includes(category.id)
+            );
+
+            children.forEach(child => {
+                if (!scopedTree.has(child.key)) {
+                    queue.push(child.key);
+                }
+            });
         }
     }
     return Array.from(scopedTree.values());
