@@ -57,7 +57,7 @@ exports.handler = async (event) => {
                 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` // Using the key for our frontend models
             },
             body: JSON.stringify({
-                model: 'gpt-o4-mini',
+                model: 'o4-mini',
                 messages: [{ role: 'user', content: prompt }],
                 response_format: { type: "json_object" }
             })
