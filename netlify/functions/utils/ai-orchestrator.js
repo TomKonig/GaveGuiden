@@ -32,7 +32,7 @@ async function callAI(params) {
         }
 
         const body = {
-            model: 'gpt-4.5-preview',
+            model: 'gpt-o3',
             messages: [{ role: 'user', content: prompt }],
         };
         if (response_format) {
