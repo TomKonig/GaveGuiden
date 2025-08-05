@@ -194,5 +194,37 @@ export function handleAnswer(question, answer) {
     return getNextQuestion();
 }
 
+export function goBackLogic() {
+    if (questionHistory.length === 0) {
+        // If there's no history, we can't go back further than the start.
+        return { type: 'start' };
+    }
+
+    // Remove the last question from history so we can ask it again.
+    const lastQuestionId = questionHistory.pop();
+    const lastQuestion = allQuestions.find(q => q.question_id === lastQuestionId);
+
+    // Find the last answer given and remove it from the user's profile.
+    const answerIndex = userProfile.answers.findIndex(a => a.question_id === lastQuestionId);
+    if (answerIndex > -1) {
+        const lastAnswer = userProfile.answers[answerIndex];
+        
+        // Reverse the score change from the last answer
+        lastAnswer.tags.forEach(tag => {
+            if (userProfile.interests[tag]) {
+                userProfile.interests[tag] -= 1;
+                if (userProfile.interests[tag] <= 0) {
+                    delete userProfile.interests[tag];
+                }
+            }
+        });
+
+        userProfile.answers.splice(answerIndex, 1);
+    }
+    
+    // Return the previous question to be re-rendered by the UI handler.
+    return { type: 'question', data: formatQuestionForDisplay(lastQuestion) };
+}
+
 // Add this line at the very end of quiz-engine.js
 export function getUserProfile() { return userProfile; }
