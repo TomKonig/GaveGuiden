@@ -66,6 +66,8 @@ ${productList}
 `;
 };
 
+// REPLACE the existing exports.handler function with this one.
+
 // --- MAIN HANDLER ---
 exports.handler = async (event) => {
     console.log(`Starting ${AGENT_NAME} run...`);
@@ -74,8 +76,28 @@ exports.handler = async (event) => {
     
     try {
         let runState = await stateCollection.findOne({ _id: RUN_ID });
-        if (!runState) { /* ... Initialize state ... */ }
-        if (runState.status === 'complete') { /* ... Early exit ... */ }
+
+        // --- FIX: This block is now fully implemented ---
+        if (!runState) {
+            console.log("No state found for this week. Initializing new run...");
+            const interests = await fs.readFile(INTERESTS_FILE_PATH, 'utf-8').then(JSON.parse);
+            const topLevelCategories = interests.filter(i => !i.parents || i.parents.length === 0);
+            
+            runState = {
+                _id: RUN_ID,
+                agent: AGENT_NAME,
+                status: 'in_progress',
+                categories_to_process: topLevelCategories.map(c => c.key),
+                processed_categories: [],
+                questions_in_progress: []
+            };
+            await stateCollection.insertOne(runState);
+        }
+
+        if (runState.status === 'complete') {
+            console.log("This week's run is already complete. Exiting.");
+            return { statusCode: 200, body: JSON.stringify({ message: "Run already complete." }) };
+        }
 
         const nextCategoryKey = runState.categories_to_process.find(key => !runState.processed_categories.includes(key));
 
@@ -112,12 +134,12 @@ exports.handler = async (event) => {
         const strategicFeedback = "No specific feedback this week.";
         const prompt = getArchitectPrompt(category, productsInCategory, scopedTree, strategicFeedback);
 
-        // --- FIX: Using gpt-o4-mini directly ---
+        // --- Using o4-mini directly ---
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` // Use the general key
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
             },
             body: JSON.stringify({
                 model: 'o4-mini',
