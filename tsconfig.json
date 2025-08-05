@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "outDir": "./lib", // Place the compiled JS file in the 'lib' folder
+    "rootDir": "./lib", // Look for TS files in the 'lib' folder
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node"
+  },
+  "include": [
+    "lib/**/*.ts" // Specifies which files to compile
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
