@@ -12,6 +12,9 @@
   timeout = 900 # 15 minutes max
   included_files = ["assets/**"]
 
+[functions."architect-day-1-questions-manual-background"]
+included_files = ["assets/**"]
+
 [functions."architect-day-2-seo"]
   # Runs every Tuesday at 5:00 AM UTC
   schedule = "0 5 * * 2"
