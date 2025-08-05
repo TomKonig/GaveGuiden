@@ -9,10 +9,14 @@ const { callAI } = require('./utils/ai-orchestrator');
 // --- CONFIGURATION ---
 const GITHUB_OWNER = 'TomKonig';
 const GITHUB_REPO = 'GaveGuiden';
-const QUESTIONS_FILE_PATH = 'assets/questions.json';
-const PRODUCTS_FILE_PATH = 'assets/products.json';
-const INTERESTS_FILE_PATH = 'assets/interests.json';
-const AGENT_NAME = 'Day 1: Question Architect';
+const AGENT_NAME = 'Day 1: Question Architect (Manual)';
+
+// --- CORRECTED FILE PATHS ---
+// This creates a reliable path from the function's location to the project root.
+const PROJECT_ROOT = path.resolve(__dirname, '../../');
+const QUESTIONS_FILE_PATH = path.join(PROJECT_ROOT, 'assets/questions.json');
+const PRODUCTS_FILE_PATH = path.join(PROJECT_ROOT, 'assets/products.json');
+const INTERESTS_FILE_PATH = path.join(PROJECT_ROOT, 'assets/interests.json');
 
 // --- HELPER: The Master Prompt ---
 const getArchitectPrompt = (category, products, interestsTree, strategicFeedback) => {
@@ -93,17 +97,17 @@ exports.handler = async (event) => {
             const { data: existingFile } = await octokit.repos.getContent({
                 owner: GITHUB_OWNER,
                 repo: GITHUB_REPO,
-                path: QUESTIONS_FILE_PATH,
+                path: 'assets/questions.json',
             });
             fileSha = existingFile.sha;
         } catch (error) {
-            console.log(`${QUESTIONS_FILE_PATH} not found. Creating new file.`);
+            console.log(`${'assets/questions.json'} not found. Creating new file.`);
         }
 
         await octokit.repos.createOrUpdateFileContents({
             owner: GITHUB_OWNER,
             repo: GITHUB_REPO,
-            path: QUESTIONS_FILE_PATH,
+            path: 'assets/questions.json',
             message: `feat(content): ${AGENT_NAME} - Automated weekly question architecture`,
             content: content,
             sha: fileSha,
