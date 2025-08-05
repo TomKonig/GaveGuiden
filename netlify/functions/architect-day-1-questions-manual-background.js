@@ -65,12 +65,12 @@ exports.handler = async (event) => {
         const strategicFeedback = latestReport ? latestReport.summary : "No specific feedback this week.";
         
         const allNewQuestions = [];
-        const topLevelCategories = interests.filter(i => !i.parent);
+        const topLevelCategories = interests.filter(i => !i.parents || i.parents.length === 0);
 
         // --- 2. Process Each Category ---
         for (const category of topLevelCategories) {
             console.log(`Processing category: ${category.name}`);
-            const productsInCategory = productCatalog.filter(p => p.tags.includes(category.id));
+            const productsInCategory = productCatalog.filter(p => p.tags.includes(category.key));
             if (productsInCategory.length === 0) continue;
 
             const prompt = getArchitectPrompt(category, productsInCategory, interests, strategicFeedback);
