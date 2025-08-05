@@ -193,3 +193,5 @@ export function handleAnswer(question, answer) {
     // If no child question, try to get another top-level question
     return getNextQuestion();
 }
+
+export function getUserProfile() { return userProfile; }
