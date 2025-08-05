@@ -2,9 +2,49 @@
   functions = "functions"
   publish = "."
 
-[functions."generate-question-batch"]
+# --- Agent Scheduling & Configuration ---
+
+[functions."architect-day-1-questions"]
+  # Runs every Monday at 5:00 AM UTC
+  schedule = "0 5 * * 1"
   background = true
-  timeout = 60
+  timeout = 900 # 15 minutes max
+
+[functions."architect-day-2-seo"]
+  # Runs every Tuesday at 5:00 AM UTC
+  schedule = "0 5 * * 2"
+  background = true
+  timeout = 900
+
+[functions."architect-day-3-tag-enrichment"]
+  # Runs every Wednesday at 5:00 AM UTC
+  schedule = "0 5 * * 3"
+  background = true
+  timeout = 900
+
+[functions."architect-day-4-gap-analysis"]
+  # Runs every Thursday at 5:00 AM UTC
+  schedule = "0 5 * * 4"
+  background = true
+  timeout = 900
+
+[functions."architect-day-5-maintenance"]
+  # Runs every Friday at 5:00 AM UTC
+  schedule = "0 5 * * 5"
+  background = true
+  timeout = 900
+
+[functions."architect-day-6-simulation"]
+  # Runs every Saturday at 5:00 AM UTC
+  schedule = "0 5 * * 6"
+  background = true
+  timeout = 900
+
+[functions."architect-day-7-strategy"]
+  # Runs every Sunday at 5:00 AM UTC
+  schedule = "0 5 * * 0"
+  background = true
+  timeout = 900
 
 [[redirects]]
   from = "/api/*"
