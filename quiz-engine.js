@@ -193,3 +193,6 @@ export function handleAnswer(question, answer) {
     // If no child question, try to get another top-level question
     return getNextQuestion();
 }
+
+// Add this line at the very end of quiz-engine.js
+export function getUserProfile() { return userProfile; }
