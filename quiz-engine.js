@@ -1,6 +1,6 @@
 // /quiz-engine.js
 
-import { ThompsonSampling } from './lib/thompsonSampling.ts';
+import { ThompsonSampling } from './lib/thompsonSampling.js';
 
 // --- CONFIGURATION & STATE ---
 let allProducts = [];
