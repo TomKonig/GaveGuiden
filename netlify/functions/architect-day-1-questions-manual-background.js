@@ -17,9 +17,11 @@ const PRODUCTS_FILE_PATH = path.join(PROJECT_ROOT, 'assets/products.json');
 const INTERESTS_FILE_PATH = path.join(PROJECT_ROOT, 'assets/interests.json');
 
 // --- PROMPT HELPER (remains the same) ---
-const getArchitectPrompt = (category, products, interestsTree, strategicFeedback) => {
+// REPLACE IT WITH THIS...
+const scopedTree = getScopedInterestTree(interests, category.key);
+const prompt = getArchitectPrompt(category, productsInCategory, scopedTree, strategicFeedback);
 // Corrected to include the full tag list for each product.
-    const productList = products.map(p => `- ${p.name}: ${p.description} (Tags: ${p.tags.join(', ')})`).join('\n');
+const productList = productsInCategory.map(p => `- ${p.name}: ${p.description} (Tags: ${p.tags.join(', ')})`).join('\n');
     
     return `
 You are a world-class Quiz Architect and e-commerce strategist for denrettegave.dk. Your primary goal is to create a dynamic, multi-step conversational path that intelligently guides a user from a broad category interest to a specific, actionable product preference.
@@ -45,6 +47,29 @@ Products in this Category:
 ${productList}
 `;
 };
+
+// ADD THIS NEW HELPER FUNCTION
+
+// --- HELPER: Scopes the interest tree to only the relevant branch ---
+function getScopedInterestTree(allInterests, parentKey) {
+    const relevantInterests = new Map();
+    const parentCategory = allInterests.find(i => i.key === parentKey);
+
+    if (!parentCategory) return [];
+
+    const findChildrenRecursive = (key) => {
+        if (relevantInterests.has(key)) return; // Avoid circular dependencies
+        const category = allInterests.find(i => i.key === key);
+        if (category) {
+            relevantInterests.set(key, category);
+            const children = allInterests.filter(i => i.parents && i.parents.includes(key));
+            children.forEach(child => findChildrenRecursive(child.key));
+        }
+    };
+
+    findChildrenRecursive(parentKey);
+    return Array.from(relevantInterests.values());
+}
 
 // --- MAIN HANDLER ---
 exports.handler = async (event) => {
