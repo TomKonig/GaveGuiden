@@ -96,7 +96,7 @@ exports.handler = async (event) => {
         console.log("Step 1: Selecting strategic products...");
         const selectionPrompt = getProductSelectionPrompt(productCatalog, strategicFeedback, recentProductIds);
         const selectedIdsResponse = await callAI({
-            model: 'gpt-4.5-preview',
+            model: 'gpt-o3',
             prompt: selectionPrompt,
             agent_name: AGENT_NAME,
             estimated_cost: 2000
