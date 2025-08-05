@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "tsc --project tsconfig.json lib/thompsonSampling.ts",
+    "prebuild": "tsc lib/thompsonSampling.ts",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
