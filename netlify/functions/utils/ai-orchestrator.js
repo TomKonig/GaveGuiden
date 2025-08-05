@@ -19,7 +19,7 @@ async function callAI(params) {
     const { model, prompt, agent_name, estimated_cost = 0, response_format } = params;
 
     // --- Step 1: Handle GPT-4.5-preview (Budgeted) ---
-    if (model === 'gpt-4.5-preview') {
+    if (model === 'gpt-o3') {
         const ledgerRequest = await fetch(LEDGER_ENDPOINT, {
             method: 'POST',
             body: JSON.stringify({ action: 'request', agent_name, estimated_cost })
