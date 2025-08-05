@@ -55,12 +55,35 @@ function setupDOMElements() {
     copyFeedback = document.getElementById('copy-feedback');
 }
 
+// REPLACE the existing attachEventListeners function with this one.
+
 function attachEventListeners() {
     document.querySelectorAll('.start-quiz-btn').forEach(btn => btn.addEventListener('click', runQuiz));
     restartButton.addEventListener('click', runQuiz);
     backButton.addEventListener('click', goBack);
-    earlyExitButton.addEventListener('click', () => renderStep({ type: 'results', data: getProductScores() }));
-    // Other event listeners from your original file can be added here
+    
+    // --- NEW: Re-implemented the Early Exit button logic ---
+    earlyExitButton.addEventListener('click', () => {
+        // This directly calls the results step, skipping any remaining questions.
+        renderStep({ type: 'results', data: getProductScores() });
+    });
+
+    howItWorksBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+    closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+    
+    shareButton.addEventListener('click', handleShare);
+    closeShareModalBtn.addEventListener('click', () => shareModal.classList.add('hidden'));
+    shareModal.addEventListener('click', e => { if (e.target === shareModal) shareModal.classList.add('hidden'); });
+    
+    copyShareLinkBtn.addEventListener('click', copyShareLink);
+    
+    starRatingContainer.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const rating = parseInt(btn.getAttribute('data-value'));
+            submitRating(rating);
+        });
+    });
 }
 
 // --- CORE UI FLOW ---
@@ -89,6 +112,11 @@ function renderStep(step) {
         renderQuestion(step.data);
     } else if (step.type === 'interest_hub') {
         renderInterestHub();
+    } else if (step.type === 'loading_ai') {
+        // This is the new, correct logic
+        showLoadingState('Et øjeblik, jeg finder på et rigtig godt spørgsmål til dig...');
+        // The fetchAIQuestion function from the engine will now be called by the UI
+        fetchAIQuestion().then(nextStep => renderStep(nextStep));
     } else if (step.type === 'results') {
         renderResults(step.data);
     } else {
@@ -123,16 +151,21 @@ function renderQuestion(question) {
     const answersContainer = template.querySelector('.answers-container');
     answersContainer.innerHTML = '';
     
-    question.answers.forEach(answer => {
-        const btn = document.createElement('button');
-        btn.className = "answer-btn"; // Add your styling classes
-        btn.textContent = answer.answer_text;
+question.answers.forEach(answer => {
+    const btn = document.createElement('button');
+    btn.className = "answer-btn"; // Add your styling classes
+    btn.textContent = answer.answer_text;
+    
+    if (answer.tags && answer.tags.includes("freetext:true")) {
+        btn.onclick = () => showFreeTextInput(answersContainer);
+    } else {
         btn.onclick = () => {
             const nextStep = handleAnswer(currentQuestion, answer);
             renderStep(nextStep);
         };
-        answersContainer.appendChild(btn);
-    });
+    }
+    answersContainer.appendChild(btn);
+});
     
     questionContainer.innerHTML = '';
     questionContainer.appendChild(template);
@@ -179,6 +212,28 @@ function createProductCard(product, isPrimary) {
             </div>
         </div>
     `;
+}
+
+function showFreeTextInput(container) {
+    container.innerHTML = `
+        <div class="w-full p-4 bg-gray-50 rounded-lg">
+            <label for="freetext-input" class="block text-sm font-medium text-gray-700 mb-1">Beskriv hvad du leder efter:</label>
+            <textarea id="freetext-input" maxlength="250" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+            <button id="freetext-submit" class="cta-btn w-full mt-2 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">Send</button>
+        </div>
+    `;
+
+    document.getElementById('freetext-submit').onclick = () => {
+        const freeTextInput = document.getElementById('freetext-input');
+        const freeText = freeTextInput.value.trim();
+        if (freeText) {
+            // Show loading state while the AI thinks
+            showLoadingState('Et øjeblik, jeg analyserer dit svar...');
+            handleFreeText(freeText).then(nextStep => {
+                renderStep(nextStep);
+            });
+        }
+    };
 }
 
 // --- INTEREST HUB LOGIC (RE-INTEGRATED) ---
@@ -349,28 +404,18 @@ async function handleSharedResult(shareId) {
         if (!res.ok) throw new Error("Shared result not found or invalid.");
         
         const sharedData = await res.json();
-        if (!sharedData.productId || !sharedData.answers || !sharedData.filters) {
-            throw new Error("Invalid shared data format");
-        }
         
-        // Re-initialize the quiz engine with the shared data
-        // NOTE: The quiz-engine needs a function to handle this state hydration.
-        // For now, we will simulate by manually setting up the state and showing results.
-        
+        // Initialize assets before loading state
         await initializeQuizAssets();
         
-        // This is a simplified way to show the result. A full implementation
-        // would require a `loadSharedState(sharedData)` function in the engine.
-        const allScores = getProductScores(); // We need a way to recalculate scores based on shared answers.
-        
-        // Find the shared product and put it first.
-        const primaryProductScore = allScores.find(s => s.id === sharedData.productId);
-        const otherScores = allScores.filter(s => s.id !== sharedData.productId);
-        const finalScores = [primaryProductScore, ...otherScores].filter(s => s);
+        // Use the new engine function to load the state
+        const nextStep = loadSharedState(sharedData);
 
         heroSection.classList.add('hidden');
         quizSection.classList.remove('hidden');
-        renderResults(finalScores);
+        
+        // Render the results directly
+        renderStep(nextStep);
 
     } catch (err) {
         console.error("Failed to load shared result:", err);

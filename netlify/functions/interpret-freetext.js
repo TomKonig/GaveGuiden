@@ -5,9 +5,9 @@ const { OPENAI_API_KEY } = process.env;
 
 const getAnalystPrompt = (userAnswers, freeText) => `
 You are an expert data analyst. Interpret the user's free-text answer and convert it into structured tags for our gift quiz engine.
- 
+ 
 **Previous Answers (context):**
-${userAnswers.map(a => `- ${a}`).join('\n')}
+${userAnswers.map(a => `- For question ${a.question_id}, the user chose an answer associated with these tags: ${a.tags.join(', ')}`).join('\n')}
  
 **User's Free-Text Input:**
 "${freeText}"

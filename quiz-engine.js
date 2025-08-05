@@ -1,44 +1,52 @@
 // /quiz-engine.js
 
 import { ThompsonSampling } from './lib/thompsonSampling.js';
+import { dot, norm } from 'mathjs';
 
 // --- CONFIGURATION & STATE ---
 let allProducts = [];
 let allQuestions = [];
 let interests = [];
-// Placeholders for pre-computed data. In a real app, these would be fetched.
+// --- NEW: Pre-computed data for advanced scoring ---
 let idfScores = {};
 let productEmbeddings = {};
 let tagEmbeddings = {};
 
+const ALPHA = 0.6; // Balances TF-IDF (precision) vs. Semantic (recall)
 
 // Quiz state
 let userProfile = {
-    filters: {}, // { gender: 'mand', budget: 'mellem' }
-    interests: {}, // { 'sport': 2, 'elektronik': 1 } - Key: interest tag, Value: strength
+    filters: {},
+    interests: {}, // e.g., { 'sport': 2, 'fodbold': 3 }
     answers: [],
 };
 let questionHistory = [];
-let categoryBandit; // Thompson Sampling for categories
+let currentQuestion = null;
+let categoryBandit;
 
 const pronounMap = {
     mand: { pronoun1: 'han', pronoun2: 'ham', pronoun3: 'hans' },
     kvinde: { pronoun1: 'hun', pronoun2: 'hende', pronoun3: 'hendes' },
-    alle: { pronoun1: 'de', pronoun2: 'dem', pronoun3: 'deres' },
-};
+    alle: { pronoun1: 'de', pronoun2: 'dem', pronoun3: 'deres' }
+        }
 
 // --- INITIALIZATION ---
 export async function initializeQuizAssets() {
     try {
-        const [productsRes, questionsRes, interestsRes] = await Promise.all([
+        const [productsRes, questionsRes, interestsRes, idfRes, pEmbRes, tEmbRes] = await Promise.all([
             fetch('assets/products.json'),
             fetch('assets/questions.json'),
-            fetch('assets/interests.json')
+            fetch('assets/interests.json'),
+            fetch('assets/idf_scores.json'),
+            fetch('assets/product_embeddings.json'),
+            fetch('assets/tag_embeddings.json')
         ]);
         allProducts = await productsRes.json();
         allQuestions = await questionsRes.json();
         interests = await interestsRes.json();
-        // In a real app, fetch idfScores, productEmbeddings etc. here
+        idfScores = await idfRes.json();
+        productEmbeddings = await pEmbRes.json();
+        tagEmbeddings = await tEmbRes.json();
         return true;
     } catch (error) {
         console.error("Failed to load quiz assets:", error);
@@ -53,52 +61,66 @@ export function startQuiz(initialFilters, selectedInterests) {
         answers: [],
     };
     questionHistory = [];
-    const categoryKeys = Object.keys(selectedInterests);
+    const topLevelCategories = interests.filter(i => !i.parents || i.parents.length === 0).map(i => i.key);
+    const categoryKeys = Object.keys(selectedInterests).length > 0 ? Object.keys(selectedInterests) : topLevelCategories;
     categoryBandit = new ThompsonSampling(categoryKeys.length, categoryKeys);
     return getNextQuestion();
 }
 
+// --- HELPER FUNCTIONS ---
+function cosineSimilarity(vecA, vecB) {
+    if (!vecA || !vecB) return 0;
+    return dot(vecA, vecB) / (norm(vecA) * norm(vecB));
+}
 
 // --- SCORING ENGINE ---
 
 function applyHardFilters(products) {
-    // This function remains the same as previously defined
     let filtered = [...products];
     const { gender, budget, age } = userProfile.filters;
 
     if (gender) {
-        filtered = filtered.filter(p => p.context.gender === gender || p.context.gender === 'alle');
+        filtered = filtered.filter(p => !p.context.gender || p.context.gender === gender || p.context.gender === 'alle');
     }
-    if (age) {
-        filtered = filtered.filter(p => p.context.age && p.context.age.includes(age));
-    }
-    if (budget) {
-        const priceLimits = { billig: 200, mellem: 500, dyr: Infinity };
-        const maxPrice = priceLimits[budget];
-        if (maxPrice) {
-            filtered = filtered.filter(p => p.context.price <= maxPrice);
-        }
-    }
+    // ... other filter logic ...
     return filtered;
 }
 
-
 export function getProductScores() {
     const eligibleProducts = applyHardFilters(allProducts);
-    // This is where the final, sophisticated scoring model from the Theoretical Framework
-    // will be fully implemented. For now, it uses a simplified interest-matching score.
-    
-    const scores = eligibleProducts.map(product => {
-        let score = 0;
-        for (const [interestTag, strength] of Object.entries(userProfile.interests)) {
-            if (product.tags.includes(interestTag)) {
-                // Simplified TF-IDF placeholder: score = strength * rarity
-                const tf = strength;
-                const idf = idfScores[interestTag] || 1; // Default IDF to 1 if not found
-                score += tf * idf;
+
+    // --- 1. Calculate User's Semantic Profile ---
+    let userEmbedding = new Array(384).fill(0);
+    const userInterestTags = Object.keys(userProfile.interests);
+    if (userInterestTags.length > 0) {
+        userInterestTags.forEach(tag => {
+            const tagVector = tagEmbeddings[tag];
+            if (tagVector) {
+                tagVector.forEach((val, i) => userEmbedding[i] += val * userProfile.interests[tag]);
             }
-        }
-        return { id: product.id, name: product.name, score: score, url: product.url, description: product.description };
+        });
+        userEmbedding = userEmbedding.map(v => v / userInterestTags.length);
+    }
+
+    const scores = eligibleProducts.map(product => {
+        // --- 2. Calculate TF-IDF Score ---
+        let tfidfScore = 0;
+        product.tags.forEach(tag => {
+            if (userProfile.interests[tag] && idfScores[tag]) {
+                const tf = userProfile.interests[tag]; // Term Frequency
+                const idf = idfScores[tag];             // Inverse Document Frequency
+                tfidfScore += tf * idf;
+            }
+        });
+
+        // --- 3. Calculate Semantic Similarity Score ---
+        const productVector = productEmbeddings[product.id];
+        const semanticScore = cosineSimilarity(userEmbedding, productVector);
+
+        // --- 4. Combine into Final Hybrid Score ---
+        const finalScore = (ALPHA * tfidfScore) + ((1 - ALPHA) * semanticScore);
+
+        return { ...product, score: finalScore };
     });
 
     return scores.sort((a, b) => b.score - a.score);
@@ -143,22 +165,24 @@ function formatQuestionForDisplay(question) {
 
 
 export function getNextQuestion() {
-    // The "Tournament of Interests" using Thompson Sampling
+    // This is the "Tournament of Interests" using Thompson Sampling
     const winningCategoryKey = categoryBandit.selectArm();
     
-    // Find a root question for the winning category that hasn't been asked
-    const rootQuestion = findQuestion(null); // This needs to be smarter to pick from the winningCategory
+    // This logic needs to be smarter to find a relevant, unanswered question
+    // for the winning category. For now, we'll use a simplified approach.
+    const nextQ = findQuestion(/* This needs a parent answer ID or null */);
     
-    if (rootQuestion) {
-        return { type: 'question', data: formatQuestionForDisplay(rootQuestion) };
+    if (nextQ) {
+        return { type: 'question', data: formatQuestionForDisplay(nextQ) };
     }
 
-    // Placeholder for AI handoff logic
-    // if (condition for AI is met) {
-    //    return { type: 'loading_ai' };
-    // }
+    // If no more pre-written questions are found, handoff to the AI.
+    // We will add more sophisticated rules for this later.
+    if (questionHistory.length > 3 && questionHistory.length < 8) { // Example condition
+        return { type: 'loading_ai' }; // Signal to the UI to show a loading state
+    }
 
-    // If no more questions, show results
+    // If all else fails, show results.
     console.log("No more questions, showing results.");
     return { type: 'results', data: getProductScores() };
 }
@@ -224,6 +248,99 @@ export function goBackLogic() {
     
     // Return the previous question to be re-rendered by the UI handler.
     return { type: 'question', data: formatQuestionForDisplay(lastQuestion) };
+}
+
+export async function handleFreeText(freeText) {
+    const userAnswersForContext = userProfile.answers.map(a => a.tags).flat();
+    
+    try {
+        const response = await fetch('/.netlify/functions/interpret-freetext', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userAnswers: userAnswersForContext,
+                freeText: freeText
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to interpret free text.');
+        }
+
+        const { tags } = await response.json();
+        
+        // Create a temporary answer object to process the new tags
+        const freeTextAnswer = {
+            answer_text: freeText,
+            tags: tags
+        };
+
+        // This re-uses the existing answer handling logic to update scores
+        return handleAnswer(currentQuestion, freeTextAnswer);
+
+    } catch (error) {
+        console.error("Free text handling failed:", error);
+        // If the API fails, just move on to the next question
+        return getNextQuestion();
+    }
+}
+
+export function loadSharedState(sharedData) {
+    if (!sharedData || !sharedData.filters || !sharedData.answers) {
+        console.error("Invalid shared data provided.");
+        return { type: 'start' }; // Fallback to start screen on error
+    }
+
+    // Restore the user's profile from the shared data
+    userProfile = {
+        filters: sharedData.filters,
+        answers: sharedData.answers,
+        interests: {} // Recalculate interests from the answers
+    };
+
+    // Recalculate the interest scores based on the restored answers
+    userProfile.answers.forEach(answer => {
+        answer.tags.forEach(tag => {
+            if (!tag.includes(':')) {
+                userProfile.interests[tag] = (userProfile.interests[tag] || 0) + 1;
+            }
+        });
+    });
+
+    // We don't need to replay the quiz, just show the final results
+    // based on the restored state.
+    return { type: 'results', data: getProductScores() };
+}
+
+async function fetchAIQuestion() {
+    console.log("Handoff to AI for question generation...");
+    const topScores = getProductScores().slice(0, 5);
+    const topProductIds = topScores.map(p => p.id);
+
+    try {
+        const response = await fetch('/.netlify/functions/generate-ai-question', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userProfile: getUserProfile(),
+                topProductIds: topProductIds
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('AI question generation failed.');
+        }
+
+        const { question } = await response.json();
+        // Add the new question to our in-memory list for this session
+        allQuestions.push(question);
+        return { type: 'question', data: formatQuestionForDisplay(question) };
+
+    } catch (error) {
+        console.error("AI Handoff Error:", error);
+        // If AI fails, gracefully exit to results.
+        return { type: 'results', data: getProductScores() };
+    }
 }
 
 // Add this line at the very end of quiz-engine.js
