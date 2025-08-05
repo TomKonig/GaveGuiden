@@ -68,7 +68,7 @@ async function callAI(params) {
         const geminiBody = {
             contents: [{ parts: [{ text: prompt }] }],
             // NEW: This instruction enables Google Search for the model.
-            tools: [{ Google Search: {} }]
+            tools: [{ googleSearch: {} }]
         };
 
         const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`, {
