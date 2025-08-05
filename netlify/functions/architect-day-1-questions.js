@@ -74,7 +74,7 @@ exports.handler = async (event) => {
 
             // --- 3. Delegate to the Engine ---
             const aiResponse = await callAI({
-                model: 'gpt-4.5-preview',
+                model: 'gpt-o3',
                 prompt: prompt,
                 agent_name: AGENT_NAME,
                 estimated_cost: estimated_cost,
