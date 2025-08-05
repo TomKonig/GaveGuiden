@@ -1,9 +1,10 @@
 {
   "name": "gaveguiden",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "tsc --project tsconfig.json lib/thompsonSampling.ts",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -17,7 +18,9 @@
     "@octokit/rest": "^20.0.1",
     "cookie": "^0.6.0",
     "jsonwebtoken": "^9.0.2",
-    "mongodb": "^6.5.0"
+    "mongodb": "^6.5.0",
+    "node-fetch": "^3.3.2",
+    "jstat": "^1.9.6"
   },
   "devDependencies": {
     "@types/node": "^20",
